@@ -1,0 +1,5 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { --trs-green: #16a34a; --trs-yellow: #f59e0b; --trs-red: #ef4444; }
