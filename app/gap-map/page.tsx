@@ -13,7 +13,7 @@ export default function GapMap() {
           <li key={g.id} className="p-3 text-sm flex items-center justify-between">
             <div>
               <div className="font-medium">{g.title}</div>
-              <div className="text-gray-500">Tier {g.tier} • Impact ${"{:,}".format(g.impact)}</div>
+              <div className="text-gray-500">Tier {g.tier} • Impact ${g.impact.toLocaleString()}</div>
             </div>
             <button className="rounded px-3 py-1 border bg-gray-50 hover:bg-gray-100">Add to Blueprint</button>
           </li>

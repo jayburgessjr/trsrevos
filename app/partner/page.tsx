@@ -14,7 +14,7 @@ export default function Partner() {
               <td className="p-2">{p.name}</td>
               <td className="p-2">{p.overlap}</td>
               <td className="p-2">{p.influence}</td>
-              <td className="p-2">${"{:,}".format(p.pipeline)}</td>
+              <td className="p-2">${p.pipeline.toLocaleString()}</td>
               <td className="p-2"><button className="underline">Draft rev-share</button></td>
             </tr>
           ))}
