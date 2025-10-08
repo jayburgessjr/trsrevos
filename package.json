@@ -12,14 +12,19 @@
     "test:watch": "vitest",
     "e2e": "playwright test",
     "format": "prettier --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prisma:generate": "prisma generate",
+    "prisma:seed": "prisma db seed"
   },
   "packageManager": "pnpm@10.18.0",
   "engines": {
     "node": ">=20.11.1 <=22.x"
   },
   "dependencies": {
+    "@auth/prisma-adapter": "2.0.0",
+    "@prisma/client": "5.20.0",
     "next": "14.2.6",
+    "next-auth": "5.0.0-beta.25",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "zod": "3.23.8",
@@ -42,6 +47,11 @@
     "vitest": "2.0.5",
     "@vitest/coverage-v8": "2.0.5",
     "msw": "2.3.1",
-    "@playwright/test": "1.47.2"
+    "@playwright/test": "1.47.2",
+    "prisma": "5.20.0",
+    "tsx": "4.7.2"
+  },
+  "prisma": {
+    "seed": "pnpm tsx prisma/seed.ts"
   }
 }
