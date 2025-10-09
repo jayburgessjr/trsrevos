@@ -1,42 +1,31 @@
 import './globals.css'
 import type { Metadata } from 'next'
-import * as React from 'react'
-import { AppShell, NavItem } from './_components/app-shell'
-import { CommandPaletteProvider } from '@/ui/command-palette'
-import { ToastViewport } from '@/ui/toast'
-import { ChatbotBubble } from '@/ui/chatbot-bubble'
-import { getSession } from '@/lib/session'
+import Sidebar from '@/components/nav/Sidebar'
+import Topbar from '@/components/nav/Topbar'
+import CommandPalette from '@/components/nav/CommandPalette'
+import AssistantBubble from '@/components/assistant/Bubble'
 
 export const metadata: Metadata = {
   title: 'TRS RevenueOS',
   description: 'The daily source of truth for GTM, finance, and partner motions.',
 }
 
-const navigation: NavItem[] = [
-  { href: '/', label: 'Morning briefing' },
-  { href: '/pipeline', label: 'Pipeline' },
-  { href: '/projects', label: 'Projects' },
-  { href: '/content', label: 'Content' },
-  { href: '/finance', label: 'Finance' },
-  { href: '/partners', label: 'Partners' },
-  { href: '/clients', label: 'Clients' },
-  { href: '/admin/flags', label: 'Feature flags', badge: 'ops' },
-]
-
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const session = await getSession()
-  const user = session.user
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // TODO replace with real session role
+  const role = 'SuperAdmin' as any
 
   return (
     <html lang="en">
-      <body className="antialiased">
-        <CommandPaletteProvider>
-          <AppShell navItems={navigation} user={user}>
-            {children}
-          </AppShell>
-          <ToastViewport />
-          <ChatbotBubble />
-        </CommandPaletteProvider>
+      <body className="bg-gray-50 text-gray-900">
+        <div className="flex min-h-screen">
+          <Sidebar role={role} />
+          <div className="flex flex-1 flex-col">
+            <Topbar />
+            <main className="flex-1">{children}</main>
+          </div>
+        </div>
+        <CommandPalette />
+        <AssistantBubble />
       </body>
     </html>
   )

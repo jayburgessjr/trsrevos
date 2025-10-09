@@ -2,7 +2,7 @@ export type Session = {
   user: {
     id: string
     name: string
-    role: 'admin' | 'revops' | 'finance' | 'partner'
+    role: 'SuperAdmin' | 'Admin' | 'Director' | 'Member' | 'Client'
   }
 }
 
@@ -11,7 +11,7 @@ export async function getSession(): Promise<Session> {
     user: {
       id: 'revops-lead',
       name: 'Morgan Singh',
-      role: 'revops',
+      role: 'Admin',
     },
   }
 }

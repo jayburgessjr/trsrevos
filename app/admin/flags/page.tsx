@@ -6,7 +6,7 @@ import { FlagsTable } from './table'
 
 export default async function FeatureFlagsPage() {
   const session = await getSession()
-  requireRole(session.user, ['admin', 'revops'])
+  requireRole(session.user, ['SuperAdmin', 'Admin'])
   const flags = listFlags()
 
   return (

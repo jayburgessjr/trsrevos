@@ -1,6 +1,44 @@
 import { calculatePriorityScore } from './score'
 import { Plan, PriorityItem } from './types'
 
+type FocusBlock = {
+  startTime: string
+  endTime: string
+  durationMinutes: number
+  type: 'focus' | 'break'
+}
+
+const focusSchedule = new Map<string, FocusBlock[]>()
+
+export function scheduleFocusBlocks(userId: string, date: Date): FocusBlock[] {
+  const day = date.toISOString().slice(0, 10)
+  const now = new Date()
+
+  // Schedule two 50-minute focus blocks starting from now
+  const blocks: FocusBlock[] = [
+    {
+      startTime: now.toISOString(),
+      endTime: new Date(now.getTime() + 50 * 60 * 1000).toISOString(),
+      durationMinutes: 50,
+      type: 'focus',
+    },
+    {
+      startTime: new Date(now.getTime() + 60 * 60 * 1000).toISOString(),
+      endTime: new Date(now.getTime() + 110 * 60 * 1000).toISOString(),
+      durationMinutes: 50,
+      type: 'focus',
+    },
+  ]
+
+  focusSchedule.set(`${userId}:${day}`, blocks)
+  return blocks
+}
+
+export function getFocusBlocks(userId: string, date: Date): FocusBlock[] | null {
+  const day = date.toISOString().slice(0, 10)
+  return focusSchedule.get(`${userId}:${day}`) ?? null
+}
+
 const library: Array<Omit<PriorityItem, 'id' | 'score'>> = [
   {
     title: 'Reset top 10 opportunities forecast',

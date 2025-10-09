@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'revops' | 'finance' | 'partner'
+export type Role = 'SuperAdmin' | 'Admin' | 'Director' | 'Member' | 'Client'
 
 export type User = {
   id: string
@@ -14,6 +14,8 @@ export type FeatureFlag = {
   audience: Role[]
 }
 
+export const FLAGS: Record<string, boolean> = { ops: true }
+
 const flagStore = new Map<string, FeatureFlag>([
   [
     'daily-plan-v1',
@@ -22,7 +24,7 @@ const flagStore = new Map<string, FeatureFlag>([
       label: 'Daily plan orchestrator',
       description: 'Expose morning briefing prioritization experience.',
       enabled: true,
-      audience: ['admin', 'revops'],
+      audience: ['SuperAdmin', 'Admin'],
     },
   ],
   [
@@ -32,7 +34,7 @@ const flagStore = new Map<string, FeatureFlag>([
       label: 'Shareable spaces',
       description: 'Allow tokenized links for cross-tenant previews.',
       enabled: false,
-      audience: ['admin', 'partner'],
+      audience: ['SuperAdmin', 'Admin'],
     },
   ],
   [
@@ -42,7 +44,7 @@ const flagStore = new Map<string, FeatureFlag>([
       label: 'Finance dashboard v2',
       description: 'Preview capital efficiency workbook.',
       enabled: false,
-      audience: ['admin', 'finance'],
+      audience: ['SuperAdmin', 'Admin', 'Director'],
     },
   ],
 ])
@@ -69,4 +71,8 @@ export function requireRole(user: User, allowedRoles: Role[]) {
   if (!allowedRoles.includes(user.role)) {
     throw new Error('Not authorized for this route')
   }
+}
+
+export function canSee(role: Role | undefined, roles?: Role[]) {
+  return roles ? roles.includes(role ?? 'Member') : true
 }

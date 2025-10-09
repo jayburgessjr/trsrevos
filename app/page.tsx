@@ -1,4 +1,7 @@
-import { getTodayPlan, computeTodayPlanAction, lockTodayPlanAction } from '@/core/dailyPlan/actions'
+import { getTodayPlan, computeTodayPlanAction, lockTodayPlanAction, startFocusAction } from '@/core/dailyPlan/actions'
+import { getFocusBlocks } from '@/core/dailyPlan/service'
+import { getTodayRecap, generateRecapAction } from '@/core/recap/actions'
+import { generateICalForFocusBlocks } from '@/core/calendar/timebox'
 import { getSession } from '@/lib/session'
 import { Badge } from '@/ui/badge'
 import { Button } from '@/ui/button'
@@ -10,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/ui/tabs'
 import { KPIStanding } from '@/ui/kpi-standing'
 import { MotivationalQuote } from '@/ui/motivational-quote'
 import { NewsTicker } from '@/ui/news-ticker'
+import { DailyScorecard } from '@/components/ui/DailyScorecard'
 import Link from 'next/link'
 
 export default async function HomePage() {
@@ -17,6 +21,14 @@ export default async function HomePage() {
   const user = session.user
   const today = new Date()
   const plan = await getTodayPlan(user.id, today)
+  const recap = await getTodayRecap(user.id, today)
+  const focusBlocks = plan?.locked ? getFocusBlocks(user.id, today) : null
+
+  // Generate iCal if plan is locked
+  let iCalData: string | null = null
+  if (plan?.locked && focusBlocks) {
+    iCalData = generateICalForFocusBlocks(user.id, focusBlocks, 'Review top priorities and update forecast')
+  }
 
   return (
     <div className="relative space-y-8">
@@ -50,6 +62,9 @@ export default async function HomePage() {
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[2fr,1fr]">
         <div className="space-y-6">
+          {/* Daily Scorecard */}
+          <DailyScorecard />
+
           {/* KPI Standing card */}
           <KPIStanding />
 
@@ -80,24 +95,42 @@ export default async function HomePage() {
                     effort.
                   </CardDescription>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Link href="/plan">
                     <Button variant="outline" size="sm">
                       Open module
                     </Button>
                   </Link>
-                  <form action={computeTodayPlanAction}>
+                  <form id="computePlan" action={computeTodayPlanAction}>
                     <input type="hidden" name="userId" value={user.id} />
                     <Button type="submit" variant="primary" size="sm">
                       Compute
                     </Button>
                   </form>
-                  <form action={lockTodayPlanAction}>
+                  <form id="lockPlan" action={lockTodayPlanAction}>
                     <input type="hidden" name="userId" value={user.id} />
                     <Button type="submit" variant="secondary" size="sm" disabled={!plan}>
                       {plan?.locked ? 'Locked' : 'Lock plan'}
                     </Button>
                   </form>
+                  {plan?.locked && (
+                    <form id="startFocus" action={startFocusAction}>
+                      <input type="hidden" name="userId" value={user.id} />
+                      <Button type="submit" variant="primary" size="sm">
+                        Start 50m Focus
+                      </Button>
+                    </form>
+                  )}
+                  {iCalData && (
+                    <a
+                      href={`data:text/calendar;charset=utf-8,${encodeURIComponent(iCalData)}`}
+                      download="trs-daily-plan.ics"
+                    >
+                      <Button variant="outline" size="sm">
+                        Download iCal
+                      </Button>
+                    </a>
+                  )}
                 </div>
               </div>
             </CardHeader>
@@ -159,6 +192,34 @@ export default async function HomePage() {
             </CardContent>
           </Card>
           <FocusTimer />
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Daily recap</CardTitle>
+                  <CardDescription>End-of-day summary with progress, risks, and tomorrow&apos;s first action.</CardDescription>
+                </div>
+                <form action={generateRecapAction}>
+                  <input type="hidden" name="userId" value={user.id} />
+                  <Button type="submit" variant="outline" size="sm">
+                    Generate
+                  </Button>
+                </form>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {recap ? (
+                <div className="prose prose-sm max-w-none text-[color:var(--color-text-muted)]">
+                  <div className="text-xs text-[color:var(--color-text-muted)] mb-3">
+                    Generated {new Date(recap.generatedAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  <div className="whitespace-pre-wrap">{recap.markdown}</div>
+                </div>
+              ) : (
+                <p className="text-sm text-[color:var(--color-text-muted)]">No recap generated yet. Click Generate above.</p>
+              )}
+            </CardContent>
+          </Card>
           <Card>
             <CardHeader>
               <CardTitle>Operating radar</CardTitle>
