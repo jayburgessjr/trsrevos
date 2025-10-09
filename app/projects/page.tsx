@@ -117,7 +117,7 @@ export default async function ProjectsPage() {
       clientId: project.clientId,
       clientName: client?.name ?? project.clientName,
       owner: project.owner ?? client?.owner ?? 'Unassigned',
-      status: client?.status ?? 'Discovery',
+      status: client?.phase ?? 'Discovery',
       progress: project.progress,
       dueDate: project.dueDate,
       health: project.health,
@@ -126,7 +126,7 @@ export default async function ProjectsPage() {
   })
 
   const phaseCounts = phaseOrder.reduce<Record<RevosPhase, number>>((acc, phase) => {
-    acc[phase] = clients.filter((client) => client.status === phase).length
+    acc[phase] = clients.filter((client) => client.phase === phase).length
     return acc
   }, Object.fromEntries(phaseOrder.map((phase) => [phase, 0])) as Record<RevosPhase, number>)
 

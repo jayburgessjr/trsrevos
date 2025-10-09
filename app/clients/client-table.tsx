@@ -1,0 +1,154 @@
+"use client";
+
+import { useCallback, useMemo, useState, type KeyboardEvent } from "react";
+import { useRouter } from "next/navigation";
+
+import type { Client, RevOSPhase } from "@/core/clients/types";
+import { Input } from "@/ui/input";
+import { Select } from "@/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/ui/table";
+
+const PHASES: RevOSPhase[] = ["Discovery", "Data", "Algorithm", "Architecture", "Compounding"];
+const SEGMENTS: Client["segment"][] = ["SMB", "Mid", "Enterprise"];
+
+export function ClientsTable({ data }: { data: Client[] }) {
+  const router = useRouter();
+  const [search, setSearch] = useState("");
+  const [segment, setSegment] = useState<string>("all");
+  const [phase, setPhase] = useState<string>("all");
+
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return data.filter((client) => {
+      const matchesQuery =
+        !query ||
+        client.name.toLowerCase().includes(query) ||
+        client.owner.toLowerCase().includes(query) ||
+        (client.industry?.toLowerCase().includes(query) ?? false);
+      const matchesSegment = segment === "all" || client.segment === segment;
+      const matchesPhase = phase === "all" || client.phase === phase;
+      return matchesQuery && matchesSegment && matchesPhase;
+    });
+  }, [data, search, segment, phase]);
+
+  const navigate = useCallback(
+    (id: string) => {
+      router.push(`/clients/${id}`);
+    },
+    [router],
+  );
+
+  const formatCurrency = useCallback((value?: number) => {
+    if (value == null) return "—";
+    return `$${value.toLocaleString()}`;
+  }, []);
+
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLTableRowElement>, id: string) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        navigate(id);
+      }
+    },
+    [navigate],
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 md:grid-cols-4">
+        <div className="md:col-span-2">
+          <Input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search by name, owner, or industry"
+            aria-label="Search clients"
+            className="bg-white text-sm dark:bg-neutral-950 dark:text-neutral-100"
+          />
+        </div>
+        <Select
+          value={segment}
+          onChange={(event) => setSegment(event.target.value)}
+          aria-label="Filter by segment"
+          className="bg-white text-sm dark:bg-neutral-950 dark:text-neutral-100"
+        >
+          <option value="all">All segments</option>
+          {SEGMENTS.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </Select>
+        <Select
+          value={phase}
+          onChange={(event) => setPhase(event.target.value)}
+          aria-label="Filter by phase"
+          className="bg-white text-sm dark:bg-neutral-950 dark:text-neutral-100"
+        >
+          <option value="all">All phases</option>
+          {PHASES.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </Select>
+      </div>
+
+      <div className="rounded-xl border border-[color:var(--color-outline)] bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
+        <Table className="text-sm">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Segment</TableHead>
+              <TableHead>ARR</TableHead>
+              <TableHead>Owner</TableHead>
+              <TableHead>Phase</TableHead>
+              <TableHead>Health</TableHead>
+              <TableHead>Open Opps</TableHead>
+              <TableHead>AR</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.map((client) => {
+              const openOpps = client.opportunities.filter(
+                (opp) => opp.stage !== "ClosedWon" && opp.stage !== "ClosedLost",
+              ).length;
+              const outstanding = client.invoices
+                .filter((invoice) => invoice.status === "Overdue" || invoice.status === "Sent")
+                .reduce((sum, invoice) => sum + invoice.amount, 0);
+              return (
+                <TableRow
+                  key={client.id}
+                  role="button"
+                  tabIndex={0}
+                  className="cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--trs-accent)]"
+                  onClick={() => navigate(client.id)}
+                  onKeyDown={(event) => handleKeyDown(event, client.id)}
+                >
+                  <TableCell className="font-medium">{client.name}</TableCell>
+                  <TableCell>{client.segment}</TableCell>
+                  <TableCell>{formatCurrency(client.arr)}</TableCell>
+                  <TableCell>{client.owner}</TableCell>
+                  <TableCell>
+                    <span className="rounded-full bg-[var(--trs-accent)] px-2 py-[2px] text-[10px] uppercase tracking-wide text-white">
+                      {client.phase}
+                    </span>
+                  </TableCell>
+                  <TableCell>{Math.round(client.health)}</TableCell>
+                  <TableCell>{openOpps}</TableCell>
+                  <TableCell>{formatCurrency(outstanding)}</TableCell>
+                </TableRow>
+              );
+            })}
+            {filtered.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center text-sm text-gray-500 dark:text-neutral-400">
+                  No clients match the current filters.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+}
