@@ -1,34 +1,31 @@
-# TRS Internal SaaS (RevenueOS Copilot)
+# TRS Internal SaaS (Scaffold Reset)
 
-Deterministic scaffold generated on 2025-10-08.
+This repository has been reset to a minimal Next.js 14 scaffold that renders the TRS Copilot preview using only dummy data and lightweight UI primitives. The goal is to provide clean starting point code while keeping the original visual design.
 
 ## Stack
-- Next.js 14 + TypeScript
-- Tailwind CSS
-- Zod
-- Vitest + Playwright + MSW
-- pnpm
+- Next.js 14 + React 18
+- TypeScript
+- Tailwind CSS utility classes
+- Local shadcn-style UI components (button, card, tabs, etc.)
 
-## Run
+## Getting Started
 ```bash
 pnpm install
 pnpm dev
 ```
-## Test
+
+## Additional Commands
 ```bash
-pnpm test
-pnpm e2e
+pnpm build     # production build
+pnpm start     # run the production server locally
+pnpm lint      # eslint over the scaffold
+pnpm typecheck # run TypeScript in no-emit mode
+pnpm format    # format files with Prettier
 ```
-## Modules
-- Deliverables pipeline
-- Governance (non-bypassable gate)
-- Agents (Blueprint, Forecast, Execution, Signals, Case, Advisor)
-- AI Engine Compliance panel
-- Gap Map with tiers and dollarized impact
-- Executive Room with Deck export
-- Partner & Channel Scout
-- KPIs & Alerts with TRS Score bands
 
+## Project Layout
+- `app/` – Next.js App Router entry point with a single page of mocked TRS data.
+- `components/ui/` – basic headless UI primitives used by the scaffold.
+- `styles/` – Tailwind configuration surface.
 
-### Preview the Copilot scaffold
-Visit `/copilot` to view the single-file TRS Copilot UI you provided.
+Everything else has been removed so new modules, data fetching, and auth flows can be rebuilt from scratch.
