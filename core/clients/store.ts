@@ -16,6 +16,10 @@ const CLIENTS = new Map<string, Client>();
       phase: "Discovery",
       owner: "Jay",
       health: 72,
+      churnRisk: 14,
+      qbrDate: "2025-10-22",
+      status: "active",
+      isExpansion: true,
       contacts: [
         {
           id: "c1",
@@ -98,6 +102,10 @@ const CLIENTS = new Map<string, Client>();
       phase: "Algorithm",
       owner: "Morgan",
       health: 64,
+      churnRisk: 18,
+      qbrDate: "2025-11-05",
+      status: "active",
+      isExpansion: false,
       contacts: [
         { id: "g1", name: "Priya Nair", role: "VP Revenue", email: "priya@globex.com", power: "Decision" },
         { id: "g2", name: "Jordan Chu", role: "Head of Data", email: "jordan@globex.com", power: "Influencer" },
@@ -158,10 +166,136 @@ const CLIENTS = new Map<string, Client>();
       },
     });
   }
+
+  const id3 = "helio";
+  if (!CLIENTS.has(id3)) {
+    CLIENTS.set(id3, {
+      id: id3,
+      name: "Helio Systems",
+      segment: "Mid",
+      arr: 180000,
+      industry: "Energy",
+      region: "NA",
+      phase: "Architecture",
+      owner: "Taylor",
+      health: 82,
+      churnRisk: 9,
+      qbrDate: "2025-10-15",
+      status: "active",
+      isExpansion: true,
+      contacts: [
+        { id: "h1", name: "Alex Park", role: "Head of RevOps", email: "alex@helio.io", power: "Decision" },
+      ],
+      commercials: { plan: "Plus", price: 1500, termMonths: 12, discountPct: 5, paymentTerms: "Net30" },
+      invoices: [
+        { id: "inv-2001", amount: 4500, status: "Paid", paidAt: "2025-09-05" },
+      ],
+      opportunities: [
+        { id: "hopp-1", name: "Expansion package", amount: 36000, stage: "Proposal", probability: 0.6 },
+      ],
+      discovery: [
+        { id: "hq1", question: "Primary growth lever?", answer: "Usage automation" },
+      ],
+      data: [
+        { id: "hd1", name: "Billing", category: "Finance", status: "Collected" },
+        { id: "hd2", name: "NPS", category: "CS", status: "Available" },
+      ],
+      qra: {
+        pricing: ["Rollout peak pricing"],
+        offers: ["Solar bundle"],
+        retention: ["Executive business review"],
+        partners: ["Field Ops"],
+        expectedImpact: 5400,
+      },
+      kanban: [
+        { id: "hk1", title: "Usage anomaly alerts", status: "Doing", owner: "Taylor" },
+      ],
+      compounding: {
+        baselineMRR: 15000,
+        currentMRR: 16200,
+        netNew: 1200,
+        forecastQTD: 4200,
+        drivers: [{ name: "Automation add-on", delta: 600 }],
+      },
+      notes: "Architecture blueprint approved for rollout.",
+    });
+  }
+
+  const id4 = "northwave";
+  if (!CLIENTS.has(id4)) {
+    CLIENTS.set(id4, {
+      id: id4,
+      name: "Northwave Analytics",
+      segment: "SMB",
+      arr: 96000,
+      industry: "SaaS",
+      region: "NA",
+      phase: "Compounding",
+      owner: "Riley",
+      health: 58,
+      churnRisk: 22,
+      qbrDate: "2025-09-28",
+      status: "churned",
+      isExpansion: false,
+      contacts: [
+        { id: "n1", name: "Jamie Cole", role: "Founder", email: "jamie@northwave.ai", power: "Economic" },
+      ],
+      commercials: { plan: "Starter", price: 800, termMonths: 6, discountPct: 0, paymentTerms: "Net15" },
+      invoices: [
+        { id: "inv-3001", amount: 2400, status: "Overdue", dueAt: "2025-09-10" },
+      ],
+      opportunities: [
+        { id: "nopp-1", name: "Renewal", amount: 12000, stage: "Negotiation", probability: 0.3 },
+      ],
+      discovery: [
+        { id: "nq1", question: "Primary blocker?", answer: "Data trust" },
+      ],
+      data: [
+        { id: "nd1", name: "Product usage", category: "Product", status: "Missing" },
+        { id: "nd2", name: "Billing", category: "Finance", status: "Collected" },
+      ],
+      qra: {
+        pricing: ["Stabilize annual plan"],
+        offers: ["Onboarding reset"],
+        retention: ["Weekly office hours"],
+        partners: ["Success"],
+        expectedImpact: 2200,
+      },
+      kanban: [
+        { id: "nk1", title: "Data trust remediation", status: "Blocked" },
+        { id: "nk2", title: "Renewal playbook", status: "Backlog" },
+      ],
+      compounding: {
+        baselineMRR: 8000,
+        currentMRR: 7800,
+        netNew: -200,
+        forecastQTD: 600,
+        drivers: [{ name: "Churn risk", delta: -300 }],
+      },
+      notes: "Renewal slipping due to data delays.",
+    });
+  }
 })();
 
 export function listClients(): Client[] {
   return Array.from(CLIENTS.values());
+}
+
+export function getClients(): Client[] {
+  return listClients();
+}
+
+export function getClientStats() {
+  const clients = getClients();
+  const total = clients.length || 1;
+  const avgHealth = Math.round(
+    clients.reduce((sum, client) => sum + (client.health ?? 0), 0) / total,
+  );
+  const atRisk = clients.filter((client) => (client.churnRisk ?? 0) >= 15).length;
+  const expansions = clients.filter((client) => client.isExpansion).length;
+  const churned = clients.filter((client) => client.status === "churned").length;
+
+  return { avgHealth, atRisk, expansions, churned };
 }
 export function getClient(id: string): Client | null {
   return CLIENTS.get(id) ?? null;
