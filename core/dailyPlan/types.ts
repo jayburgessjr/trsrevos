@@ -1,26 +1,23 @@
-export type PriorityItemStatus = 'pending' | 'in-progress' | 'complete'
+export type StrategicWeight = "Brilliant" | "Incremental" | "Stabilization"
 
 export type PriorityItem = {
   id: string
   title: string
-  summary: string
-  nextAction: string
   expectedImpact: number
+  effortHours: number
   probability: number
-  strategicWeight: number
   urgency: number
   confidence: number
-  effort: number
-  score: number
-  status: PriorityItemStatus
-  ownerName?: string
+  strategicWeight: StrategicWeight
+  nextAction: string
+  moduleHref?: string
 }
 
-export type Plan = {
+export type DailyPlan = {
   id: string
   userId: string
-  date: string // YYYY-MM-DD
-  generatedAt: string
-  locked: boolean
+  orgId?: string
+  dateISO: string
   items: PriorityItem[]
+  lockedAt?: string | null
 }

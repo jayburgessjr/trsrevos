@@ -1,53 +1,31 @@
-import { getEventsByDate } from '@/core/events/store'
+import { allEvents } from "@/core/events/store"
 
-export type Recap = {
-  id: string
-  userId: string
-  date: string
-  dollarsAdvanced: number
-  itemsShipped: number
-  risks: string[]
-  firstActionTomorrow: string
-  markdown: string
-  generatedAt: string
-}
+export function generateRecap(userId: string) {
+  const ev = allEvents()
+  const dollars = ev
+    .filter(
+      (e) =>
+        (e.entity === "proposal" && e.action === "sent") ||
+        (e.entity === "invoice" && (e.action === "sent" || e.action === "paid"))
+    )
+    .map((e) => Number((e.meta as any)?.amount || 0))
+    .reduce((a, b) => a + b, 0)
+  const shipped = ev.filter((e) =>
+    ["proposal", "invoice", "pricing_rule", "content", "partner_step"].includes(e.entity)
+  )
+  const risks: string[] = []
+  const tomorrow = "Block 1: follow-up on hottest deal at 8:45am"
+  const md = `# TRS Recap
 
-export async function generateRecap(userId: string, date: Date): Promise<Recap> {
-  const day = date.toISOString().slice(0, 10)
-  const events = getEventsByDate(day)
+**Dollars advanced:** ${dollars.toLocaleString()}
 
-  // Derive metrics from events (stub logic - replace with real computation)
-  const dollarsAdvanced = events.filter((e) => e.entity === 'pipeline').length * 25000
-  const itemsShipped = events.filter((e) => e.entity === 'plan' && e.action === 'completed').length || 3
-  const risks = ['Client renewal at risk - needs follow-up', 'Pipeline coverage below 100%']
-  const firstActionTomorrow = 'Review top 3 opportunities and update forecast'
+**Shipped (${shipped.length}):**
+${shipped.map((e) => `- ${e.entity}:${e.action}`).join("\n")}
 
-  const markdown = `# Daily Recap – ${day}
+**Risks:**
+${risks.length ? risks.map((r) => `- ${r}`).join("\n") : "- None captured"}
 
-## Progress
-- **Dollars Advanced**: $${dollarsAdvanced.toLocaleString()}
-- **Items Shipped**: ${itemsShipped}
-- **Focus Sessions**: ${events.filter((e) => e.entity === 'focus').length}
-
-## Risks & Blockers
-${risks.map((r) => `- ${r}`).join('\n')}
-
-## Tomorrow's First Action
-${firstActionTomorrow}
-
----
-Generated at ${new Date().toLocaleTimeString()}
+**First action tomorrow:** ${tomorrow}
 `
-
-  return {
-    id: `${userId}-${day}`,
-    userId,
-    date: day,
-    dollarsAdvanced,
-    itemsShipped,
-    risks,
-    firstActionTomorrow,
-    markdown,
-    generatedAt: new Date().toISOString(),
-  }
+  return { dollars, shippedCount: shipped.length, markdown: md, tomorrow }
 }

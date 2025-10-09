@@ -12,7 +12,7 @@ export default function CommandPalette() {
         e.preventDefault()
         const action = prompt(
           'Actions:\n' +
-            '• home | pipeline | projects | content | finance | partners | clients | flags\n' +
+            '• home | pipeline | pricing | projects | content | finance | partners | clients | flags\n' +
             '• compute-plan | lock-plan | start-focus\n' +
             '• new-task | new-opportunity | create-invoice | share',
         )
@@ -22,6 +22,7 @@ export default function CommandPalette() {
         const routeMap: Record<string, string> = {
           home: '/',
           pipeline: '/pipeline',
+          pricing: '/pricing',
           projects: '/projects',
           content: '/content',
           finance: '/finance',

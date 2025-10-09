@@ -1,18 +1,6 @@
-import { PriorityItem } from './types'
+import { PriorityItem } from "./types"
 
-type PriorityInputs = Pick<
-  PriorityItem,
-  'expectedImpact' | 'probability' | 'strategicWeight' | 'urgency' | 'confidence' | 'effort'
->
-
-export function calculatePriorityScore(inputs: PriorityInputs) {
-  const numerator =
-    inputs.expectedImpact *
-    inputs.probability *
-    inputs.strategicWeight *
-    inputs.urgency *
-    inputs.confidence
-  const effort = inputs.effort <= 0 ? 1 : inputs.effort
-  const score = numerator / effort
-  return Number.isFinite(score) ? Number(score.toFixed(2)) : 0
+export function priorityScore(i: PriorityItem) {
+  const w = i.strategicWeight === "Brilliant" ? 1.2 : i.strategicWeight === "Incremental" ? 1.0 : 0.9
+  return (i.expectedImpact * i.probability * w * i.urgency * i.confidence) / Math.max(i.effortHours, 0.25)
 }

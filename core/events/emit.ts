@@ -1,5 +1,5 @@
-import { appendEvent, Event } from './store'
+import { allEvents } from "./store"
 
-export function emit(event: Omit<Event, 'ts'>): Event {
-  return appendEvent(event)
+export async function emitEvent(actorId: string, entity: string, action: string, meta?: Record<string, unknown>) {
+  allEvents().push({ entity, action, ts: new Date().toISOString(), meta: { actorId, ...(meta || {}) } })
 }

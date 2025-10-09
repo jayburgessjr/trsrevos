@@ -1,15 +1,14 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card'
-import { getEvents } from '@/core/events/store'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/ui/card"
+import { eventsToday } from "@/core/events/store"
 
 export function DailyScorecard() {
-  const today = new Date().toISOString().slice(0, 10)
-  const events = getEvents({ since: today })
+  const events = eventsToday()
 
   // Derive metrics from events
-  const dollarsAdvanced = events.filter((e) => e.entity === 'pipeline').length * 25000
-  const focusSessions = events.filter((e) => e.entity === 'focus' && e.action === 'started').length
-  const invoicesSent = events.filter((e) => e.entity === 'invoice' && e.action === 'sent').length
-  const invoicesPaid = events.filter((e) => e.entity === 'invoice' && e.action === 'paid').length
+  const dollarsAdvanced = events.filter((e: any) => e.entity === "pipeline").length * 25000
+  const focusSessions = events.filter((e: any) => e.entity === "focus" && e.action === "started").length
+  const invoicesSent = events.filter((e: any) => e.entity === "invoice" && e.action === "sent").length
+  const invoicesPaid = events.filter((e: any) => e.entity === "invoice" && e.action === "paid").length
 
   // Stub metrics
   const winRate = 72
@@ -25,9 +24,7 @@ export function DailyScorecard() {
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
           <div>
             <p className="text-xs text-[color:var(--color-text-muted)]">Dollars Advanced</p>
-            <p className="text-2xl font-semibold text-[color:var(--color-text)]">
-              ${(dollarsAdvanced / 1000).toFixed(0)}K
-            </p>
+            <p className="text-2xl font-semibold text-[color:var(--color-text)]">${(dollarsAdvanced / 1000).toFixed(0)}K</p>
           </div>
           <div>
             <p className="text-xs text-[color:var(--color-text-muted)]">Win Rate (7d)</p>
