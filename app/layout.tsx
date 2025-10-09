@@ -1,5 +1,6 @@
 import './globals.css'
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import AppShell from '@/components/layout/AppShell'
 
 export const metadata: Metadata = {
@@ -11,7 +12,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="min-h-screen bg-white text-gray-900">
-        <AppShell>{children}</AppShell>
+        <Suspense fallback={<div className="min-h-screen bg-white" />}>
+          <AppShell>{children}</AppShell>
+        </Suspense>
       </body>
     </html>
   )
