@@ -95,6 +95,10 @@ export type Client = {
   phase: RevOSPhase;
   owner: string;
   health: number;
+  churnRisk?: number;
+  qbrDate?: string;
+  status?: "active" | "churned";
+  isExpansion?: boolean;
   contacts: Contact[];
   commercials?: Commercials;
   invoices: Invoice[];
