@@ -563,7 +563,7 @@ export default function ClientsPage() {
                     <div>
                       <div className="font-semibold text-black">{client.name}</div>
                       <div className="text-xs text-gray-500">
-                        Partners: {client.partners?.join(", ") ?? "TBD"}
+                        Partners: {client.qra?.partners?.join(", ") ?? "TBD"}
                       </div>
                     </div>
                     <Button
