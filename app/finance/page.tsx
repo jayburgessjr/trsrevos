@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/
 import { PageDescription, PageHeader, PageTitle } from '@/ui/page-header'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table'
 import { Button } from '@/ui/button'
+import { TopTabs } from '@/components/kit/TopTabs'
 
 const mockInvoices = [
   { id: '1', client: 'Acme Corp', invoiceNumber: 'INV-2025-1043', status: 'Paid', dueDate: '2025-09-30', amount: 45000, daysOverdue: 0 },
@@ -20,11 +21,16 @@ const burnMultiple = 0.65
 const nrr = 118
 const ruleOf40 = 62
 
-export default function FinancePage() {
+export default function FinancePage({
+  searchParams,
+}: {
+  searchParams: { tab?: string }
+}) {
+  const tab = searchParams?.tab ?? 'Overview'
   const totalOutstanding = mockInvoices.filter(i => i.status !== 'Paid').reduce((sum, i) => sum + i.amount, 0)
   const overdueAmount = mockInvoices.filter(i => i.status === 'Overdue').reduce((sum, i) => sum + i.amount, 0)
 
-  return (
+  const body = (
     <div className="space-y-6">
       <PageHeader className="rounded-xl border border-[color:var(--color-outline)]">
         <PageTitle>Finance</PageTitle>
@@ -217,6 +223,16 @@ export default function FinancePage() {
           </div>
         </CardContent>
       </Card>
+    </div>
+  )
+
+  return (
+    <div className="min-h-screen bg-white text-black">
+      <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+        <TopTabs />
+        <div className="text-xs text-gray-600">{tab}</div>
+      </div>
+      <main className="max-w-7xl mx-auto p-4">{body}</main>
     </div>
   )
 }

@@ -8,6 +8,7 @@ export type NavItem = {
 
 export const MAIN_NAV: NavItem[] = [
   { label: 'Morning briefing', href: '/', icon: 'Sun', roles: ['SuperAdmin', 'Admin', 'Director', 'Member'] },
+  { label: 'Dashboard', href: '/dashboard', icon: 'LayoutDashboard', roles: ['SuperAdmin', 'Admin', 'Director', 'Member'] },
   { label: 'Pipeline', href: '/pipeline', icon: 'TrendingUp', roles: ['SuperAdmin', 'Admin', 'Director', 'Member'] },
   { label: 'Projects', href: '/projects', icon: 'Kanban', roles: ['SuperAdmin', 'Admin', 'Director', 'Member'] },
   { label: 'AI Agents', href: '/agents', icon: 'Bot', roles: ['SuperAdmin', 'Admin', 'Director', 'Member'] },

@@ -1,5 +1,6 @@
 "use client";
 import * as React from "react";
+import { useSearchParams } from "next/navigation";
 import { Bell, Download, Home, Search } from "lucide-react";
 import AdminSidebar from "@/components/nav/AdminSidebar";
 import { TopTabs } from "@/components/kit/TopTabs";
@@ -10,6 +11,8 @@ import { LineChart, AreaChart, BarChart } from "@/components/kit/Charts";
 const H = { header: 56, tabs: 44, gap: 12 };
 
 export default function DashboardPage() {
+  const searchParams = useSearchParams();
+  const tab = searchParams.get("tab") ?? "Overview";
   return (
     <div className="w-full min-h-screen bg-white text-black">
       <header style={{ height: H.header }} className="border-b border-gray-200 flex items-center">
@@ -36,8 +39,11 @@ export default function DashboardPage() {
         <AdminSidebar />
         <main className="flex-1" style={{ height: `calc(100vh - ${H.header}px)` }}>
           <div className="px-3 border-b border-gray-200 flex items-center justify-between" style={{ height: H.tabs }}>
-            <TopTabs value="Overview" onChange={() => {}} />
-            <div className="text-xs text-gray-600">Pick a date</div>
+            <TopTabs />
+            <div className="text-xs text-gray-600">
+              <span className="sr-only">Current tab: {tab}</span>
+              Pick a date
+            </div>
           </div>
           <ViewportGrid />
         </main>
