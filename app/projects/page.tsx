@@ -6,7 +6,6 @@ import { Button } from '@/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card'
 import { PageDescription, PageHeader, PageTitle } from '@/ui/page-header'
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/ui/table'
-import { TopTabs } from '@/components/kit/TopTabs'
 
 import { ProjectRow } from './project-row'
 
@@ -237,12 +236,18 @@ export default async function ProjectsPage({
   )
 
   return (
-    <div className="min-h-screen bg-white text-black">
-      <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-        <TopTabs />
-        <div className="text-xs text-gray-600">{tab}</div>
-      </div>
-      <main className="max-w-7xl mx-auto p-4">{body}</main>
+    <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
+      <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-black">Projects</h1>
+          <p className="text-sm text-gray-500">Operational visibility across active delivery tracks.</p>
+          <div className="text-xs text-gray-500">Active view: {tab}</div>
+        </div>
+        <form action="#">
+          <button className="rounded-md border border-gray-200 bg-white px-3 py-2 text-xs text-black">New Project</button>
+        </form>
+      </header>
+      {body}
     </div>
   )
 }

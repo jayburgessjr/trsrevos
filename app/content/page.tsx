@@ -3,7 +3,6 @@ import { computeMetrics, getContentState } from '@/core/content/store'
 import { nextBestContent } from '@/core/content/recommender'
 import { computeMediaMetrics, getMediaState } from '@/core/mediaAgent/store'
 import { suggestMediaFromPipeline } from '@/core/mediaAgent/recommender'
-import { TopTabs } from '@/components/kit/TopTabs'
 
 export default async function ContentPage({
   searchParams,
@@ -34,12 +33,20 @@ export default async function ContentPage({
   )
 
   return (
-    <div className="min-h-screen bg-white text-black">
-      <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-        <TopTabs />
-        <div className="text-xs text-gray-600">{tab}</div>
+    <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
+      <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-black">Content Studio</h1>
+          <p className="text-sm text-gray-500">Activate, test, and distribute revenue assets.</p>
+          <div className="text-xs text-gray-500">Active view: {tab}</div>
+        </div>
+        <form action="#">
+          <button className="rounded-md border border-gray-200 bg-white px-3 py-2 text-xs text-black">New Asset</button>
+        </form>
+      </header>
+      <div className="rounded-xl border border-gray-200 bg-white">
+        {body}
       </div>
-      <main className="max-w-7xl mx-auto p-4">{body}</main>
     </div>
   )
 }

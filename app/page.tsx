@@ -3,16 +3,18 @@
 import { useState, useEffect } from "react"
 import { Badge } from "@/ui/badge"
 import { Button } from "@/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/ui/card"
-import { PageDescription, PageHeader, PageTitle } from "@/ui/page-header"
+import { Card, CardContent, CardHeader, CardTitle } from "@/ui/card"
+import { PageDescription, PageTitle } from "@/ui/page-header"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/tabs"
-import { Input } from "@/ui/input"
 import Link from "next/link"
 import { actionComputePlan, actionLockPlan, actionGetPlan, actionGetFocus } from "@/core/dailyPlan/actions"
 import { actionGenerateRecap } from "@/core/recap/actions"
 import { toICal } from "@/core/calendar/timebox"
 import { eventsToday } from "@/core/events/store"
 import { DailyPlan } from "@/core/dailyPlan/types"
+import { StatCard } from "@/components/kit/StatCard"
+import { cn } from "@/lib/utils"
+import { TRS_CARD, TRS_SECTION_TITLE, TRS_SUBTITLE } from "@/lib/style"
 
 export default function HomePage() {
   const [plan, setPlan] = useState<DailyPlan | null>(null)
@@ -100,248 +102,199 @@ export default function HomePage() {
   }, [newsItems.length])
 
   return (
-    <div className="relative space-y-8 p-6">
-      {/* Hero background */}
-      <div className="absolute inset-x-0 top-0 -z-10 h-[400px] overflow-hidden rounded-3xl">
-        <div
-          className="h-full w-full bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600"
-          style={{
-            backgroundImage:
-              "linear-gradient(135deg, rgba(6, 182, 212, 0.9) 0%, rgba(59, 130, 246, 0.85) 50%, rgba(37, 99, 235, 0.9) 100%)",
-          }}
-        />
-        <div className="absolute inset-0 bg-black/20" />
-      </div>
-
-      {/* News ticker */}
-      <div className="relative overflow-hidden rounded-lg border border-white/30 bg-white/95 p-2 shadow backdrop-blur-sm">
-        <p className="text-center text-sm font-medium text-[color:var(--color-text)]">{newsItems[newsIndex]}</p>
-      </div>
-
-      <PageHeader className="relative rounded-xl border border-white/30 bg-white/95 shadow-lg backdrop-blur-sm">
-        <div className="flex flex-col gap-3">
-          <PageTitle className="text-[color:var(--color-text)]">Morning Briefing</PageTitle>
-          <PageDescription className="text-[color:var(--color-text)]">
-            Your single source of truth for pipeline confidence, customer health, and capital efficiency.
-          </PageDescription>
-          <div className="flex flex-wrap items-center gap-3 text-sm text-[color:var(--color-text-muted)]">
-            <span>Today is {today.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}</span>
-            <Badge variant="success">Momentum: steady</Badge>
+    <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
+      <div className={cn(TRS_CARD, "p-4 space-y-3")}>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-1">
+            <PageTitle className="text-lg font-semibold text-black">Morning Briefing</PageTitle>
+            <PageDescription className="text-sm text-gray-500">
+              Your single source of truth for pipeline confidence, customer health, and capital efficiency.
+            </PageDescription>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={handleComputePlan} disabled={loading} size="sm">
+              {loading ? "Computing..." : "Compute Plan"}
+            </Button>
+            <Button onClick={handleLockPlan} disabled={loading} size="sm" variant="outline">
+              Lock Plan
+            </Button>
+            <Button onClick={handleDownloadICal} size="sm" variant="outline">
+              Download iCal
+            </Button>
           </div>
         </div>
-      </PageHeader>
+        <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600">
+          <span>
+            Today is {today.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
+          </span>
+          <Badge variant="success">Momentum: steady</Badge>
+          <span className="truncate">{newsItems[newsIndex]}</span>
+        </div>
+      </div>
 
-      {/* Motivational quote */}
-      <Card>
+      <Card className={cn(TRS_CARD)}>
         <CardContent className="p-4">
-          <p className="text-center text-sm italic text-[color:var(--color-text-muted)]">&ldquo;{quote}&rdquo;</p>
+          <p className="text-center text-sm italic text-gray-500">&ldquo;{quote}&rdquo;</p>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[2fr,1fr]">
-        <div className="space-y-6">
-          {/* Scorecard */}
-          <Card>
+      <div className="grid gap-3 lg:grid-cols-[2fr_1fr]">
+        <div className="space-y-3">
+          <Card className={cn(TRS_CARD)}>
             <CardHeader>
-              <CardTitle>Today&apos;s Scorecard</CardTitle>
-              <CardDescription>Real-time performance metrics from events</CardDescription>
+              <CardTitle className={TRS_SECTION_TITLE}>Today&apos;s Priorities</CardTitle>
+              <p className={TRS_SUBTITLE}>
+                {plan?.items?.length ? "Focus on the highest-impact moves" : "Compute a plan to populate daily priorities."}
+              </p>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-                <div>
-                  <p className="text-xs text-[color:var(--color-text-muted)]">Dollars Advanced</p>
-                  <p className="text-2xl font-semibold text-[color:var(--color-text)]">${(dollarsAdvanced / 1000).toFixed(0)}K</p>
+            <CardContent className="space-y-3">
+              {plan?.items?.length ? (
+                plan.items.map((item) => (
+                  <div key={item.id} className="rounded-lg border border-gray-200 bg-white p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-black">{item.title}</p>
+                        <p className={cn(TRS_SUBTITLE, "text-xs")}>{item.nextAction}</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[11px] text-gray-500 uppercase">Impact</div>
+                        <div className="text-sm font-semibold text-black">{item.expectedImpact}%</div>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                      <span>Effort: {item.effortHours}h</span>
+                      <span>Confidence: {item.confidence}%</span>
+                      <span>Probability: {item.probability}%</span>
+                      {item.moduleHref ? (
+                        <Link href={item.moduleHref} className="underline">
+                          Open workspace
+                        </Link>
+                      ) : null}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-lg border border-dashed border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
+                  No priorities yet. Generate your plan to get curated actions.
                 </div>
-                <div>
-                  <p className="text-xs text-[color:var(--color-text-muted)]">Proposals Sent</p>
-                  <p className="text-2xl font-semibold text-[color:var(--color-text)]">{proposalsSent}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-[color:var(--color-text-muted)]">Invoices Sent</p>
-                  <p className="text-2xl font-semibold text-[color:var(--color-text)]">{invoicesSent}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-[color:var(--color-text-muted)]">Invoices Paid</p>
-                  <p className="text-2xl font-semibold text-[color:var(--color-positive)]">{invoicesPaid}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-[color:var(--color-text-muted)]">Focus Sessions</p>
-                  <p className="text-2xl font-semibold text-[color:var(--color-text)]">{focusCompleted}</p>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* KPI Standing */}
-          <Card>
+          <Card className={cn(TRS_CARD)}>
             <CardHeader>
-              <CardTitle>KPI Standing</CardTitle>
-              <CardDescription>Performance deltas across time horizons</CardDescription>
+              <CardTitle className={TRS_SECTION_TITLE}>KPI Standing</CardTitle>
+              <p className={TRS_SUBTITLE}>Performance deltas across time horizons</p>
             </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="today">
-                <TabsList>
+            <CardContent className="space-y-3">
+              <Tabs defaultValue="today" className="space-y-3">
+                <TabsList className="w-full justify-start">
                   <TabsTrigger value="today">Today</TabsTrigger>
                   <TabsTrigger value="week">Week</TabsTrigger>
                   <TabsTrigger value="quarter">Quarter</TabsTrigger>
                   <TabsTrigger value="year">Year</TabsTrigger>
                 </TabsList>
-                <TabsContent value="today" className="space-y-3">
-                  <div className="flex justify-between text-sm">
+                <TabsContent value="today" className="space-y-2 text-sm text-black">
+                  <div className="flex items-center justify-between">
                     <span>Pipeline Dollars</span>
-                    <span className="font-medium text-[color:var(--color-positive)]">+$12K</span>
+                    <span className="font-medium">+$12K</span>
                   </div>
-                  <div className="flex justify-between text-sm">
+                  <div className="flex items-center justify-between">
                     <span>Invoices Sent</span>
                     <span className="font-medium">{invoicesSent}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
+                  <div className="flex items-center justify-between">
                     <span>Win Rate</span>
                     <span className="font-medium">72%</span>
                   </div>
                 </TabsContent>
-                <TabsContent value="week" className="text-sm text-[color:var(--color-text-muted)]">
-                  Week view: stub metrics (7d rolling)
+                <TabsContent value="week" className="space-y-2 text-sm text-black">
+                  <div className="flex items-center justify-between">
+                    <span>Pipeline Coverage</span>
+                    <span className="font-medium">138%</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Avg Deal Size</span>
+                    <span className="font-medium">$54K</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>New Meetings</span>
+                    <span className="font-medium">14</span>
+                  </div>
                 </TabsContent>
-                <TabsContent value="quarter" className="text-sm text-[color:var(--color-text-muted)]">
-                  Quarter view: stub metrics (90d)
+                <TabsContent value="quarter" className="space-y-2 text-sm text-black">
+                  <div className="flex items-center justify-between">
+                    <span>Bookings</span>
+                    <span className="font-medium">$1.8M</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>CS Expansion</span>
+                    <span className="font-medium">$420K</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Churn</span>
+                    <span className="font-medium">-1.8%</span>
+                  </div>
                 </TabsContent>
-                <TabsContent value="year" className="text-sm text-[color:var(--color-text-muted)]">
-                  Year view: stub metrics (365d)
+                <TabsContent value="year" className="space-y-2 text-sm text-black">
+                  <div className="flex items-center justify-between">
+                    <span>Net Revenue</span>
+                    <span className="font-medium">$6.4M</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>EBITDA</span>
+                    <span className="font-medium">$1.2M</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Cash Burn</span>
+                    <span className="font-medium">$-380K</span>
+                  </div>
                 </TabsContent>
               </Tabs>
-            </CardContent>
-          </Card>
-
-          {/* Today's Plan */}
-          <Card>
-            <CardHeader>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <CardTitle>Today&apos;s Plan</CardTitle>
-                  <CardDescription>Rank-ordered focus list by impact, probability, and urgency / effort</CardDescription>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button variant="primary" size="sm" onClick={handleComputePlan} disabled={loading}>
-                    Compute Plan
-                  </Button>
-                  <Button variant="secondary" size="sm" onClick={handleLockPlan} disabled={!plan || loading}>
-                    {plan?.lockedAt ? "Locked" : "Lock Plan"}
-                  </Button>
-                  {plan?.lockedAt && (
-                    <>
-                      <Button variant="primary" size="sm" onClick={handleStartFocus}>
-                        Start 50m Focus
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={handleDownloadICal}>
-                        Download iCal
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {plan ? (
-                <div className="space-y-3">
-                  {plan.items.map((item, index) => (
-                    <div key={item.id} className="rounded-lg border border-[color:var(--color-outline)] bg-white p-4 shadow-sm">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--color-text-muted)]">
-                            Rank {index + 1}
-                          </p>
-                          {item.moduleHref ? (
-                            <Link href={item.moduleHref} className="text-base font-semibold text-[color:var(--color-primary)] hover:underline">
-                              {item.title}
-                            </Link>
-                          ) : (
-                            <p className="text-base font-semibold text-[color:var(--color-text)]">{item.title}</p>
-                          )}
-                          <p className="mt-1 text-sm text-[color:var(--color-text)]">
-                            Next action: <span className="font-medium">{item.nextAction}</span>
-                          </p>
-                        </div>
-                        <div className="flex flex-col items-end gap-2">
-                          <Badge variant="outline">Impact ${(item.expectedImpact / 1000).toFixed(0)}K</Badge>
-                          <span className="text-xs text-[color:var(--color-text-muted)]">Effort {item.effortHours}h</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-lg border border-dashed border-[color:var(--color-outline)] bg-[color:var(--color-surface-muted)]/40 p-6 text-sm text-[color:var(--color-text-muted)]">
-                  <p className="font-medium text-[color:var(--color-text)]">No plan generated yet.</p>
-                  <p className="mt-1">Tap Compute Plan to synthesize a 5–7 item focus list.</p>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>
 
-        <div className="space-y-6">
-          {/* Quick Capture */}
-          <Card>
+        <div className="space-y-3">
+          <Card className={cn(TRS_CARD)}>
             <CardHeader>
-              <CardTitle>Quick Capture</CardTitle>
-              <CardDescription>Drop a note for later triage</CardDescription>
+              <CardTitle className={TRS_SECTION_TITLE}>Performance Snapshot</CardTitle>
+              <p className={TRS_SUBTITLE}>Live metrics from today&apos;s activity</p>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Input placeholder="What needs attention?" />
-              <Button variant="outline" size="sm">
-                Save Draft
-              </Button>
+              <div className="grid gap-3">
+                <StatCard label="Dollars Advanced" value={`$${(dollarsAdvanced / 1000).toFixed(1)}K`} delta="vs yesterday" trend="flat" />
+                <StatCard label="Proposals Sent" value={`${proposalsSent}`} delta="Past 24 hours" trend="flat" />
+                <StatCard label="Invoices Paid" value={`${invoicesPaid}`} delta="Cleared this week" trend="up" />
+                <StatCard label="Focus Sessions" value={`${focusCompleted}`} delta="Completed today" trend="up" />
+              </div>
             </CardContent>
           </Card>
 
-          {/* End-of-Day Recap */}
-          <Card>
+          <Card className={cn(TRS_CARD)}>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Daily Recap</CardTitle>
-                  <CardDescription>End-of-day summary</CardDescription>
-                </div>
-                <Button variant="outline" size="sm" onClick={handleGenerateRecap} disabled={loading}>
-                  Generate
+              <CardTitle className={TRS_SECTION_TITLE}>Daily Actions</CardTitle>
+              <p className={TRS_SUBTITLE}>Launch workflows and sync teammates</p>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex flex-col gap-2">
+                <Button onClick={handleStartFocus} size="sm">Start Focus Timer</Button>
+                <Button onClick={handleGenerateRecap} size="sm" variant="outline" disabled={loading}>
+                  {loading ? "Working..." : "Generate Recap"}
+                </Button>
+                <Button onClick={handleDownloadICal} size="sm" variant="outline">
+                  Export Agenda (.ics)
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent>
-              {recap ? (
-                <div className="prose prose-sm max-w-none text-[color:var(--color-text-muted)]">
-                  <div className="whitespace-pre-wrap text-sm">{recap.markdown}</div>
+              {recap && (
+                <div className="rounded-lg border border-gray-200 bg-white p-3">
+                  <div className={TRS_SECTION_TITLE}>Latest Recap</div>
+                  <p className={cn(TRS_SUBTITLE, "mt-1")}>{recap.summary ?? "Recap ready to share with leadership."}</p>
                 </div>
-              ) : (
-                <p className="text-sm text-[color:var(--color-text-muted)]">No recap generated yet. Click Generate above.</p>
               )}
-            </CardContent>
-          </Card>
-
-          {/* Operating Radar */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Operating Radar</CardTitle>
-              <CardDescription>Snapshots across pipeline, finance, and client health</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="pipeline">
-                <TabsList>
-                  <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
-                  <TabsTrigger value="finance">Finance</TabsTrigger>
-                  <TabsTrigger value="clients">Clients</TabsTrigger>
-                </TabsList>
-                <TabsContent value="pipeline" className="text-sm text-[color:var(--color-text-muted)]">
-                  Pipeline coverage vs. commit chart (stub)
-                </TabsContent>
-                <TabsContent value="finance" className="text-sm text-[color:var(--color-text-muted)]">
-                  Weekly ARR waterfall and burn multiple (stub)
-                </TabsContent>
-                <TabsContent value="clients" className="text-sm text-[color:var(--color-text-muted)]">
-                  NPS + activation funnel summary (stub)
-                </TabsContent>
-              </Tabs>
+              <div className="text-xs text-gray-500">
+                Need a deeper dive? <Link href="/dashboard" className="underline">Open the executive dashboard</Link>.
+              </div>
             </CardContent>
           </Card>
         </div>

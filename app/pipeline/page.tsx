@@ -1,13 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { PageDescription, PageHeader, PageTitle } from "@/ui/page-header"
+import { PageDescription, PageTitle } from "@/ui/page-header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/ui/card"
 import { Badge } from "@/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/ui/table"
 import { Button } from "@/ui/button"
 import { Input } from "@/ui/input"
 import { emitEvent } from "@/core/events/emit"
+import { cn } from "@/lib/utils"
+import { TRS_CARD, TRS_SECTION_TITLE, TRS_SUBTITLE } from "@/lib/style"
 
 type Deal = {
   id: string
@@ -214,38 +216,40 @@ export default function PipelinePage() {
   }).length
 
   return (
-    <div className="space-y-6 p-6">
-      <PageHeader className="rounded-xl border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-950">
-        <div className="flex items-center justify-between">
-          <div>
-            <PageTitle>Pipeline & Sales Intelligence</PageTitle>
-            <PageDescription>AI-powered forecasting, coverage analysis, and proactive deal insights</PageDescription>
+    <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
+      <div className={cn(TRS_CARD, "p-4 space-y-3")}>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-1">
+            <PageTitle className="text-lg font-semibold text-black">Pipeline &amp; Sales Intelligence</PageTitle>
+            <PageDescription className="text-sm text-gray-500">
+              AI-powered forecasting, coverage analysis, and proactive deal insights
+            </PageDescription>
           </div>
           <Button onClick={() => setShowNewProspectModal(true)} variant="primary" size="sm">
             + New Prospect
           </Button>
         </div>
-        <div className="flex flex-wrap items-center gap-3 text-sm mt-3">
+        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
           <Badge variant={coverage >= 100 ? "success" : "outline"}>Coverage: {coverage.toFixed(0)}%</Badge>
-          <span className="text-[color:var(--color-text-muted)]">${(totalWeighted / 1000).toFixed(0)}K weighted pipeline</span>
+          <span>${(totalWeighted / 1000).toFixed(0)}K weighted pipeline</span>
         </div>
-      </PageHeader>
+      </div>
 
       {/* AI Sales Agent Placeholder */}
-      <Card className="border-[var(--trs-accent)] bg-gradient-to-r from-orange-50 to-white dark:from-neutral-900 dark:to-neutral-950">
+      <Card className={cn(TRS_CARD)}>
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-2xl">🤖</span>
-                <h3 className="text-sm font-semibold">AI Sales Agent</h3>
+                <div className={TRS_SECTION_TITLE}>AI Sales Agent</div>
                 <Badge>Coming Soon</Badge>
               </div>
-              <p className="text-xs text-[color:var(--color-text-muted)] mt-1">
+              <p className={cn(TRS_SUBTITLE, "mt-1")}>
                 Automated prospecting, scheduling, follow-ups, and deal intelligence powered by AI
               </p>
             </div>
-            <Button variant="outline" size="sm" disabled>
+            <Button variant="outline" size="sm" disabled className="border-gray-200 text-gray-500">
               Configure Agent
             </Button>
           </div>
@@ -253,119 +257,115 @@ export default function PipelinePage() {
       </Card>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-gray-200 dark:border-neutral-800">
-          <CardContent className="p-4">
-            <div className="text-xs text-[color:var(--color-text-muted)]">Weighted Pipeline</div>
-            <div className="mt-1 text-2xl font-semibold text-[color:var(--color-text)]">
-              ${(totalWeighted / 1000).toFixed(0)}K
-            </div>
-            <div className="mt-2 flex items-center gap-2">
-              <div className="text-xs text-[color:var(--color-positive)]">↑ 18%</div>
-              <div className="text-xs text-[color:var(--color-text-muted)]">vs last month</div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+        <Card className={cn(TRS_CARD)}>
+          <CardContent className="p-4 space-y-2">
+            <div className={TRS_SUBTITLE}>Weighted Pipeline</div>
+            <div className="text-2xl font-semibold text-black">${(totalWeighted / 1000).toFixed(0)}K</div>
+            <div className="flex items-center gap-2 text-xs text-gray-600">
+              <span className="font-medium text-gray-700">↑ 18%</span>
+              <span>vs last month</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-gray-200 dark:border-neutral-800">
-          <CardContent className="p-4">
-            <div className="text-xs text-[color:var(--color-text-muted)]">Win Rate</div>
-            <div className="mt-1 text-2xl font-semibold text-[color:var(--color-text)]">{winRate}%</div>
-            <div className="mt-2 flex items-center gap-2">
-              <div className="text-xs text-[color:var(--color-positive)]">↑ 5%</div>
-              <div className="text-xs text-[color:var(--color-text-muted)]">vs last quarter</div>
+        <Card className={cn(TRS_CARD)}>
+          <CardContent className="p-4 space-y-2">
+            <div className={TRS_SUBTITLE}>Win Rate</div>
+            <div className="text-2xl font-semibold text-black">{winRate}%</div>
+            <div className="flex items-center gap-2 text-xs text-gray-600">
+              <span className="font-medium text-gray-700">↑ 5%</span>
+              <span>vs last quarter</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-gray-200 dark:border-neutral-800">
-          <CardContent className="p-4">
-            <div className="text-xs text-[color:var(--color-text-muted)]">Avg Deal Size</div>
-            <div className="mt-1 text-2xl font-semibold text-[color:var(--color-text)]">
-              ${(avgDealSize / 1000).toFixed(0)}K
-            </div>
-            <div className="mt-2 flex items-center gap-2">
-              <div className="text-xs text-[color:var(--color-positive)]">↑ 12%</div>
-              <div className="text-xs text-[color:var(--color-text-muted)]">vs target</div>
+        <Card className={cn(TRS_CARD)}>
+          <CardContent className="p-4 space-y-2">
+            <div className={TRS_SUBTITLE}>Avg Deal Size</div>
+            <div className="text-2xl font-semibold text-black">${(avgDealSize / 1000).toFixed(0)}K</div>
+            <div className="flex items-center gap-2 text-xs text-gray-600">
+              <span className="font-medium text-gray-700">↑ 12%</span>
+              <span>vs target</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-gray-200 dark:border-neutral-800">
-          <CardContent className="p-4">
-            <div className="text-xs text-[color:var(--color-text-muted)]">Avg Sales Cycle</div>
-            <div className="mt-1 text-2xl font-semibold text-[color:var(--color-text)]">{avgSalesCycle} days</div>
-            <div className="mt-2 flex items-center gap-2">
-              <div className="text-xs text-[color:var(--color-positive)]">↓ 8 days</div>
-              <div className="text-xs text-[color:var(--color-text-muted)]">faster</div>
+        <Card className={cn(TRS_CARD)}>
+          <CardContent className="p-4 space-y-2">
+            <div className={TRS_SUBTITLE}>Avg Sales Cycle</div>
+            <div className="text-2xl font-semibold text-black">{avgSalesCycle} days</div>
+            <div className="flex items-center gap-2 text-xs text-gray-600">
+              <span className="font-medium text-gray-700">↓ 8 days</span>
+              <span>faster</span>
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* OKR Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-gray-200 dark:border-neutral-800">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <Card className={cn(TRS_CARD)}>
           <CardHeader>
             <CardTitle className="text-sm font-medium">Q4 Objectives & Key Results</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Close $2M in new ARR</span>
-                <span className="text-sm text-[color:var(--color-text-muted)]">68%</span>
+                <span className="text-sm font-medium text-black">Close $2M in new ARR</span>
+                <span className="text-sm text-gray-500">68%</span>
               </div>
-              <div className="h-2 rounded-full bg-gray-200 dark:bg-neutral-800 overflow-hidden">
-                <div className="h-full w-[68%] bg-[var(--trs-accent)]" />
+              <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
+                <div className="h-full w-[68%] bg-gray-900" />
               </div>
-              <div className="text-xs text-[color:var(--color-text-muted)] mt-1">$1.36M / $2M</div>
+              <div className="mt-1 text-xs text-gray-500">$1.36M / $2M</div>
             </div>
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Achieve 75% win rate</span>
-                <span className="text-sm text-[color:var(--color-text-muted)]">96%</span>
+                <span className="text-sm font-medium text-black">Achieve 75% win rate</span>
+                <span className="text-sm text-gray-500">96%</span>
               </div>
-              <div className="h-2 rounded-full bg-gray-200 dark:bg-neutral-800 overflow-hidden">
-                <div className="h-full w-[96%] bg-[var(--color-positive)]" />
+              <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
+                <div className="h-full w-[96%] bg-gray-800" />
               </div>
-              <div className="text-xs text-[color:var(--color-text-muted)] mt-1">72% / 75%</div>
+              <div className="mt-1 text-xs text-gray-500">72% / 75%</div>
             </div>
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Reduce sales cycle to 40 days</span>
-                <span className="text-sm text-[color:var(--color-text-muted)]">88%</span>
+                <span className="text-sm font-medium text-black">Reduce sales cycle to 40 days</span>
+                <span className="text-sm text-gray-500">88%</span>
               </div>
-              <div className="h-2 rounded-full bg-gray-200 dark:bg-neutral-800 overflow-hidden">
-                <div className="h-full w-[88%] bg-[var(--trs-accent)]" />
+              <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
+                <div className="h-full w-[88%] bg-gray-900" />
               </div>
-              <div className="text-xs text-[color:var(--color-text-muted)] mt-1">45 days / 40 target</div>
+              <div className="mt-1 text-xs text-gray-500">45 days / 40 target</div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-gray-200 dark:border-neutral-800">
+        <Card className={cn(TRS_CARD)}>
           <CardHeader>
             <CardTitle className="text-sm font-medium">Sales Enablement Pipeline</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-neutral-900">
+            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
               <div>
-                <div className="text-sm font-medium">Product Demo Deck v2</div>
-                <div className="text-xs text-[color:var(--color-text-muted)]">ROI calculator integration</div>
+                <div className="text-sm font-medium text-black">Product Demo Deck v2</div>
+                <div className="text-xs text-gray-500">ROI calculator integration</div>
               </div>
               <Badge>In Review</Badge>
             </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-neutral-900">
+            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
               <div>
-                <div className="text-sm font-medium">Competitive Battle Cards</div>
-                <div className="text-xs text-[color:var(--color-text-muted)]">Updated positioning</div>
+                <div className="text-sm font-medium text-black">Competitive Battle Cards</div>
+                <div className="text-xs text-gray-500">Updated positioning</div>
               </div>
               <Badge variant="success">Ready</Badge>
             </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-neutral-900">
+            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
               <div>
-                <div className="text-sm font-medium">Objection Handling Guide</div>
-                <div className="text-xs text-[color:var(--color-text-muted)]">Common pricing concerns</div>
+                <div className="text-sm font-medium text-black">Objection Handling Guide</div>
+                <div className="text-xs text-gray-500">Common pricing concerns</div>
               </div>
               <Badge variant="outline">Draft</Badge>
             </div>
@@ -374,8 +374,8 @@ export default function PipelinePage() {
       </div>
 
       {/* Proactive Sales Graphs */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-gray-200 dark:border-neutral-800">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <Card className={cn(TRS_CARD)}>
           <CardHeader>
             <CardTitle className="text-sm font-medium">Deal Velocity Trend</CardTitle>
             <CardDescription>Average days to close by month</CardDescription>
@@ -383,26 +383,26 @@ export default function PipelinePage() {
           <CardContent>
             <div className="space-y-3">
               {[
-                { month: "Jul", days: 52, color: "bg-gray-400" },
-                { month: "Aug", days: 48, color: "bg-gray-400" },
-                { month: "Sep", days: 45, color: "bg-[var(--trs-accent)]" },
-                { month: "Oct", days: 45, color: "bg-[var(--trs-accent)]" },
+                { month: "Jul", days: 52, color: "bg-gray-800" },
+                { month: "Aug", days: 48, color: "bg-gray-700" },
+                { month: "Sep", days: 45, color: "bg-gray-900" },
+                { month: "Oct", days: 45, color: "bg-gray-900" },
               ].map((item) => (
                 <div key={item.month} className="flex items-center gap-3">
-                  <div className="w-12 text-xs text-[color:var(--color-text-muted)]">{item.month}</div>
+                  <div className="w-12 text-xs text-gray-500">{item.month}</div>
                   <div className="flex-1">
-                    <div className="h-6 rounded-md bg-gray-100 dark:bg-neutral-900 overflow-hidden">
+                    <div className="h-6 rounded-md bg-gray-100 overflow-hidden">
                       <div className={`h-full ${item.color}`} style={{ width: `${(60 - item.days) * 2}%` }} />
                     </div>
                   </div>
-                  <div className="w-16 text-sm font-medium text-right">{item.days}d</div>
+                  <div className="w-16 text-sm font-medium text-right text-black">{item.days}d</div>
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-gray-200 dark:border-neutral-800">
+        <Card className={cn(TRS_CARD)}>
           <CardHeader>
             <CardTitle className="text-sm font-medium">Pipeline Health Score</CardTitle>
             <CardDescription>AI-powered risk assessment</CardDescription>
@@ -411,33 +411,33 @@ export default function PipelinePage() {
             <div className="space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm">Healthy Deals</span>
-                  <span className="text-sm font-medium text-[color:var(--color-positive)]">62%</span>
+                  <span className="text-sm text-black">Healthy Deals</span>
+                  <span className="text-sm font-medium text-gray-700">62%</span>
                 </div>
-                <div className="h-2 rounded-full bg-gray-200 dark:bg-neutral-800 overflow-hidden">
-                  <div className="h-full w-[62%] bg-[var(--color-positive)]" />
-                </div>
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm">At Risk</span>
-                  <span className="text-sm font-medium text-[color:var(--color-caution)]">28%</span>
-                </div>
-                <div className="h-2 rounded-full bg-gray-200 dark:bg-neutral-800 overflow-hidden">
-                  <div className="h-full w-[28%] bg-[var(--color-caution)]" />
+                <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
+                  <div className="h-full w-[62%] bg-gray-800" />
                 </div>
               </div>
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm">Stalled</span>
-                  <span className="text-sm font-medium text-[color:var(--color-critical)]">10%</span>
+                  <span className="text-sm text-black">At Risk</span>
+                  <span className="text-sm font-medium text-gray-700">28%</span>
                 </div>
-                <div className="h-2 rounded-full bg-gray-200 dark:bg-neutral-800 overflow-hidden">
-                  <div className="h-full w-[10%] bg-[var(--color-critical)]" />
+                <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
+                  <div className="h-full w-[28%] bg-gray-600" />
                 </div>
               </div>
-              <div className="pt-2 border-t border-gray-200 dark:border-neutral-800">
-                <div className="text-xs text-[color:var(--color-text-muted)]">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-black">Stalled</span>
+                  <span className="text-sm font-medium text-gray-700">10%</span>
+                </div>
+                <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
+                  <div className="h-full w-[10%] bg-gray-500" />
+                </div>
+              </div>
+              <div className="pt-2 border-t border-gray-200">
+                <div className="text-xs text-gray-500">
                   <strong>3 deals</strong> need attention: Enterprise SaaS Platform, Revenue Analytics Suite, Customer Success Platform
                 </div>
               </div>
@@ -447,7 +447,7 @@ export default function PipelinePage() {
       </div>
 
       {/* Deal Pipeline Table */}
-      <Card className="border-gray-200 dark:border-neutral-800">
+      <Card className={cn(TRS_CARD)}>
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -458,7 +458,7 @@ export default function PipelinePage() {
               <select
                 value={filterStage}
                 onChange={(e) => setFilterStage(e.target.value)}
-                className="rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-1 text-sm"
+                className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm"
               >
                 <option value="all">All Stages</option>
                 {stages.map((stage) => (
@@ -470,7 +470,7 @@ export default function PipelinePage() {
               <select
                 value={filterOwner}
                 onChange={(e) => setFilterOwner(e.target.value)}
-                className="rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-1 text-sm"
+                className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm"
               >
                 <option value="all">All Owners</option>
                 {owners.map((owner) => (
@@ -482,7 +482,7 @@ export default function PipelinePage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-1 text-sm"
+                className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm"
               >
                 <option value="amount-desc">Amount (High to Low)</option>
                 <option value="amount-asc">Amount (Low to High)</option>
@@ -513,7 +513,7 @@ export default function PipelinePage() {
                 <TableRow
                   key={deal.id}
                   onClick={() => setSelectedDeal(deal)}
-                  className="cursor-pointer hover:bg-gray-50 dark:hover:bg-neutral-900"
+                  className="cursor-pointer hover:bg-gray-50"
                 >
                   <TableCell className="font-medium">{deal.name}</TableCell>
                   <TableCell>{deal.company}</TableCell>
@@ -526,13 +526,13 @@ export default function PipelinePage() {
                       {deal.stage}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-sm text-[color:var(--color-text-muted)]">{deal.owner}</TableCell>
+                  <TableCell className="text-sm text-gray-500">{deal.owner}</TableCell>
                   <TableCell className="text-right font-medium">${(deal.amount / 1000).toFixed(0)}K</TableCell>
                   <TableCell className="text-right">{deal.probability}%</TableCell>
-                  <TableCell className="text-right font-medium text-[color:var(--color-text)]">
+                  <TableCell className="text-right font-medium text-black">
                     ${((deal.amount * deal.probability) / 100 / 1000).toFixed(0)}K
                   </TableCell>
-                  <TableCell className="text-sm text-[color:var(--color-text-muted)]">
+                  <TableCell className="text-sm text-gray-500">
                     {new Date(deal.closeDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                   </TableCell>
                 </TableRow>
@@ -549,13 +549,13 @@ export default function PipelinePage() {
           onClick={() => setShowNewProspectModal(false)}
         >
           <div
-            className="w-full max-w-2xl rounded-lg bg-white dark:bg-neutral-950 p-6 shadow-xl border border-gray-200 dark:border-neutral-800"
+            className="w-full max-w-2xl rounded-lg border border-gray-200 bg-white p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-start justify-between">
               <div>
-                <h2 className="text-2xl font-semibold text-[color:var(--color-text)]">Add New Prospect</h2>
-                <p className="text-sm text-[color:var(--color-text-muted)]">Create a new opportunity in the pipeline</p>
+                <h2 className="text-2xl font-semibold text-black">Add New Prospect</h2>
+                <p className="text-sm text-gray-500">Create a new opportunity in the pipeline</p>
               </div>
               <button onClick={() => setShowNewProspectModal(false)} className="text-gray-400 hover:text-gray-600">
                 ✕
@@ -565,7 +565,7 @@ export default function PipelinePage() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-[color:var(--color-text)]">Opportunity Name *</label>
+                  <label className="text-sm font-medium text-black">Opportunity Name *</label>
                   <Input
                     value={newProspect.name}
                     onChange={(e) => setNewProspect({ ...newProspect, name: e.target.value })}
@@ -574,7 +574,7 @@ export default function PipelinePage() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-[color:var(--color-text)]">Company *</label>
+                  <label className="text-sm font-medium text-black">Company *</label>
                   <Input
                     value={newProspect.company}
                     onChange={(e) => setNewProspect({ ...newProspect, company: e.target.value })}
@@ -586,7 +586,7 @@ export default function PipelinePage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-[color:var(--color-text)]">Amount *</label>
+                  <label className="text-sm font-medium text-black">Amount *</label>
                   <Input
                     type="number"
                     value={newProspect.amount}
@@ -596,7 +596,7 @@ export default function PipelinePage() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-[color:var(--color-text)]">Owner</label>
+                  <label className="text-sm font-medium text-black">Owner</label>
                   <Input
                     value={newProspect.owner}
                     onChange={(e) => setNewProspect({ ...newProspect, owner: e.target.value })}
@@ -607,7 +607,7 @@ export default function PipelinePage() {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-[color:var(--color-text)]">Expected Close Date</label>
+                <label className="text-sm font-medium text-black">Expected Close Date</label>
                 <Input
                   type="date"
                   value={newProspect.closeDate}
@@ -616,7 +616,7 @@ export default function PipelinePage() {
                 />
               </div>
 
-              <div className="flex justify-end gap-2 border-t border-gray-200 dark:border-neutral-800 pt-4">
+              <div className="flex justify-end gap-2 border-t border-gray-200 pt-4">
                 <Button onClick={() => setShowNewProspectModal(false)} variant="outline" size="sm">
                   Cancel
                 </Button>
@@ -631,15 +631,15 @@ export default function PipelinePage() {
 
       {/* Opportunity Detail Modal */}
       {selectedDeal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setSelectedDeal(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setSelectedDeal(null)}>
           <div
-            className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white dark:bg-neutral-950 p-6 shadow-xl border border-gray-200 dark:border-neutral-800"
+            className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg border border-gray-200 bg-white p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-start justify-between">
               <div>
-                <h2 className="text-2xl font-semibold text-[color:var(--color-text)]">{selectedDeal.name}</h2>
-                <p className="text-sm text-[color:var(--color-text-muted)]">{selectedDeal.company}</p>
+                <h2 className="text-2xl font-semibold text-black">{selectedDeal.name}</h2>
+                <p className="text-sm text-gray-500">{selectedDeal.company}</p>
               </div>
               <button onClick={() => setSelectedDeal(null)} className="text-gray-400 hover:text-gray-600">
                 ✕
@@ -649,20 +649,20 @@ export default function PipelinePage() {
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-[color:var(--color-text-muted)]">Amount</p>
-                  <p className="text-lg font-semibold text-[color:var(--color-text)]">${selectedDeal.amount.toLocaleString()}</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Amount</p>
+                  <p className="text-lg font-semibold text-black">${selectedDeal.amount.toLocaleString()}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-[color:var(--color-text-muted)]">Probability</p>
-                  <p className="text-lg font-semibold text-[color:var(--color-text)]">{selectedDeal.probability}%</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Probability</p>
+                  <p className="text-lg font-semibold text-black">{selectedDeal.probability}%</p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-[color:var(--color-text-muted)]">Owner</p>
-                  <p className="text-lg font-semibold text-[color:var(--color-text)]">{selectedDeal.owner}</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Owner</p>
+                  <p className="text-lg font-semibold text-black">{selectedDeal.owner}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-[color:var(--color-text-muted)]">Close Date</p>
-                  <p className="text-lg font-semibold text-[color:var(--color-text)]">
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Close Date</p>
+                  <p className="text-lg font-semibold text-black">
                     {new Date(selectedDeal.closeDate).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
@@ -673,11 +673,11 @@ export default function PipelinePage() {
               </div>
 
               <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[color:var(--color-text-muted)]">Stage</p>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">Stage</p>
                 <select
                   value={selectedDeal.stage}
                   onChange={(e) => handleStageChange(selectedDeal.id, e.target.value)}
-                  className="w-full rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2"
+                  className="w-full rounded-md border border-gray-200 bg-white px-3 py-2"
                 >
                   {stages.map((stage) => (
                     <option key={stage} value={stage}>
@@ -688,15 +688,15 @@ export default function PipelinePage() {
               </div>
 
               <div>
-                <p className="mb-3 text-xs font-medium uppercase tracking-wide text-[color:var(--color-text-muted)]">
+                <p className="mb-3 text-xs font-medium uppercase tracking-wide text-gray-500">
                   Notes ({selectedDeal.notes.length})
                 </p>
 
                 <div className="mb-4 space-y-3">
                   {selectedDeal.notes.map((note) => (
-                    <div key={note.id} className="rounded-lg border border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-neutral-900 p-3">
-                      <p className="text-sm text-[color:var(--color-text)]">{note.text}</p>
-                      <p className="mt-1 text-xs text-[color:var(--color-text-muted)]">
+                    <div key={note.id} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                      <p className="text-sm text-black">{note.text}</p>
+                      <p className="mt-1 text-xs text-gray-500">
                         {note.author} •{" "}
                         {new Date(note.timestamp).toLocaleDateString("en-US", {
                           month: "short",
@@ -708,7 +708,7 @@ export default function PipelinePage() {
                     </div>
                   ))}
                   {selectedDeal.notes.length === 0 && (
-                    <p className="text-sm text-[color:var(--color-text-muted)]">No notes yet. Add one below.</p>
+                    <p className="text-sm text-gray-500">No notes yet. Add one below.</p>
                   )}
                 </div>
 
@@ -727,7 +727,7 @@ export default function PipelinePage() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 border-t border-gray-200 dark:border-neutral-800 pt-4">
+              <div className="flex justify-end gap-2 border-t border-gray-200 pt-4">
                 <Button onClick={() => setSelectedDeal(null)} variant="outline" size="sm">
                   Close
                 </Button>
