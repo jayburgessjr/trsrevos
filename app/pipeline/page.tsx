@@ -98,6 +98,14 @@ export default function PipelinePage() {
   const [filterStage, setFilterStage] = useState<string>("all")
   const [filterOwner, setFilterOwner] = useState<string>("all")
   const [sortBy, setSortBy] = useState<string>("amount-desc")
+  const [showNewProspectModal, setShowNewProspectModal] = useState(false)
+  const [newProspect, setNewProspect] = useState({
+    name: "",
+    company: "",
+    amount: "",
+    owner: "",
+    closeDate: "",
+  })
 
   const pipelineGoal = 2500000
   const activeDeals = deals.filter((d) => d.stage !== "Closed Won" && d.stage !== "Closed Lost")
@@ -117,7 +125,6 @@ export default function PipelinePage() {
       setSelectedDeal({ ...selectedDeal, stage: newStage })
     }
 
-    // Emit event
     await emitEvent("me", "opportunity", "stage_changed", {
       dealId,
       company: deal.company,
@@ -148,6 +155,30 @@ export default function PipelinePage() {
     setNewNote("")
   }
 
+  const handleAddProspect = () => {
+    if (!newProspect.name || !newProspect.company || !newProspect.amount) {
+      alert("Please fill in required fields: Name, Company, and Amount")
+      return
+    }
+
+    const prospect: Deal = {
+      id: `p${Date.now()}`,
+      name: newProspect.name,
+      company: newProspect.company,
+      stage: "Discovery",
+      amount: parseInt(newProspect.amount),
+      probability: 20,
+      closeDate: newProspect.closeDate || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      owner: newProspect.owner || "Current User",
+      notes: [],
+    }
+
+    setDeals([...deals, prospect])
+    setShowNewProspectModal(false)
+    setNewProspect({ name: "", company: "", amount: "", owner: "", closeDate: "" })
+    emitEvent("me", "opportunity", "created", { company: prospect.company, amount: prospect.amount })
+  }
+
   // Apply filters and sorting
   let filteredDeals = activeDeals
   if (filterStage !== "all") {
@@ -157,7 +188,6 @@ export default function PipelinePage() {
     filteredDeals = filteredDeals.filter((d) => d.owner === filterOwner)
   }
 
-  // Apply sorting
   filteredDeals = [...filteredDeals].sort((a, b) => {
     switch (sortBy) {
       case "amount-desc":
@@ -177,80 +207,262 @@ export default function PipelinePage() {
     }
   })
 
+  // Calculate metrics
+  const avgDealSize = activeDeals.reduce((sum, d) => sum + d.amount, 0) / activeDeals.length
+  const winRate = 72 // Mock
+  const avgSalesCycle = 45 // Mock days
+  const dealsClosingThisMonth = activeDeals.filter((d) => {
+    const close = new Date(d.closeDate)
+    const now = new Date()
+    return close.getMonth() === now.getMonth() && close.getFullYear() === now.getFullYear()
+  }).length
+
   const body = (
     <div className="space-y-6 p-6">
-      <PageHeader className="rounded-xl border border-[color:var(--color-outline)]">
-        <PageTitle>Pipeline</PageTitle>
-        <PageDescription>Track forecast health, coverage, and conversion across all active opportunities.</PageDescription>
-        <div className="flex flex-wrap items-center gap-3 text-sm">
+      <PageHeader className="rounded-xl border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-950">
+        <div className="flex items-center justify-between">
+          <div>
+            <PageTitle>Pipeline & Sales Intelligence</PageTitle>
+            <PageDescription>AI-powered forecasting, coverage analysis, and proactive deal insights</PageDescription>
+          </div>
+          <Button onClick={() => setShowNewProspectModal(true)} variant="primary" size="sm">
+            + New Prospect
+          </Button>
+        </div>
+        <div className="flex flex-wrap items-center gap-3 text-sm mt-3">
           <Badge variant={coverage >= 100 ? "success" : "outline"}>Coverage: {coverage.toFixed(0)}%</Badge>
           <span className="text-[color:var(--color-text-muted)]">${(totalWeighted / 1000).toFixed(0)}K weighted pipeline</span>
         </div>
       </PageHeader>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Weighted Pipeline</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-semibold text-[color:var(--color-text)]">${(totalWeighted / 1000).toFixed(0)}K</p>
-            <p className="mt-1 text-xs text-[color:var(--color-text-muted)]">Target: ${(pipelineGoal / 1000).toFixed(0)}K</p>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-[color:var(--color-surface-muted)]">
-              <div className="h-full bg-[color:var(--color-positive)]" style={{ width: `${Math.min(coverage, 100)}%` }} />
+      {/* AI Sales Agent Placeholder */}
+      <Card className="border-[var(--trs-accent)] bg-gradient-to-r from-orange-50 to-white dark:from-neutral-900 dark:to-neutral-950">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🤖</span>
+                <h3 className="text-sm font-semibold">AI Sales Agent</h3>
+                <Badge>Coming Soon</Badge>
+              </div>
+              <p className="text-xs text-[color:var(--color-text-muted)] mt-1">
+                Automated prospecting, scheduling, follow-ups, and deal intelligence powered by AI
+              </p>
+            </div>
+            <Button variant="outline" size="sm" disabled>
+              Configure Agent
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border-gray-200 dark:border-neutral-800">
+          <CardContent className="p-4">
+            <div className="text-xs text-[color:var(--color-text-muted)]">Weighted Pipeline</div>
+            <div className="mt-1 text-2xl font-semibold text-[color:var(--color-text)]">
+              ${(totalWeighted / 1000).toFixed(0)}K
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              <div className="text-xs text-[color:var(--color-positive)]">↑ 18%</div>
+              <div className="text-xs text-[color:var(--color-text-muted)]">vs last month</div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Active Opportunities</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-semibold text-[color:var(--color-text)]">{activeDeals.length}</p>
-            <p className="mt-1 text-xs text-[color:var(--color-text-muted)]">
-              {activeDeals.filter((d) => d.probability >= 60).length} high probability
-            </p>
+        <Card className="border-gray-200 dark:border-neutral-800">
+          <CardContent className="p-4">
+            <div className="text-xs text-[color:var(--color-text-muted)]">Win Rate</div>
+            <div className="mt-1 text-2xl font-semibold text-[color:var(--color-text)]">{winRate}%</div>
+            <div className="mt-2 flex items-center gap-2">
+              <div className="text-xs text-[color:var(--color-positive)]">↑ 5%</div>
+              <div className="text-xs text-[color:var(--color-text-muted)]">vs last quarter</div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Closing This Month</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-semibold text-[color:var(--color-text)]">
-              {activeDeals.filter((d) => {
-                const close = new Date(d.closeDate)
-                return close.getMonth() === 9 && close.getFullYear() === 2025
-              }).length}
-            </p>
-            <p className="mt-1 text-xs text-[color:var(--color-text-muted)]">
-              $
-              {activeDeals
-                .filter((d) => {
-                  const close = new Date(d.closeDate)
-                  return close.getMonth() === 9 && close.getFullYear() === 2025
-                })
-                .reduce((sum, d) => sum + d.amount, 0) / 1000}
-              K value
-            </p>
+        <Card className="border-gray-200 dark:border-neutral-800">
+          <CardContent className="p-4">
+            <div className="text-xs text-[color:var(--color-text-muted)]">Avg Deal Size</div>
+            <div className="mt-1 text-2xl font-semibold text-[color:var(--color-text)]">
+              ${(avgDealSize / 1000).toFixed(0)}K
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              <div className="text-xs text-[color:var(--color-positive)]">↑ 12%</div>
+              <div className="text-xs text-[color:var(--color-text-muted)]">vs target</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-gray-200 dark:border-neutral-800">
+          <CardContent className="p-4">
+            <div className="text-xs text-[color:var(--color-text-muted)]">Avg Sales Cycle</div>
+            <div className="mt-1 text-2xl font-semibold text-[color:var(--color-text)]">{avgSalesCycle} days</div>
+            <div className="mt-2 flex items-center gap-2">
+              <div className="text-xs text-[color:var(--color-positive)]">↓ 8 days</div>
+              <div className="text-xs text-[color:var(--color-text-muted)]">faster</div>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
+      {/* OKR Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="border-gray-200 dark:border-neutral-800">
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Q4 Objectives & Key Results</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium">Close $2M in new ARR</span>
+                <span className="text-sm text-[color:var(--color-text-muted)]">68%</span>
+              </div>
+              <div className="h-2 rounded-full bg-gray-200 dark:bg-neutral-800 overflow-hidden">
+                <div className="h-full w-[68%] bg-[var(--trs-accent)]" />
+              </div>
+              <div className="text-xs text-[color:var(--color-text-muted)] mt-1">$1.36M / $2M</div>
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium">Achieve 75% win rate</span>
+                <span className="text-sm text-[color:var(--color-text-muted)]">96%</span>
+              </div>
+              <div className="h-2 rounded-full bg-gray-200 dark:bg-neutral-800 overflow-hidden">
+                <div className="h-full w-[96%] bg-[var(--color-positive)]" />
+              </div>
+              <div className="text-xs text-[color:var(--color-text-muted)] mt-1">72% / 75%</div>
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium">Reduce sales cycle to 40 days</span>
+                <span className="text-sm text-[color:var(--color-text-muted)]">88%</span>
+              </div>
+              <div className="h-2 rounded-full bg-gray-200 dark:bg-neutral-800 overflow-hidden">
+                <div className="h-full w-[88%] bg-[var(--trs-accent)]" />
+              </div>
+              <div className="text-xs text-[color:var(--color-text-muted)] mt-1">45 days / 40 target</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-gray-200 dark:border-neutral-800">
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Sales Enablement Pipeline</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-neutral-900">
+              <div>
+                <div className="text-sm font-medium">Product Demo Deck v2</div>
+                <div className="text-xs text-[color:var(--color-text-muted)]">ROI calculator integration</div>
+              </div>
+              <Badge>In Review</Badge>
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-neutral-900">
+              <div>
+                <div className="text-sm font-medium">Competitive Battle Cards</div>
+                <div className="text-xs text-[color:var(--color-text-muted)]">Updated positioning</div>
+              </div>
+              <Badge variant="success">Ready</Badge>
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-neutral-900">
+              <div>
+                <div className="text-sm font-medium">Objection Handling Guide</div>
+                <div className="text-xs text-[color:var(--color-text-muted)]">Common pricing concerns</div>
+              </div>
+              <Badge variant="outline">Draft</Badge>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Proactive Sales Graphs */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="border-gray-200 dark:border-neutral-800">
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Deal Velocity Trend</CardTitle>
+            <CardDescription>Average days to close by month</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {[
+                { month: "Jul", days: 52, color: "bg-gray-400" },
+                { month: "Aug", days: 48, color: "bg-gray-400" },
+                { month: "Sep", days: 45, color: "bg-[var(--trs-accent)]" },
+                { month: "Oct", days: 45, color: "bg-[var(--trs-accent)]" },
+              ].map((item) => (
+                <div key={item.month} className="flex items-center gap-3">
+                  <div className="w-12 text-xs text-[color:var(--color-text-muted)]">{item.month}</div>
+                  <div className="flex-1">
+                    <div className="h-6 rounded-md bg-gray-100 dark:bg-neutral-900 overflow-hidden">
+                      <div className={`h-full ${item.color}`} style={{ width: `${(60 - item.days) * 2}%` }} />
+                    </div>
+                  </div>
+                  <div className="w-16 text-sm font-medium text-right">{item.days}d</div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-gray-200 dark:border-neutral-800">
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Pipeline Health Score</CardTitle>
+            <CardDescription>AI-powered risk assessment</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm">Healthy Deals</span>
+                  <span className="text-sm font-medium text-[color:var(--color-positive)]">62%</span>
+                </div>
+                <div className="h-2 rounded-full bg-gray-200 dark:bg-neutral-800 overflow-hidden">
+                  <div className="h-full w-[62%] bg-[var(--color-positive)]" />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm">At Risk</span>
+                  <span className="text-sm font-medium text-[color:var(--color-caution)]">28%</span>
+                </div>
+                <div className="h-2 rounded-full bg-gray-200 dark:bg-neutral-800 overflow-hidden">
+                  <div className="h-full w-[28%] bg-[var(--color-caution)]" />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm">Stalled</span>
+                  <span className="text-sm font-medium text-[color:var(--color-critical)]">10%</span>
+                </div>
+                <div className="h-2 rounded-full bg-gray-200 dark:bg-neutral-800 overflow-hidden">
+                  <div className="h-full w-[10%] bg-[var(--color-critical)]" />
+                </div>
+              </div>
+              <div className="pt-2 border-t border-gray-200 dark:border-neutral-800">
+                <div className="text-xs text-[color:var(--color-text-muted)]">
+                  <strong>3 deals</strong> need attention: Enterprise SaaS Platform, Revenue Analytics Suite, Customer Success Platform
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Deal Pipeline Table */}
+      <Card className="border-gray-200 dark:border-neutral-800">
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <CardTitle>Deal pipeline</CardTitle>
-              <CardDescription>All opportunities with stage, amount, and probability weighting.</CardDescription>
+              <CardTitle>Deal Pipeline</CardTitle>
+              <CardDescription>All opportunities with stage, amount, and probability weighting</CardDescription>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <select
                 value={filterStage}
                 onChange={(e) => setFilterStage(e.target.value)}
-                className="rounded-md border border-[color:var(--color-outline)] bg-white px-3 py-1 text-sm"
+                className="rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-1 text-sm"
               >
                 <option value="all">All Stages</option>
                 {stages.map((stage) => (
@@ -262,7 +474,7 @@ export default function PipelinePage() {
               <select
                 value={filterOwner}
                 onChange={(e) => setFilterOwner(e.target.value)}
-                className="rounded-md border border-[color:var(--color-outline)] bg-white px-3 py-1 text-sm"
+                className="rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-1 text-sm"
               >
                 <option value="all">All Owners</option>
                 {owners.map((owner) => (
@@ -274,7 +486,7 @@ export default function PipelinePage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="rounded-md border border-[color:var(--color-outline)] bg-white px-3 py-1 text-sm"
+                className="rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-1 text-sm"
               >
                 <option value="amount-desc">Amount (High to Low)</option>
                 <option value="amount-asc">Amount (Low to High)</option>
@@ -302,17 +514,17 @@ export default function PipelinePage() {
             </TableHeader>
             <TableBody>
               {filteredDeals.map((deal) => (
-                <TableRow key={deal.id} onClick={() => setSelectedDeal(deal)} className="cursor-pointer hover:bg-gray-50">
+                <TableRow
+                  key={deal.id}
+                  onClick={() => setSelectedDeal(deal)}
+                  className="cursor-pointer hover:bg-gray-50 dark:hover:bg-neutral-900"
+                >
                   <TableCell className="font-medium">{deal.name}</TableCell>
                   <TableCell>{deal.company}</TableCell>
                   <TableCell>
                     <Badge
                       variant={
-                        deal.stage === "Closed Won"
-                          ? "success"
-                          : deal.stage === "Negotiation"
-                            ? "default"
-                            : "outline"
+                        deal.stage === "Closed Won" ? "success" : deal.stage === "Negotiation" ? "default" : "outline"
                       }
                     >
                       {deal.stage}
@@ -334,11 +546,98 @@ export default function PipelinePage() {
         </CardContent>
       </Card>
 
-      {/* Opportunity Modal */}
+      {/* New Prospect Modal */}
+      {showNewProspectModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setShowNewProspectModal(false)}
+        >
+          <div
+            className="w-full max-w-2xl rounded-lg bg-white dark:bg-neutral-950 p-6 shadow-xl border border-gray-200 dark:border-neutral-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-start justify-between">
+              <div>
+                <h2 className="text-2xl font-semibold text-[color:var(--color-text)]">Add New Prospect</h2>
+                <p className="text-sm text-[color:var(--color-text-muted)]">Create a new opportunity in the pipeline</p>
+              </div>
+              <button onClick={() => setShowNewProspectModal(false)} className="text-gray-400 hover:text-gray-600">
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-[color:var(--color-text)]">Opportunity Name *</label>
+                  <Input
+                    value={newProspect.name}
+                    onChange={(e) => setNewProspect({ ...newProspect, name: e.target.value })}
+                    placeholder="e.g. Enterprise Platform Deal"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-[color:var(--color-text)]">Company *</label>
+                  <Input
+                    value={newProspect.company}
+                    onChange={(e) => setNewProspect({ ...newProspect, company: e.target.value })}
+                    placeholder="e.g. Acme Corp"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-[color:var(--color-text)]">Amount *</label>
+                  <Input
+                    type="number"
+                    value={newProspect.amount}
+                    onChange={(e) => setNewProspect({ ...newProspect, amount: e.target.value })}
+                    placeholder="e.g. 250000"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-[color:var(--color-text)]">Owner</label>
+                  <Input
+                    value={newProspect.owner}
+                    onChange={(e) => setNewProspect({ ...newProspect, owner: e.target.value })}
+                    placeholder="Current User"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-[color:var(--color-text)]">Expected Close Date</label>
+                <Input
+                  type="date"
+                  value={newProspect.closeDate}
+                  onChange={(e) => setNewProspect({ ...newProspect, closeDate: e.target.value })}
+                  className="mt-1"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 border-t border-gray-200 dark:border-neutral-800 pt-4">
+                <Button onClick={() => setShowNewProspectModal(false)} variant="outline" size="sm">
+                  Cancel
+                </Button>
+                <Button onClick={handleAddProspect} variant="primary" size="sm">
+                  Add Prospect
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Opportunity Detail Modal */}
       {selectedDeal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setSelectedDeal(null)}>
           <div
-            className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white p-6 shadow-xl"
+            className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white dark:bg-neutral-950 p-6 shadow-xl border border-gray-200 dark:border-neutral-800"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-start justify-between">
@@ -352,13 +651,10 @@ export default function PipelinePage() {
             </div>
 
             <div className="space-y-6">
-              {/* Deal Details Grid */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-[color:var(--color-text-muted)]">Amount</p>
-                  <p className="text-lg font-semibold text-[color:var(--color-text)]">
-                    ${selectedDeal.amount.toLocaleString()}
-                  </p>
+                  <p className="text-lg font-semibold text-[color:var(--color-text)]">${selectedDeal.amount.toLocaleString()}</p>
                 </div>
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-[color:var(--color-text-muted)]">Probability</p>
@@ -380,13 +676,12 @@ export default function PipelinePage() {
                 </div>
               </div>
 
-              {/* Stage Selection */}
               <div>
                 <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[color:var(--color-text-muted)]">Stage</p>
                 <select
                   value={selectedDeal.stage}
                   onChange={(e) => handleStageChange(selectedDeal.id, e.target.value)}
-                  className="w-full rounded-md border border-[color:var(--color-outline)] bg-white px-3 py-2"
+                  className="w-full rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2"
                 >
                   {stages.map((stage) => (
                     <option key={stage} value={stage}>
@@ -396,7 +691,6 @@ export default function PipelinePage() {
                 </select>
               </div>
 
-              {/* Notes Section */}
               <div>
                 <p className="mb-3 text-xs font-medium uppercase tracking-wide text-[color:var(--color-text-muted)]">
                   Notes ({selectedDeal.notes.length})
@@ -404,7 +698,7 @@ export default function PipelinePage() {
 
                 <div className="mb-4 space-y-3">
                   {selectedDeal.notes.map((note) => (
-                    <div key={note.id} className="rounded-lg border border-[color:var(--color-outline)] bg-gray-50 p-3">
+                    <div key={note.id} className="rounded-lg border border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-neutral-900 p-3">
                       <p className="text-sm text-[color:var(--color-text)]">{note.text}</p>
                       <p className="mt-1 text-xs text-[color:var(--color-text-muted)]">
                         {note.author} •{" "}
@@ -437,8 +731,7 @@ export default function PipelinePage() {
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex justify-end gap-2 border-t pt-4">
+              <div className="flex justify-end gap-2 border-t border-gray-200 dark:border-neutral-800 pt-4">
                 <Button onClick={() => setSelectedDeal(null)} variant="outline" size="sm">
                   Close
                 </Button>
@@ -447,35 +740,6 @@ export default function PipelinePage() {
           </div>
         </div>
       )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Stage velocity</CardTitle>
-          <CardDescription>Average days in each pipeline stage (last 30 days).</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[
-              { stage: "Discovery", days: 12, deals: 8 },
-              { stage: "Qualification", days: 18, deals: 5 },
-              { stage: "Proposal", days: 22, deals: 6 },
-              { stage: "Negotiation", days: 15, deals: 4 },
-            ].map((item) => (
-              <div key={item.stage}>
-                <div className="mb-1 flex items-center justify-between text-sm">
-                  <span className="font-medium text-[color:var(--color-text)]">{item.stage}</span>
-                  <span className="text-[color:var(--color-text-muted)]">
-                    {item.days} days avg • {item.deals} deals
-                  </span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-[color:var(--color-surface-muted)]">
-                  <div className="h-full bg-[color:var(--color-primary)]" style={{ width: `${(item.days / 30) * 100}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 
