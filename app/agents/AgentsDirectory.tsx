@@ -32,6 +32,18 @@ const GPT_AGENTS: GPTAgent[] = [
     url: "https://chatgpt.com/g/g-686b5c0bdcec8191b43a5065baff3de7-revenue-science-advisor?model=gpt-4o",
     category: "Revenue Strategy",
   },
+  {
+    name: "Scholarly Mentor",
+    description: "Academic research assistant and educational mentor. Provides scholarly insights, research guidance, and learning support across various disciplines.",
+    url: "https://chatgpt.com/g/g-686c749ae3488191b09203dc7bc02ab6-scholarly-mentor?model=gpt-4o",
+    category: "Education & Research",
+  },
+  {
+    name: "Revenue Agent Architect",
+    description: "Specialized in designing and architecting revenue agent systems. Helps build automated workflows, agent pipelines, and revenue intelligence frameworks.",
+    url: "https://chatgpt.com/g/g-68e5382ab9f48191bf653cff8d80d0b1-revenue-agent-architect",
+    category: "Agent Design",
+  },
 ];
 
 function computeStatus(enabled: boolean, lastRun?: string) {
