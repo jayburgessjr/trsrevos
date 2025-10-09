@@ -9,13 +9,21 @@ import { isRole, type TrsRole } from '@/lib/auth/rbac'
 const googleClientId = process.env.GOOGLE_CLIENT_ID
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET
 
-if (!googleClientId || !googleClientSecret) {
-  const missing = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'].filter(
-    (key) => !process.env[key]
-  )
-  if (missing.length > 0 && process.env.NODE_ENV === 'production') {
-    throw new Error(`Missing required Google auth environment variables: ${missing.join(', ')}`)
+const missingGoogleConfig = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'].filter(
+  (key) => !process.env[key]
+)
+
+if (missingGoogleConfig.length > 0) {
+  const isProduction = process.env.NODE_ENV === 'production'
+  const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build'
+
+  const message = `Missing required Google auth environment variables: ${missingGoogleConfig.join(', ')}`
+
+  if (isProduction && !isBuildPhase) {
+    throw new Error(message)
   }
+
+  console.warn(message)
 }
 
 export const SESSION_COOKIE_NAME =
