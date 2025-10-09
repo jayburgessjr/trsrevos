@@ -2,6 +2,7 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import AppShell from '@/components/layout/AppShell'
+import Rosie from '@/components/assistant/Rosie'
 
 export const metadata: Metadata = {
   title: 'TRS RevenueOS',
@@ -15,6 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Suspense fallback={<div className="min-h-screen bg-white" />}>
           <AppShell>{children}</AppShell>
         </Suspense>
+        <Rosie />
       </body>
     </html>
   )
