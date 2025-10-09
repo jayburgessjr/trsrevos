@@ -3,7 +3,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/
 import { PageDescription, PageHeader, PageTitle } from '@/ui/page-header'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table'
 import { Button } from '@/ui/button'
-import { TopTabs } from '@/components/kit/TopTabs'
 
 const mockPartners = [
   { id: '1', name: 'Strategic Consulting Group', tier: 'Platinum', status: 'Active', revenue: 485000, deals: 12, enablement: 95, lastActivity: '2025-10-05' },
@@ -23,14 +22,8 @@ const pipelineBySource = [
 const totalPartnerRevenue = mockPartners.reduce((sum, p) => sum + p.revenue, 0)
 const activePartners = mockPartners.filter(p => p.status === 'Active').length
 
-export default function PartnersPage({
-  searchParams,
-}: {
-  searchParams: { tab?: string }
-}) {
-  const tab = searchParams?.tab ?? 'Overview'
-
-  const body = (
+export default function PartnersPage() {
+  return (
     <div className="space-y-6">
       <PageHeader className="rounded-xl border border-[color:var(--color-outline)]">
         <PageTitle>Partners</PageTitle>
@@ -229,16 +222,6 @@ export default function PartnersPage({
           </CardContent>
         </Card>
       </div>
-    </div>
-  )
-
-  return (
-    <div className="min-h-screen bg-white text-black">
-      <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-        <TopTabs />
-        <div className="text-xs text-gray-600">{tab}</div>
-      </div>
-      <main className="max-w-7xl mx-auto p-4">{body}</main>
     </div>
   )
 }

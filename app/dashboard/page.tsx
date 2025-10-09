@@ -1,81 +1,24 @@
 "use client";
 import * as React from "react";
-import { useSearchParams } from "next/navigation";
-import { Bell, Download, Home, Search } from "lucide-react";
-import AdminSidebar from "@/components/nav/AdminSidebar";
-import { TopTabs } from "@/components/kit/TopTabs";
 import { Card } from "@/components/kit/Card";
 import { StatCard } from "@/components/kit/StatCard";
 import { LineChart, AreaChart, BarChart } from "@/components/kit/Charts";
 
-const H = { header: 56, tabs: 44, gap: 12 };
+const H = { gap: 12 };
 
 export default function DashboardPage() {
-  const searchParams = useSearchParams();
-  const tab = searchParams.get("tab") ?? "Overview";
-  return (
-    <div className="w-full min-h-screen bg-white text-black">
-      <header style={{ height: H.header }} className="border-b border-gray-200 flex items-center">
-        <div className="px-3 w-full flex items-center gap-3">
-          <button className="h-9 w-9 rounded-lg border flex items-center justify-center">
-            <Home size={16} />
-          </button>
-          <div className="text-lg font-semibold">Dashboard</div>
-          <div className="ml-4 flex items-center gap-2 h-9 px-2 rounded-lg border flex-1 max-w-xl">
-            <Search size={16} className="text-gray-500" />
-            <input placeholder="Search" className="flex-1 outline-none text-sm bg-transparent" />
-          </div>
-          <button className="h-9 px-3 rounded-lg border flex items-center gap-2 text-sm">
-            <Download size={16} /> Download
-          </button>
-          <button className="h-9 w-9 rounded-lg border flex items-center justify-center">
-            <Bell size={16} />
-          </button>
-          <button className="h-9 w-9 rounded-full bg-gray-200" aria-label="Account" />
-        </div>
-      </header>
-
-      <div className="flex" style={{ height: `calc(100vh - ${H.header}px)` }}>
-        <AdminSidebar />
-        <main className="flex-1" style={{ height: `calc(100vh - ${H.header}px)` }}>
-          <div className="px-3 border-b border-gray-200 flex items-center justify-between" style={{ height: H.tabs }}>
-            <TopTabs />
-            <div className="text-xs text-gray-600">
-              <span className="sr-only">Current tab: {tab}</span>
-              Pick a date
-            </div>
-          </div>
-          <ViewportGrid />
-        </main>
-      </div>
-    </div>
-  );
+  return <ViewportGrid />;
 }
 
 function ViewportGrid() {
-  const [vh, setVh] = React.useState(800);
-
-  React.useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-    const update = () => setVh(window.innerHeight);
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
-
-  const contentH = (vh ?? 800) - H.header - H.tabs - H.gap * 2;
-
   return (
-    <div className="p-3" style={{ height: contentH }}>
+    <div className="p-3">
       <div
         className="grid"
         style={{
           gridTemplateColumns: "repeat(12, minmax(0,1fr))",
           gridTemplateRows: "110px 200px 220px",
           gap: H.gap,
-          height: "100%",
         }}
       >
         <div className="col-span-3">

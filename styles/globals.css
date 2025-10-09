@@ -3,57 +3,27 @@
 @tailwind utilities;
 
 :root {
-  --trs-accent: #ff6a00;
-  --color-background: #ffffff;
+  --color-background: #fafafa;
   --color-surface: #ffffff;
-  --color-surface-muted: #f9fafb;
   --color-text: #111827;
   --color-text-muted: #6b7280;
   --color-border: #e5e7eb;
-  --color-outline: #d1d5db;
-  --color-accent: #ff6a00;
-  --color-accent-muted: #ff8533;
-  --color-primary: #ff6a00;
   --color-positive: #16a34a;
   --color-caution: #f59e0b;
   --color-critical: #ef4444;
-  --color-negative: #ef4444;
-  --trs-green: var(--color-positive);
-  --trs-yellow: var(--color-caution);
-  --trs-red: var(--color-critical);
-}
-
-.dark {
-  --color-background: #0a0a0a;
-  --color-surface: #0a0a0a;
-  --color-surface-muted: #171717;
-  --color-text: #fafafa;
-  --color-text-muted: #a3a3a3;
-  --color-border: #262626;
-  --color-outline: #404040;
 }
 
 body {
-  background: var(--color-background);
-  color: var(--color-text);
   font-family: 'Inter', 'SF Pro Text', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   font-feature-settings: 'liga' 1, 'calt' 1;
-  min-height: 100vh;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-a:hover {
-  color: var(--color-accent);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
-  border-color: var(--color-outline);
+  box-sizing: border-box;
 }
 
 ::selection {
-  background: rgba(255, 106, 0, 0.16);
+  background: rgba(17, 24, 39, 0.1);
 }

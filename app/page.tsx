@@ -1,8 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
-import { TopTabs } from "@/components/kit/TopTabs"
 import { Badge } from "@/ui/badge"
 import { Button } from "@/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/ui/card"
@@ -17,8 +15,6 @@ import { eventsToday } from "@/core/events/store"
 import { DailyPlan } from "@/core/dailyPlan/types"
 
 export default function HomePage() {
-  const searchParams = useSearchParams()
-  const tab = searchParams.get("tab") ?? "Overview"
   const [plan, setPlan] = useState<DailyPlan | null>(null)
   const [recap, setRecap] = useState<any>(null)
   const [loading, setLoading] = useState(false)
@@ -103,7 +99,7 @@ export default function HomePage() {
     return () => clearInterval(interval)
   }, [newsItems.length])
 
-  const body = (
+  return (
     <div className="relative space-y-8 p-6">
       {/* Hero background */}
       <div className="absolute inset-x-0 top-0 -z-10 h-[400px] overflow-hidden rounded-3xl">
@@ -350,21 +346,6 @@ export default function HomePage() {
           </Card>
         </div>
       </div>
-    </div>
-  )
-
-  return (
-    <div className="min-h-screen bg-white text-black">
-      <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-        <TopTabs />
-        <div className="flex items-center gap-2">
-          <span className="sr-only">Current tab: {tab}</span>
-          <Link href="/dashboard" className="text-xs px-3 py-1.5 rounded-md border">
-            Open dashboard
-          </Link>
-        </div>
-      </div>
-      <main className="max-w-7xl mx-auto p-4">{body}</main>
     </div>
   )
 }

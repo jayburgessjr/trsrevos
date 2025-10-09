@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useSearchParams } from "next/navigation"
 import { PageDescription, PageHeader, PageTitle } from "@/ui/page-header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/ui/card"
 import { Badge } from "@/ui/badge"
@@ -9,7 +8,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/ui/button"
 import { Input } from "@/ui/input"
 import { emitEvent } from "@/core/events/emit"
-import { TopTabs } from "@/components/kit/TopTabs"
 
 type Deal = {
   id: string
@@ -90,8 +88,6 @@ const initialDeals: Deal[] = [
 const stages = ["Discovery", "Qualification", "Proposal", "Negotiation", "Closed Won", "Closed Lost"]
 
 export default function PipelinePage() {
-  const searchParams = useSearchParams()
-  const tab = searchParams.get("tab") ?? "Overview"
   const [deals, setDeals] = useState<Deal[]>(initialDeals)
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null)
   const [newNote, setNewNote] = useState("")
@@ -740,16 +736,6 @@ export default function PipelinePage() {
           </div>
         </div>
       )}
-    </div>
-  )
-
-  return (
-    <div className="min-h-screen bg-white text-black">
-      <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-        <TopTabs />
-        <div className="text-xs text-gray-600">{tab}</div>
-      </div>
-      <main className="max-w-7xl mx-auto p-4">{body}</main>
     </div>
   )
 }
