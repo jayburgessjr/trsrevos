@@ -5,6 +5,18 @@ import { usePathname, useSearchParams } from "next/navigation";
 
 import { Card } from "@/components/kit/Card";
 import { resolveTabs } from "@/lib/tabs";
+import type { RevOSPhase } from "@/core/clients/types";
+
+export type ProjectRowData = {
+  name: string;
+  clientId: string;
+  clientName: string;
+  owner: string;
+  status: RevOSPhase;
+  progress: number;
+  dueDate: string;
+  health: "green" | "yellow" | "red";
+};
 
 const overviewProjects = [
   {

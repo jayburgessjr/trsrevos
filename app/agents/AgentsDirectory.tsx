@@ -55,7 +55,7 @@ export default function AgentsDirectory({ agents }: { agents: AgentRecord[] }) {
     });
   }, [agents, query, statusFilter, statusOverrides]);
 
-  const handleToggle = (key: string) => {
+  const handleToggle = (key: AgentMeta["key"]) => {
     setStatusOverrides((prev) => {
       const next = new Map(prev);
       const current = prev.get(key) ?? true;
