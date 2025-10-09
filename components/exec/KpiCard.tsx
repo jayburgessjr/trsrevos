@@ -1,0 +1,12 @@
+"use client";
+
+export default function KpiCard({ label, value, hint, onClick }: { label:string; value:string; hint?:string; onClick?:()=>void }) {
+  return (
+    <button onClick={onClick}
+      className="rounded-xl border border-gray-200 bg-white p-3 text-left hover:bg-gray-50 transition-colors">
+      <div className="text-[11px] text-gray-500">{label}</div>
+      <div className="text-[22px] font-semibold leading-tight mt-1 text-black">{value}</div>
+      {hint ? <div className="text-[11px] text-gray-500 mt-1">{hint}</div> : null}
+    </button>
+  );
+}

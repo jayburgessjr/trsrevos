@@ -213,7 +213,7 @@ export default function PipelinePage() {
     return close.getMonth() === now.getMonth() && close.getFullYear() === now.getFullYear()
   }).length
 
-  const body = (
+  return (
     <div className="space-y-6 p-6">
       <PageHeader className="rounded-xl border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-950">
         <div className="flex items-center justify-between">
