@@ -2,11 +2,11 @@
 
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { PAGE_TABS } from "@/lib/tabs";
+import { resolveTabs } from "@/lib/tabs";
 
 export function TopTabs({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const pathname = usePathname();
-  const tabs = PAGE_TABS[pathname] || ["Overview"];
+  const tabs = resolveTabs(pathname);
   const active = tabs.includes(value) ? value : tabs[0];
 
   return (

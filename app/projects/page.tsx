@@ -1,253 +1,266 @@
-import { listClients } from '@/core/clients/store'
-import { phaseBadgeClasses, REVOS_PHASES } from '@/core/clients/constants'
-import type { RevosPhase } from '@/core/clients/types'
-import { Badge } from '@/ui/badge'
-import { Button } from '@/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card'
-import { PageDescription, PageHeader, PageTitle } from '@/ui/page-header'
-import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/ui/table'
+"use client";
 
-import { ProjectRow } from './project-row'
+import { useMemo } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 
-export type ProjectRowData = {
-  id: string
-  name: string
-  clientId: string
-  clientName: string
-  owner: string
-  status: RevosPhase
-  progress: number
-  dueDate: string
-  health: 'green' | 'yellow' | 'red'
-  clientOwner?: string
-}
+import { Card } from "@/components/kit/Card";
+import { resolveTabs } from "@/lib/tabs";
 
-type MockProject = {
-  id: string
-  name: string
-  clientId: string
-  clientName: string
-  owner: string
-  status?: string
-  dueDate: string
-  progress: number
-  health: 'green' | 'yellow' | 'red'
-}
-
-const mockProjects: MockProject[] = [
+const overviewProjects = [
   {
-    id: '1',
-    name: 'Q4 Revenue Optimization Workshop',
-    clientId: 'acme',
-    clientName: 'ACME Corp',
-    owner: 'Sarah Chen',
-    status: 'In Progress',
-    dueDate: '2025-10-30',
-    progress: 65,
-    health: 'green',
+    id: "revos",
+    name: "RevenueOS Expansion",
+    stage: "Execution",
+    owner: "Jay Burgess",
+    health: "Stable",
+    progress: 68,
+    due: "Nov 12",
   },
   {
-    id: '2',
-    name: 'Clarity Audit & Scorecard',
-    clientId: 'acme',
-    clientName: 'ACME Corp',
-    owner: 'Mike Johnson',
-    status: 'In Progress',
-    dueDate: '2025-11-05',
-    progress: 40,
-    health: 'yellow',
+    id: "reggie",
+    name: "Reggie AI Workbench",
+    stage: "Architecture",
+    owner: "Morgan Lee",
+    health: "Watching",
+    progress: 52,
+    due: "Nov 6",
   },
   {
-    id: '3',
-    name: 'Partner Enablement Package',
-    clientId: 'acme',
-    clientName: 'ACME Corp',
-    owner: 'Alex Rivera',
-    status: 'Not Started',
-    dueDate: '2025-11-15',
-    progress: 0,
-    health: 'green',
+    id: "ops",
+    name: "Delivery Ops Automation",
+    stage: "Pilot",
+    owner: "Sarah Trent",
+    health: "At Risk",
+    progress: 34,
+    due: "Oct 28",
+  },
+];
+
+const activeStreams = [
+  {
+    title: "This Week",
+    items: [
+      {
+        task: "Finalize compounding forecast",
+        owner: "Morgan",
+        due: "Oct 18",
+        status: "On track",
+      },
+      {
+        task: "Align ACME rollout playbook",
+        owner: "Jay",
+        due: "Oct 19",
+        status: "Review",
+      },
+      {
+        task: "Partner launch readiness",
+        owner: "Riya",
+        due: "Oct 21",
+        status: "Blocked",
+      },
+    ],
   },
   {
-    id: '4',
-    name: 'ROI Analysis Report',
-    clientId: 'acme',
-    clientName: 'ACME Corp',
-    owner: 'Sarah Chen',
-    status: 'At Risk',
-    dueDate: '2025-10-22',
-    progress: 25,
-    health: 'red',
+    title: "Risks",
+    items: [
+      {
+        task: "Billing integration QA",
+        owner: "Noah",
+        due: "Oct 20",
+        status: "Need escalation",
+      },
+      {
+        task: "Security questionnaire",
+        owner: "Amelia",
+        due: "Oct 24",
+        status: "Waiting on client",
+      },
+    ],
   },
-  {
-    id: '5',
-    name: 'Customer Success Playbook',
-    clientId: 'acme',
-    clientName: 'ACME Corp',
-    owner: 'Mike Johnson',
-    status: 'Complete',
-    dueDate: '2025-09-28',
-    progress: 100,
-    health: 'green',
-  },
-  {
-    id: '6',
-    name: 'Pipeline Review Session',
-    clientId: 'acme',
-    clientName: 'ACME Corp',
-    owner: 'Alex Rivera',
-    status: 'In Progress',
-    dueDate: '2025-10-25',
-    progress: 80,
-    health: 'green',
-  },
-]
+];
 
-const phaseOrder: RevosPhase[] = REVOS_PHASES
+const forecastMetrics = [
+  { label: "Q4 ARR Forecast", value: "$3.8M", context: "+6.2% vs plan" },
+  { label: "Projected Completion", value: "78%", context: "Across 12 tracks" },
+  { label: "Budget Utilization", value: "64%", context: "$420k of $650k" },
+];
 
-export default async function ProjectsPage({
-  searchParams,
-}: {
-  searchParams: { tab?: string }
-}) {
-  const tab = searchParams?.tab ?? 'Overview'
-  const clients = listClients()
-  const clientsById = new Map(clients.map((client) => [client.id, client]))
+const forecastTimeline = [
+  { month: "Oct", arr: "$940k", milestone: "RevenueOS rollout" },
+  { month: "Nov", arr: "$1.25M", milestone: "Compounding launch" },
+  { month: "Dec", arr: "$1.6M", milestone: "Partner expansion" },
+];
 
-  const projects: ProjectRowData[] = mockProjects.map((project) => {
-    const client = clientsById.get(project.clientId)
-    return {
-      id: project.id,
-      name: project.name,
-      clientId: project.clientId,
-      clientName: client?.name ?? project.clientName,
-      owner: project.owner ?? client?.owner ?? 'Unassigned',
-      status: client?.phase ?? 'Discovery',
-      progress: project.progress,
-      dueDate: project.dueDate,
-      health: project.health,
-      clientOwner: client?.owner,
-    }
-  })
+const agentPrompts = [
+  "Where are we trending behind schedule?",
+  "Summarize project risks for tomorrow's QBR",
+  "What is the next milestone for RevenueOS expansion?",
+];
 
-  const phaseCounts = phaseOrder.reduce<Record<RevosPhase, number>>((acc, phase) => {
-    acc[phase] = clients.filter((client) => client.phase === phase).length
-    return acc
-  }, Object.fromEntries(phaseOrder.map((phase) => [phase, 0])) as Record<RevosPhase, number>)
-
-  const body = (
-    <div className="space-y-6">
-      <PageHeader className="rounded-xl border border-[color:var(--color-outline)]">
-        <PageTitle>Projects</PageTitle>
-        <PageDescription>Coordinate deliverables, track progress, and manage client engagements.</PageDescription>
-        <div className="flex flex-wrap items-center gap-2 text-sm">
-          {phaseOrder.map((phase) => (
-            <Badge key={phase} variant="outline" className={phaseBadgeClasses[phase]}>
-              {phaseCounts[phase]} {phase}
-            </Badge>
-          ))}
-        </div>
-      </PageHeader>
-
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-5">
-        {phaseOrder.map((phase) => (
-          <Card key={phase}>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-[color:var(--color-text-muted)]">{phase}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-semibold text-[color:var(--color-text)]">{phaseCounts[phase]}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <Card>
-        <CardHeader>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <CardTitle>Active engagements</CardTitle>
-              <CardDescription>All client deliverables with owners, timelines, and health status.</CardDescription>
-            </div>
-            <Button variant="outline" size="sm">
-              Add project
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Project</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Owner</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Progress</TableHead>
-                <TableHead>Due Date</TableHead>
-                <TableHead>Health</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {projects.map((project) => (
-                <ProjectRow key={project.id} project={project} />
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Risks &amp; blockers</CardTitle>
-          <CardDescription>Projects requiring immediate attention based on SLA adherence and status.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {projects
-              .filter((project) => project.health !== 'green')
-              .map((project) => (
-                <div
-                  key={project.id}
-                  className="rounded-lg border border-[color:var(--color-outline)] bg-white p-4"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <p className="font-medium text-[color:var(--color-text)]">{project.name}</p>
-                      <p className="mt-1 text-sm text-[color:var(--color-text-muted)]">
-                        {project.clientName} • Owner: {project.owner}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className={phaseBadgeClasses[project.status]}>
-                        {project.status}
-                      </Badge>
-                    </div>
-                  </div>
-                  <p className="mt-2 text-sm text-[color:var(--color-text-muted)]">
-                    Due: {new Date(project.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} •{' '}
-                    {project.progress}% complete
-                  </p>
-                </div>
-              ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  )
+export default function ProjectsPage() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const tabs = useMemo(() => resolveTabs(pathname), [pathname]);
+  const activeTab = useMemo(() => {
+    const current = searchParams.get("tab");
+    return current && tabs.includes(current) ? current : tabs[0];
+  }, [searchParams, tabs]);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
-      <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-black">Projects</h1>
-          <p className="text-sm text-gray-500">Operational visibility across active delivery tracks.</p>
-          <div className="text-xs text-gray-500">Active view: {tab}</div>
-        </div>
-        <form action="#">
-          <button className="rounded-md border border-gray-200 bg-white px-3 py-2 text-xs text-black">New Project</button>
-        </form>
+    <div className="w-full px-6 py-6 space-y-6">
+      <header className="flex flex-col gap-2">
+        <h1 className="text-2xl font-semibold text-black">Projects Control Center</h1>
+        <p className="text-sm text-gray-600">
+          Coordinate delivery motions, surface risk, and keep stakeholders aligned across TRS programs.
+        </p>
       </header>
-      {body}
+
+      {activeTab === "Overview" && (
+        <div className="space-y-4">
+          <Card className="p-4">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <div className="text-sm font-semibold text-black">Live Programs</div>
+                <p className="text-xs text-gray-600">Snapshot of core initiatives and momentum.</p>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="rounded-lg bg-gray-50 p-3">
+                  <div className="text-[11px] uppercase tracking-wide text-gray-500">Active Tracks</div>
+                  <div className="mt-1 text-xl font-semibold text-black">12</div>
+                  <div className="text-[11px] text-emerald-600">+2 vs last week</div>
+                </div>
+                <div className="rounded-lg bg-gray-50 p-3">
+                  <div className="text-[11px] uppercase tracking-wide text-gray-500">On Time</div>
+                  <div className="mt-1 text-xl font-semibold text-black">78%</div>
+                  <div className="text-[11px] text-emerald-600">SLA window stable</div>
+                </div>
+                <div className="rounded-lg bg-gray-50 p-3">
+                  <div className="text-[11px] uppercase tracking-wide text-gray-500">At Risk</div>
+                  <div className="mt-1 text-xl font-semibold text-black">3</div>
+                  <div className="text-[11px] text-amber-600">Requires action</div>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 overflow-hidden rounded-lg border border-gray-200">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 text-left text-[12px] uppercase tracking-wide text-gray-500">
+                  <tr>
+                    <th className="px-3 py-2 font-medium">Project</th>
+                    <th className="px-3 py-2 font-medium">Stage</th>
+                    <th className="px-3 py-2 font-medium">Owner</th>
+                    <th className="px-3 py-2 font-medium">Health</th>
+                    <th className="px-3 py-2 font-medium">Progress</th>
+                    <th className="px-3 py-2 font-medium">Due</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {overviewProjects.map((project) => (
+                    <tr key={project.id} className="hover:bg-gray-50">
+                      <td className="px-3 py-2 font-medium text-black">{project.name}</td>
+                      <td className="px-3 py-2 text-gray-700">{project.stage}</td>
+                      <td className="px-3 py-2 text-gray-700">{project.owner}</td>
+                      <td
+                        className={`px-3 py-2 text-sm ${
+                          project.health === "Stable"
+                            ? "text-emerald-600"
+                            : project.health === "Watching"
+                            ? "text-amber-600"
+                            : "text-rose-600"
+                        }`}
+                      >
+                        {project.health}
+                      </td>
+                      <td className="px-3 py-2 text-gray-700">{project.progress}%</td>
+                      <td className="px-3 py-2 text-gray-700">{project.due}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {activeTab === "Active" && (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {activeStreams.map((stream) => (
+            <Card key={stream.title} className="p-4">
+              <div className="text-sm font-semibold text-black">{stream.title}</div>
+              <div className="mt-3 space-y-3">
+                {stream.items.map((item) => (
+                  <div key={`${stream.title}-${item.task}`} className="rounded-lg border border-gray-200 p-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="text-sm font-medium text-black">{item.task}</div>
+                        <div className="text-[12px] text-gray-600">
+                          Owner: {item.owner} • Due {item.due}
+                        </div>
+                      </div>
+                      <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                        {item.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {activeTab === "Forecast" && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {forecastMetrics.map((metric) => (
+              <Card key={metric.label} className="p-4">
+                <div className="text-[12px] uppercase tracking-wide text-gray-500">{metric.label}</div>
+                <div className="mt-2 text-2xl font-semibold text-black">{metric.value}</div>
+                <div className="text-[12px] text-gray-600">{metric.context}</div>
+              </Card>
+            ))}
+          </div>
+          <Card className="p-4">
+            <div className="text-sm font-semibold text-black">Quarterly outlook</div>
+            <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
+              {forecastTimeline.map((point) => (
+                <div key={point.month} className="rounded-lg border border-gray-200 p-3">
+                  <div className="text-[11px] uppercase tracking-wide text-gray-500">{point.month}</div>
+                  <div className="mt-1 text-lg font-semibold text-black">{point.arr}</div>
+                  <div className="text-[12px] text-gray-600">{point.milestone}</div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {activeTab === "Agent" && (
+        <Card className="p-4">
+          <div className="text-sm font-semibold text-black">Project Intelligence Agent</div>
+          <p className="mt-2 text-sm text-gray-600">
+            Ask the agent to analyze timelines, forecast budget impact, or surface risk across delivery tracks.
+          </p>
+          <div className="mt-4 space-y-3">
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+              Prompt workspace placeholder
+            </div>
+            <div>
+              <div className="text-[12px] uppercase tracking-wide text-gray-500">Quick prompts</div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {agentPrompts.map((prompt) => (
+                  <button
+                    key={prompt}
+                    className="rounded-full border border-gray-300 px-3 py-1 text-[12px] text-gray-700 transition hover:border-black hover:text-black"
+                    type="button"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
     </div>
-  )
+  );
 }

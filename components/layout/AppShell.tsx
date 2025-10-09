@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { TopTabs } from "@/components/kit/TopTabs"
 import GlobalSidebar from "@/components/nav/GlobalSidebar"
 import GlobalHeader from "@/components/nav/GlobalHeader"
-import { PAGE_TABS } from "@/lib/tabs"
+import { resolveTabs } from "@/lib/tabs"
 
 export default function AppShell({ children, showTabs = true }: { children: React.ReactNode; showTabs?: boolean }) {
   const TABS_H = 44
@@ -13,7 +13,7 @@ export default function AppShell({ children, showTabs = true }: { children: Reac
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const tabs = useMemo(() => PAGE_TABS[pathname] || ["Overview"], [pathname])
+  const tabs = useMemo(() => resolveTabs(pathname), [pathname])
   const activeTab = useMemo(() => {
     const current = searchParams.get("tab") || tabs[0]
     return tabs.includes(current) ? current : tabs[0]
