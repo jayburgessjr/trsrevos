@@ -1,20 +1,38 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 import { Card } from "@/components/kit/Card";
 import type { AgentMeta } from "@/core/agents/types";
+import { resolveTabs } from "@/lib/tabs";
 
 type AgentStatus = { enabled: boolean; lastRun?: string; lastSummary?: string; impact$?: number };
 
 type AgentRecord = { meta: AgentMeta; status: AgentStatus };
+
+type GPTAgent = {
+  name: string;
+  description: string;
+  url: string;
+  category: string;
+};
 
 const STATUS_TONES: Record<string, { badge: string }> = {
   Active: { badge: "bg-emerald-100 text-emerald-700" },
   Idle: { badge: "bg-amber-100 text-amber-700" },
   Offline: { badge: "bg-gray-200 text-gray-700" },
 };
+
+const GPT_AGENTS: GPTAgent[] = [
+  {
+    name: "Revenue Science Advisor",
+    description: "Expert guidance on revenue operations, pricing strategy, and growth frameworks. Helps analyze deals, optimize pricing, and build predictable revenue systems.",
+    url: "https://chatgpt.com/g/g-686b5c0bdcec8191b43a5065baff3de7-revenue-science-advisor?model=gpt-4o",
+    category: "Revenue Strategy",
+  },
+];
 
 function computeStatus(enabled: boolean, lastRun?: string) {
   if (!enabled) {
@@ -24,6 +42,14 @@ function computeStatus(enabled: boolean, lastRun?: string) {
 }
 
 export default function AgentsDirectory({ agents }: { agents: AgentRecord[] }) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const tabs = useMemo(() => resolveTabs(pathname), [pathname]);
+  const activeTab = useMemo(() => {
+    const current = searchParams.get("tab");
+    return current && tabs.includes(current) ? current : tabs[0];
+  }, [searchParams, tabs]);
+
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [statusOverrides, setStatusOverrides] = useState(() =>
@@ -40,6 +66,12 @@ export default function AgentsDirectory({ agents }: { agents: AgentRecord[] }) {
     return agents.filter((agent) => {
       const enabled = statusOverrides.get(agent.meta.key) ?? agent.status.enabled;
       const status = computeStatus(enabled, agent.status.lastRun);
+
+      // Filter by tab
+      const matchesTab =
+        activeTab === "All" ||
+        (activeTab === "GPT Agents" ? false : agent.meta.category === activeTab);
+
       const matchesQuery =
         !normalizedQuery ||
         agent.meta.name.toLowerCase().includes(normalizedQuery) ||
@@ -51,9 +83,9 @@ export default function AgentsDirectory({ agents }: { agents: AgentRecord[] }) {
         (statusFilter === "idle" && status === "Idle") ||
         (statusFilter === "offline" && status === "Offline");
 
-      return matchesQuery && matchesFilter;
+      return matchesTab && matchesQuery && matchesFilter;
     });
-  }, [agents, query, statusFilter, statusOverrides]);
+  }, [agents, query, statusFilter, statusOverrides, activeTab]);
 
   const handleToggle = (key: AgentMeta["key"]) => {
     setStatusOverrides((prev) => {
@@ -73,27 +105,61 @@ export default function AgentsDirectory({ agents }: { agents: AgentRecord[] }) {
             Manage intelligence modules powering RevenueOS workflows.
           </p>
         </div>
-        <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-center">
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search agents..."
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10 md:w-64"
-          />
-          <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10 md:w-40"
-          >
-            <option value="all">All statuses</option>
-            <option value="active">Active</option>
-            <option value="idle">Idle</option>
-            <option value="offline">Offline</option>
-          </select>
-        </div>
+        {activeTab !== "GPT Agents" && (
+          <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-center">
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search agents..."
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10 md:w-64"
+            />
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10 md:w-40"
+            >
+              <option value="all">All statuses</option>
+              <option value="active">Active</option>
+              <option value="idle">Idle</option>
+              <option value="offline">Offline</option>
+            </select>
+          </div>
+        )}
       </header>
 
-      {filteredAgents.length === 0 ? (
+      {activeTab === "GPT Agents" ? (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+          {GPT_AGENTS.map((gptAgent) => (
+            <Card key={gptAgent.name} className="flex h-full flex-col p-4 transition hover:shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-semibold text-black">{gptAgent.name}</h2>
+                  <p className="mt-1 text-xs leading-relaxed text-gray-600">{gptAgent.description}</p>
+                </div>
+                <span className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide text-purple-700">
+                  GPT
+                </span>
+              </div>
+
+              <div className="mt-4 text-xs">
+                <span className="font-medium text-gray-700">Category: </span>
+                <span className="text-gray-600">{gptAgent.category}</span>
+              </div>
+
+              <div className="mt-4 flex flex-col gap-2">
+                <a
+                  href={gptAgent.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-black transition hover:border-black hover:bg-gray-50"
+                >
+                  Open in ChatGPT
+                </a>
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : filteredAgents.length === 0 ? (
         <Card className="border-dashed bg-gray-50 p-6 text-center text-sm text-gray-600">
           No agents match the current filters.
         </Card>

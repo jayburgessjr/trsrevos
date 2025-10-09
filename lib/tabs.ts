@@ -5,6 +5,7 @@ export const PAGE_TABS: Record<string, string[]> = {
   "/morning": ["Today", "This Week", "Focus Blocks", "Risks"],
   "/projects": ["Overview", "Active", "Forecast", "Agent"],
   "/content": ["Pipeline", "Ideas", "Scheduled", "Performance"],
+  "/agents": ["All", "Projects", "Content", "Clients", "GPT Agents"],
   "/clients": ["Accounts", "Health", "Churn", "QBR", "History"],
   "/clients/[id]": ["Overview", "RevenueOS", "Data", "Strategy", "Results"],
 };

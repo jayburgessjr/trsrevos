@@ -1,0 +1,130 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+type NewsItem = {
+  id: string;
+  type: "World" | "Sports" | "Financial";
+  title: string;
+  source: string;
+  time: string;
+};
+
+const newsItems: NewsItem[] = [
+  { id: "1", type: "Financial", title: "Fed Signals Rate Cuts Could Begin in Q2 2025", source: "Bloomberg", time: "2h ago" },
+  { id: "2", type: "World", title: "G20 Summit Focuses on Climate and Trade Agreements", source: "Reuters", time: "3h ago" },
+  { id: "3", type: "Sports", title: "NBA Finals: Lakers Lead Series 3-2", source: "ESPN", time: "4h ago" },
+  { id: "4", type: "Financial", title: "Tech Stocks Rally on Strong Q1 Earnings Reports", source: "CNBC", time: "5h ago" },
+  { id: "5", type: "World", title: "UN Announces New Global Health Initiative", source: "BBC", time: "6h ago" },
+  { id: "6", type: "Sports", title: "Wimbledon: Defending Champion Advances to Semifinals", source: "Sky Sports", time: "7h ago" },
+  { id: "7", type: "Financial", title: "Oil Prices Drop 3% on OPEC Production News", source: "Financial Times", time: "8h ago" },
+  { id: "8", type: "World", title: "EU Parliament Passes New Digital Privacy Laws", source: "Associated Press", time: "9h ago" },
+  { id: "9", type: "Sports", title: "Olympic Committee Announces 2028 Los Angeles Updates", source: "Olympics.com", time: "10h ago" },
+  { id: "10", type: "Financial", title: "Bitcoin Surges Past $65K on Institutional Investment", source: "CoinDesk", time: "11h ago" },
+];
+
+export default function NewsFeed() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [filter, setFilter] = useState<"All" | "World" | "Sports" | "Financial">("All");
+
+  const filteredNews = filter === "All"
+    ? newsItems
+    : newsItems.filter(item => item.type === filter);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % filteredNews.length);
+    }, 6000);
+
+    return () => clearInterval(interval);
+  }, [filteredNews.length]);
+
+  const currentNews = filteredNews[currentIndex];
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case "World":
+        return "bg-blue-100 text-blue-700";
+      case "Sports":
+        return "bg-green-100 text-green-700";
+      case "Financial":
+        return "bg-amber-100 text-amber-700";
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case "World":
+        return "🌍";
+      case "Sports":
+        return "⚽";
+      case "Financial":
+        return "💰";
+      default:
+        return "•";
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-3">
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-sm font-semibold text-black">News Feed</div>
+        <div className="flex gap-1">
+          {["All", "World", "Sports", "Financial"].map((cat) => (
+            <button
+              key={cat}
+              onClick={() => {
+                setFilter(cat as typeof filter);
+                setCurrentIndex(0);
+              }}
+              className={`text-[10px] px-2 py-0.5 rounded-md transition-colors ${
+                filter === cat
+                  ? "bg-black text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="min-h-[70px] flex flex-col justify-center">
+        <div className="flex items-start gap-2">
+          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${getTypeColor(currentNews.type)}`}>
+            <span>{getTypeIcon(currentNews.type)}</span>
+            <span>{currentNews.type}</span>
+          </span>
+          <div className="flex-1">
+            <div className="text-[13px] text-black leading-relaxed font-medium">{currentNews.title}</div>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-[10px] text-gray-600">{currentNews.source}</span>
+              <span className="text-[10px] text-gray-400">•</span>
+              <span className="text-[10px] text-gray-500">{currentNews.time}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+        <div className="flex gap-1">
+          {filteredNews.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentIndex(index)}
+              className={`h-1 rounded-full transition-all ${
+                index === currentIndex ? "w-4 bg-black" : "w-1 bg-gray-300"
+              }`}
+              aria-label={`Go to news item ${index + 1}`}
+            />
+          ))}
+        </div>
+        <div className="text-[10px] text-gray-500">
+          {currentIndex + 1} / {filteredNews.length}
+        </div>
+      </div>
+    </div>
+  );
+}
