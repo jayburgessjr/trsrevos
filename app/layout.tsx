@@ -4,6 +4,7 @@ import * as React from 'react'
 import { AppShell, NavItem } from './_components/app-shell'
 import { CommandPaletteProvider } from '@/ui/command-palette'
 import { ToastViewport } from '@/ui/toast'
+import { ChatbotBubble } from '@/ui/chatbot-bubble'
 import { getSession } from '@/lib/session'
 
 export const metadata: Metadata = {
@@ -34,6 +35,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             {children}
           </AppShell>
           <ToastViewport />
+          <ChatbotBubble />
         </CommandPaletteProvider>
       </body>
     </html>

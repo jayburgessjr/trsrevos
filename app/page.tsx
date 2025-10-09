@@ -7,6 +7,10 @@ import { FocusTimer } from '@/ui/focus-timer'
 import { Input } from '@/ui/input'
 import { PageDescription, PageHeader, PageTitle } from '@/ui/page-header'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/ui/tabs'
+import { KPIStanding } from '@/ui/kpi-standing'
+import { MotivationalQuote } from '@/ui/motivational-quote'
+import { NewsTicker } from '@/ui/news-ticker'
+import Link from 'next/link'
 
 export default async function HomePage() {
   const session = await getSession()
@@ -15,11 +19,24 @@ export default async function HomePage() {
   const plan = await getTodayPlan(user.id, today)
 
   return (
-    <div className="space-y-8">
-      <PageHeader className="rounded-xl border border-[color:var(--color-outline)]">
+    <div className="relative space-y-8">
+      {/* Hero background with Caribbean water image */}
+      <div className="absolute inset-x-0 top-0 -z-10 h-[400px] overflow-hidden rounded-3xl">
+        <div
+          className="h-full w-full bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600"
+          style={{
+            backgroundImage: 'linear-gradient(135deg, rgba(6, 182, 212, 0.9) 0%, rgba(59, 130, 246, 0.85) 50%, rgba(37, 99, 235, 0.9) 100%)',
+          }}
+        />
+        <div className="absolute inset-0 bg-black/20" />
+      </div>
+      {/* News ticker at top */}
+      <NewsTicker />
+
+      <PageHeader className="relative rounded-xl border border-white/30 bg-white/95 shadow-lg backdrop-blur-sm">
         <div className="flex flex-col gap-3">
-          <PageTitle>Morning briefing</PageTitle>
-          <PageDescription>
+          <PageTitle className="text-[color:var(--color-text)]">Morning briefing</PageTitle>
+          <PageDescription className="text-[color:var(--color-text)]">
             Welcome back, {user.name.split(' ')[0]}. This workspace will evolve into your single source of truth for pipeline
             confidence, customer health, and capital efficiency.
           </PageDescription>
@@ -33,6 +50,12 @@ export default async function HomePage() {
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[2fr,1fr]">
         <div className="space-y-6">
+          {/* KPI Standing card */}
+          <KPIStanding />
+
+          {/* Motivational quote */}
+          <MotivationalQuote />
+
           <Card>
             <CardHeader>
               <CardTitle>Yesterday recap</CardTitle>
@@ -58,6 +81,11 @@ export default async function HomePage() {
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Link href="/plan">
+                    <Button variant="outline" size="sm">
+                      Open module
+                    </Button>
+                  </Link>
                   <form action={computeTodayPlanAction}>
                     <input type="hidden" name="userId" value={user.id} />
                     <Button type="submit" variant="primary" size="sm">
