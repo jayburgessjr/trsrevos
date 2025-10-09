@@ -6,6 +6,7 @@ import { Button } from '@/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card'
 import { PageDescription, PageHeader, PageTitle } from '@/ui/page-header'
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/ui/table'
+import { TopTabs } from '@/components/kit/TopTabs'
 
 import { ProjectRow } from './project-row'
 
@@ -105,7 +106,12 @@ const mockProjects: MockProject[] = [
 
 const phaseOrder: RevosPhase[] = REVOS_PHASES
 
-export default async function ProjectsPage() {
+export default async function ProjectsPage({
+  searchParams,
+}: {
+  searchParams: { tab?: string }
+}) {
+  const tab = searchParams?.tab ?? 'Overview'
   const clients = listClients()
   const clientsById = new Map(clients.map((client) => [client.id, client]))
 
@@ -130,7 +136,7 @@ export default async function ProjectsPage() {
     return acc
   }, Object.fromEntries(phaseOrder.map((phase) => [phase, 0])) as Record<RevosPhase, number>)
 
-  return (
+  const body = (
     <div className="space-y-6">
       <PageHeader className="rounded-xl border border-[color:var(--color-outline)]">
         <PageTitle>Projects</PageTitle>
@@ -227,6 +233,16 @@ export default async function ProjectsPage() {
           </div>
         </CardContent>
       </Card>
+    </div>
+  )
+
+  return (
+    <div className="min-h-screen bg-white text-black">
+      <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+        <TopTabs />
+        <div className="text-xs text-gray-600">{tab}</div>
+      </div>
+      <main className="max-w-7xl mx-auto p-4">{body}</main>
     </div>
   )
 }

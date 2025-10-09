@@ -1,10 +1,16 @@
 import { actionListClients } from "@/core/clients/actions";
 import { ClientsTable } from "./client-table";
+import { TopTabs } from "@/components/kit/TopTabs";
 
-export default async function ClientsPage() {
+export default async function ClientsPage({
+  searchParams,
+}: {
+  searchParams: { tab?: string };
+}) {
+  const tab = searchParams?.tab ?? "Overview";
   const data = await actionListClients();
 
-  return (
+  const body = (
     <div className="p-6 space-y-4">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
@@ -19,6 +25,16 @@ export default async function ClientsPage() {
       </header>
 
       <ClientsTable data={data} />
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-white text-black">
+      <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+        <TopTabs />
+        <div className="text-xs text-gray-600">{tab}</div>
+      </div>
+      <main className="max-w-7xl mx-auto p-4">{body}</main>
     </div>
   );
 }
