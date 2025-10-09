@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
+import { usePathname, useSearchParams } from "next/navigation"
 import { PageDescription, PageTitle } from "@/ui/page-header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/ui/card"
 import { Badge } from "@/ui/badge"
@@ -10,6 +11,7 @@ import { Input } from "@/ui/input"
 import { emitEvent } from "@/core/events/emit"
 import { cn } from "@/lib/utils"
 import { TRS_CARD, TRS_SECTION_TITLE, TRS_SUBTITLE } from "@/lib/style"
+import { resolveTabs } from "@/lib/tabs"
 
 type Deal = {
   id: string
@@ -90,6 +92,14 @@ const initialDeals: Deal[] = [
 const stages = ["Discovery", "Qualification", "Proposal", "Negotiation", "Closed Won", "Closed Lost"]
 
 export default function PipelinePage() {
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const tabs = useMemo(() => resolveTabs(pathname), [pathname])
+  const activeTab = useMemo(() => {
+    const current = searchParams.get("tab")
+    return current && tabs.includes(current) ? current : tabs[0]
+  }, [searchParams, tabs])
+
   const [deals, setDeals] = useState<Deal[]>(initialDeals)
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null)
   const [newNote, setNewNote] = useState("")
@@ -207,8 +217,8 @@ export default function PipelinePage() {
 
   // Calculate metrics
   const avgDealSize = activeDeals.reduce((sum, d) => sum + d.amount, 0) / activeDeals.length
-  const winRate = 72 // Mock
-  const avgSalesCycle = 45 // Mock days
+  const winRate = 72
+  const avgSalesCycle = 45
   const dealsClosingThisMonth = activeDeals.filter((d) => {
     const close = new Date(d.closeDate)
     const now = new Date()
@@ -217,46 +227,7 @@ export default function PipelinePage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
-      <div className={cn(TRS_CARD, "p-4 space-y-3")}>
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-1">
-            <PageTitle className="text-lg font-semibold text-black">Pipeline &amp; Sales Intelligence</PageTitle>
-            <PageDescription className="text-sm text-gray-500">
-              AI-powered forecasting, coverage analysis, and proactive deal insights
-            </PageDescription>
-          </div>
-          <Button onClick={() => setShowNewProspectModal(true)} variant="primary" size="sm">
-            + New Prospect
-          </Button>
-        </div>
-        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
-          <Badge variant={coverage >= 100 ? "success" : "outline"}>Coverage: {coverage.toFixed(0)}%</Badge>
-          <span>${(totalWeighted / 1000).toFixed(0)}K weighted pipeline</span>
-        </div>
-      </div>
-
-      {/* AI Sales Agent Placeholder */}
-      <Card className={cn(TRS_CARD)}>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🤖</span>
-                <div className={TRS_SECTION_TITLE}>AI Sales Agent</div>
-                <Badge>Coming Soon</Badge>
-              </div>
-              <p className={cn(TRS_SUBTITLE, "mt-1")}>
-                Automated prospecting, scheduling, follow-ups, and deal intelligence powered by AI
-              </p>
-            </div>
-            <Button variant="outline" size="sm" disabled className="border-gray-200 text-gray-500">
-              Configure Agent
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* KPI Cards */}
+      {/* KPI Cards - Always Visible */}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
         <Card className={cn(TRS_CARD)}>
           <CardContent className="p-4 space-y-2">
@@ -303,246 +274,289 @@ export default function PipelinePage() {
         </Card>
       </div>
 
-      {/* OKR Cards */}
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <Card className={cn(TRS_CARD)}>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Q4 Objectives & Key Results</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-black">Close $2M in new ARR</span>
-                <span className="text-sm text-gray-500">68%</span>
+      {/* Tab Content */}
+      {activeTab === "Overview" && (
+        <div className="space-y-4">
+          <div className={cn(TRS_CARD, "p-4 space-y-3")}>
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="space-y-1">
+                <PageTitle className="text-lg font-semibold text-black">Pipeline &amp; Sales Intelligence</PageTitle>
+                <PageDescription className="text-sm text-gray-500">
+                  AI-powered forecasting, coverage analysis, and proactive deal insights
+                </PageDescription>
               </div>
-              <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
-                <div className="h-full w-[68%] bg-gray-900" />
-              </div>
-              <div className="mt-1 text-xs text-gray-500">$1.36M / $2M</div>
+              <Button onClick={() => setShowNewProspectModal(true)} variant="primary" size="sm">
+                + New Prospect
+              </Button>
             </div>
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-black">Achieve 75% win rate</span>
-                <span className="text-sm text-gray-500">96%</span>
-              </div>
-              <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
-                <div className="h-full w-[96%] bg-gray-800" />
-              </div>
-              <div className="mt-1 text-xs text-gray-500">72% / 75%</div>
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-black">Reduce sales cycle to 40 days</span>
-                <span className="text-sm text-gray-500">88%</span>
-              </div>
-              <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
-                <div className="h-full w-[88%] bg-gray-900" />
-              </div>
-              <div className="mt-1 text-xs text-gray-500">45 days / 40 target</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className={cn(TRS_CARD)}>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Sales Enablement Pipeline</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-              <div>
-                <div className="text-sm font-medium text-black">Product Demo Deck v2</div>
-                <div className="text-xs text-gray-500">ROI calculator integration</div>
-              </div>
-              <Badge>In Review</Badge>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-              <div>
-                <div className="text-sm font-medium text-black">Competitive Battle Cards</div>
-                <div className="text-xs text-gray-500">Updated positioning</div>
-              </div>
-              <Badge variant="success">Ready</Badge>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-              <div>
-                <div className="text-sm font-medium text-black">Objection Handling Guide</div>
-                <div className="text-xs text-gray-500">Common pricing concerns</div>
-              </div>
-              <Badge variant="outline">Draft</Badge>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Proactive Sales Graphs */}
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <Card className={cn(TRS_CARD)}>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Deal Velocity Trend</CardTitle>
-            <CardDescription>Average days to close by month</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {[
-                { month: "Jul", days: 52, color: "bg-gray-800" },
-                { month: "Aug", days: 48, color: "bg-gray-700" },
-                { month: "Sep", days: 45, color: "bg-gray-900" },
-                { month: "Oct", days: 45, color: "bg-gray-900" },
-              ].map((item) => (
-                <div key={item.month} className="flex items-center gap-3">
-                  <div className="w-12 text-xs text-gray-500">{item.month}</div>
-                  <div className="flex-1">
-                    <div className="h-6 rounded-md bg-gray-100 overflow-hidden">
-                      <div className={`h-full ${item.color}`} style={{ width: `${(60 - item.days) * 2}%` }} />
-                    </div>
-                  </div>
-                  <div className="w-16 text-sm font-medium text-right text-black">{item.days}d</div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className={cn(TRS_CARD)}>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Pipeline Health Score</CardTitle>
-            <CardDescription>AI-powered risk assessment</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-black">Healthy Deals</span>
-                  <span className="text-sm font-medium text-gray-700">62%</span>
-                </div>
-                <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
-                  <div className="h-full w-[62%] bg-gray-800" />
-                </div>
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-black">At Risk</span>
-                  <span className="text-sm font-medium text-gray-700">28%</span>
-                </div>
-                <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
-                  <div className="h-full w-[28%] bg-gray-600" />
-                </div>
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-black">Stalled</span>
-                  <span className="text-sm font-medium text-gray-700">10%</span>
-                </div>
-                <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
-                  <div className="h-full w-[10%] bg-gray-500" />
-                </div>
-              </div>
-              <div className="pt-2 border-t border-gray-200">
-                <div className="text-xs text-gray-500">
-                  <strong>3 deals</strong> need attention: Enterprise SaaS Platform, Revenue Analytics Suite, Customer Success Platform
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Deal Pipeline Table */}
-      <Card className={cn(TRS_CARD)}>
-        <CardHeader>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <CardTitle>Deal Pipeline</CardTitle>
-              <CardDescription>All opportunities with stage, amount, and probability weighting</CardDescription>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <select
-                value={filterStage}
-                onChange={(e) => setFilterStage(e.target.value)}
-                className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm"
-              >
-                <option value="all">All Stages</option>
-                {stages.map((stage) => (
-                  <option key={stage} value={stage}>
-                    {stage}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={filterOwner}
-                onChange={(e) => setFilterOwner(e.target.value)}
-                className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm"
-              >
-                <option value="all">All Owners</option>
-                {owners.map((owner) => (
-                  <option key={owner} value={owner}>
-                    {owner}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm"
-              >
-                <option value="amount-desc">Amount (High to Low)</option>
-                <option value="amount-asc">Amount (Low to High)</option>
-                <option value="probability-desc">Probability (High to Low)</option>
-                <option value="probability-asc">Probability (Low to High)</option>
-                <option value="name-asc">Name (A-Z)</option>
-                <option value="name-desc">Name (Z-A)</option>
-              </select>
+            <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
+              <Badge variant={coverage >= 100 ? "success" : "outline"}>Coverage: {coverage.toFixed(0)}%</Badge>
+              <span>${(totalWeighted / 1000).toFixed(0)}K weighted pipeline</span>
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Opportunity</TableHead>
-                <TableHead>Company</TableHead>
-                <TableHead>Stage</TableHead>
-                <TableHead>Owner</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead className="text-right">Probability</TableHead>
-                <TableHead className="text-right">Weighted</TableHead>
-                <TableHead>Close Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredDeals.map((deal) => (
-                <TableRow
-                  key={deal.id}
-                  onClick={() => setSelectedDeal(deal)}
-                  className="cursor-pointer hover:bg-gray-50"
-                >
-                  <TableCell className="font-medium">{deal.name}</TableCell>
-                  <TableCell>{deal.company}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        deal.stage === "Closed Won" ? "success" : deal.stage === "Negotiation" ? "default" : "outline"
-                      }
-                    >
-                      {deal.stage}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-sm text-gray-500">{deal.owner}</TableCell>
-                  <TableCell className="text-right font-medium">${(deal.amount / 1000).toFixed(0)}K</TableCell>
-                  <TableCell className="text-right">{deal.probability}%</TableCell>
-                  <TableCell className="text-right font-medium text-black">
-                    ${((deal.amount * deal.probability) / 100 / 1000).toFixed(0)}K
-                  </TableCell>
-                  <TableCell className="text-sm text-gray-500">
-                    {new Date(deal.closeDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
 
-      {/* New Prospect Modal */}
+          {/* OKR Cards */}
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            <Card className={cn(TRS_CARD)}>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium">Q4 Objectives & Key Results</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-black">Close $2M in new ARR</span>
+                    <span className="text-sm text-gray-500">68%</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
+                    <div className="h-full w-[68%] bg-gray-900" />
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">$1.36M / $2M</div>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-black">Achieve 75% win rate</span>
+                    <span className="text-sm text-gray-500">96%</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
+                    <div className="h-full w-[96%] bg-gray-800" />
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">72% / 75%</div>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-black">Reduce sales cycle to 40 days</span>
+                    <span className="text-sm text-gray-500">88%</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
+                    <div className="h-full w-[88%] bg-gray-900" />
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">45 days / 40 target</div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className={cn(TRS_CARD)}>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium">Pipeline Health Score</CardTitle>
+                <CardDescription>AI-powered risk assessment</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-black">Healthy Deals</span>
+                      <span className="text-sm font-medium text-gray-700">62%</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
+                      <div className="h-full w-[62%] bg-gray-800" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-black">At Risk</span>
+                      <span className="text-sm font-medium text-gray-700">28%</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
+                      <div className="h-full w-[28%] bg-gray-600" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-black">Stalled</span>
+                      <span className="text-sm font-medium text-gray-700">10%</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
+                      <div className="h-full w-[10%] bg-gray-500" />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "Deals" && (
+        <Card className={cn(TRS_CARD)}>
+          <CardHeader>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <CardTitle>Deal Pipeline</CardTitle>
+                <CardDescription>All opportunities with stage, amount, and probability weighting</CardDescription>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  value={filterStage}
+                  onChange={(e) => setFilterStage(e.target.value)}
+                  className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm"
+                >
+                  <option value="all">All Stages</option>
+                  {stages.map((stage) => (
+                    <option key={stage} value={stage}>
+                      {stage}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={filterOwner}
+                  onChange={(e) => setFilterOwner(e.target.value)}
+                  className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm"
+                >
+                  <option value="all">All Owners</option>
+                  {owners.map((owner) => (
+                    <option key={owner} value={owner}>
+                      {owner}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm"
+                >
+                  <option value="amount-desc">Amount (High to Low)</option>
+                  <option value="amount-asc">Amount (Low to High)</option>
+                  <option value="probability-desc">Probability (High to Low)</option>
+                  <option value="probability-asc">Probability (Low to High)</option>
+                  <option value="name-asc">Name (A-Z)</option>
+                  <option value="name-desc">Name (Z-A)</option>
+                </select>
+                <Button onClick={() => setShowNewProspectModal(true)} variant="primary" size="sm">
+                  + New Prospect
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Opportunity</TableHead>
+                  <TableHead>Company</TableHead>
+                  <TableHead>Stage</TableHead>
+                  <TableHead>Owner</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-right">Probability</TableHead>
+                  <TableHead className="text-right">Weighted</TableHead>
+                  <TableHead>Close Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredDeals.map((deal) => (
+                  <TableRow
+                    key={deal.id}
+                    onClick={() => setSelectedDeal(deal)}
+                    className="cursor-pointer hover:bg-gray-50"
+                  >
+                    <TableCell className="font-medium">{deal.name}</TableCell>
+                    <TableCell>{deal.company}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          deal.stage === "Closed Won" ? "success" : deal.stage === "Negotiation" ? "default" : "outline"
+                        }
+                      >
+                        {deal.stage}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-gray-500">{deal.owner}</TableCell>
+                    <TableCell className="text-right font-medium">${(deal.amount / 1000).toFixed(0)}K</TableCell>
+                    <TableCell className="text-right">{deal.probability}%</TableCell>
+                    <TableCell className="text-right font-medium text-black">
+                      ${((deal.amount * deal.probability) / 100 / 1000).toFixed(0)}K
+                    </TableCell>
+                    <TableCell className="text-sm text-gray-500">
+                      {new Date(deal.closeDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {activeTab === "Commit" && (
+        <Card className={cn(TRS_CARD, "p-6")}>
+          <div className="text-center space-y-3">
+            <h2 className="text-lg font-semibold text-black">Commit Forecast</h2>
+            <p className="text-sm text-gray-600">Lock your forecast for the quarter and track against actuals</p>
+            <div className="text-[11px] text-gray-500 italic">Feature coming soon</div>
+          </div>
+        </Card>
+      )}
+
+      {activeTab === "Forecast" && (
+        <Card className={cn(TRS_CARD, "p-6")}>
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-black">Revenue Forecast</h2>
+            <p className="text-sm text-gray-600">Probabilistic revenue modeling based on pipeline health</p>
+            <div className="text-[11px] text-gray-500 italic">AI-powered forecasting coming soon</div>
+          </div>
+        </Card>
+      )}
+
+      {activeTab === "Health" && (
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <Card className={cn(TRS_CARD)}>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium">Deal Velocity Trend</CardTitle>
+              <CardDescription>Average days to close by month</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {[
+                  { month: "Jul", days: 52, color: "bg-gray-800" },
+                  { month: "Aug", days: 48, color: "bg-gray-700" },
+                  { month: "Sep", days: 45, color: "bg-gray-900" },
+                  { month: "Oct", days: 45, color: "bg-gray-900" },
+                ].map((item) => (
+                  <div key={item.month} className="flex items-center gap-3">
+                    <div className="w-12 text-xs text-gray-500">{item.month}</div>
+                    <div className="flex-1">
+                      <div className="h-6 rounded-md bg-gray-100 overflow-hidden">
+                        <div className={`h-full ${item.color}`} style={{ width: `${(60 - item.days) * 2}%` }} />
+                      </div>
+                    </div>
+                    <div className="w-16 text-sm font-medium text-right text-black">{item.days}d</div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className={cn(TRS_CARD)}>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium">Sales Enablement Pipeline</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
+                <div>
+                  <div className="text-sm font-medium text-black">Product Demo Deck v2</div>
+                  <div className="text-xs text-gray-500">ROI calculator integration</div>
+                </div>
+                <Badge>In Review</Badge>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
+                <div>
+                  <div className="text-sm font-medium text-black">Competitive Battle Cards</div>
+                  <div className="text-xs text-gray-500">Updated positioning</div>
+                </div>
+                <Badge variant="success">Ready</Badge>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
+                <div>
+                  <div className="text-sm font-medium text-black">Objection Handling Guide</div>
+                  <div className="text-xs text-gray-500">Common pricing concerns</div>
+                </div>
+                <Badge variant="outline">Draft</Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Modals */}
       {showNewProspectModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
@@ -629,7 +643,6 @@ export default function PipelinePage() {
         </div>
       )}
 
-      {/* Opportunity Detail Modal */}
       {selectedDeal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setSelectedDeal(null)}>
           <div
