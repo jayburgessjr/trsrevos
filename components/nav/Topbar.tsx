@@ -1,34 +1,26 @@
 'use client'
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-
 export default function Topbar() {
-  const path = usePathname()
-  const parts = path.split('/').filter(Boolean)
-
   return (
-    <header className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-      <div className="flex h-12 items-center gap-3 px-4">
-        <nav className="flex items-center gap-1 text-sm text-gray-500">
-          <Link href="/" className="hover:text-gray-800">
-            Home
-          </Link>
-          {parts.map((p, idx) => (
-            <span key={idx} className="flex items-center gap-1">
-              <span>/</span>
-              <span className="capitalize text-gray-800">{p}</span>
+    <header className="h-14 border-b border-gray-200 dark:border-neutral-800 flex items-center">
+      <div className="w-full px-4 flex items-center justify-between">
+        <div className="text-sm font-medium">TRS Internal SaaS</div>
+        <div className="flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-2">
+            <span className="text-sm font-medium">TRS Copilot</span>
+            <span className="rounded-full border px-2 py-[2px] text-[10px] text-gray-600 dark:text-neutral-400 dark:border-neutral-700 border-gray-200">
+              Internal
             </span>
-          ))}
-        </nav>
-        <div className="ml-auto flex items-center gap-2">
-          <span className="hidden rounded-full bg-emerald-50 px-2 py-1 text-xs text-emerald-700 sm:inline">
-            TRS Score 68
-          </span>
-          <button data-cmdk className="rounded-md border px-2 py-1 text-xs">
-            ⌘K Command
+          </div>
+          <div className="hidden lg:flex items-center gap-3">
+            <div className="text-xs text-gray-500 dark:text-neutral-400">TRS Score</div>
+            <div className="w-44 h-2 rounded-full bg-gray-200 dark:bg-neutral-800 overflow-hidden">
+              <div className="h-full w-2/3 bg-[var(--trs-accent)]" />
+            </div>
+          </div>
+          <button className="text-xs rounded-md border px-3 py-1 border-[var(--trs-accent)] text-[var(--trs-accent)]">
+            ⌘K
           </button>
-          <div className="h-8 w-8 rounded-full bg-gray-200" />
         </div>
       </div>
     </header>
