@@ -6,6 +6,7 @@ import KpiTile from "@/components/morning/KpiTile";
 import PriorityRow from "@/components/morning/PriorityRow";
 import SummaryFeed from "@/components/morning/SummaryFeed";
 import CoPilotDrawer from "@/components/morning/CoPilotDrawer";
+import NewsTicker from "@/components/morning/NewsTicker";
 import { computePlan, lockPlan, startFocusBlock, completeFocusBlock, downloadIcal, generateRecap, getMorningState } from "@/core/morning/actions";
 
 type S = Awaited<ReturnType<typeof getMorningState>>;
@@ -86,7 +87,7 @@ export default function MorningPage(){
       </section>
 
       {/* Priority Matrix */}
-      <section className="col-span-6">
+      <section className="col-span-6 space-y-3">
         <div className="rounded-xl border border-gray-200 bg-white p-3">
           <div className="text-sm font-semibold text-black mb-2">Today&apos;s Priorities</div>
           <div className="space-y-2">
@@ -99,6 +100,7 @@ export default function MorningPage(){
             ))}
           </div>
         </div>
+        <NewsTicker />
       </section>
 
       {/* Footer link */}
