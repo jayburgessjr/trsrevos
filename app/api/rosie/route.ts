@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
+import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions'
 
 import { getClient, listClients } from '@/core/clients/store'
 import { getDashboard } from '@/core/exec/store'
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest) {
   const systemPrompt =
     'You are Rosie, the TRS internal assistant. You have full context of company data, clients, projects, and workflows. You help operators summarize, retrieve, and act on TRS information with precision. Respond naturally but concisely, reason about the intent before replying, and confirm before executing any irreversible actions.'
 
-  const payload = [
+  const payload: ChatCompletionMessageParam[] = [
     { role: 'system' as const, content: systemPrompt },
     { role: 'system' as const, content: prompt },
   ]
@@ -55,7 +56,14 @@ export async function POST(req: NextRequest) {
     payload.push({ role: 'system' as const, content: `Context for reasoning:\n${context}` })
   }
 
-  payload.push(...normalizedMessages)
+  payload.push(
+    ...normalizedMessages.map(
+      (message): ChatCompletionMessageParam => ({
+        role: message.role,
+        content: message.content,
+      }),
+    ),
+  )
 
   try {
     const stream = await openai.chat.completions.create({
