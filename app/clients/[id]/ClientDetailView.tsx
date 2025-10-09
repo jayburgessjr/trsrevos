@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { Card } from "@/components/kit/Card";
 import { resolveTabs } from "@/lib/tabs";
 import type { Client } from "@/core/clients/types";
+import type { Project } from "@/core/projects/types";
 
 const formatCurrency = (value?: number) =>
   value != null ? `$${value.toLocaleString()}` : "—";
@@ -13,7 +14,7 @@ const formatCurrency = (value?: number) =>
 const formatPercent = (value?: number) =>
   value != null ? `${Math.round(value)}%` : "—";
 
-export default function ClientDetailView({ client }: { client: Client }) {
+export default function ClientDetailView({ client, projects }: { client: Client; projects: Project[] }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const tabs = useMemo(() => resolveTabs(pathname), [pathname]);
@@ -106,6 +107,111 @@ export default function ClientDetailView({ client }: { client: Client }) {
               </div>
             </div>
           </Card>
+        </div>
+      )}
+
+      {activeTab === "Projects" && (
+        <div className="space-y-4">
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="text-sm font-semibold text-black">Client Projects</div>
+                <p className="text-[13px] text-gray-600">Active projects and deliverables for {client.name}</p>
+              </div>
+              <button className="text-xs px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-100 bg-white">
+                + New Project
+              </button>
+            </div>
+
+            {projects.length === 0 ? (
+              <div className="text-center py-8 text-sm text-gray-600">
+                No projects yet. Create a project to get started.
+              </div>
+            ) : (
+              <div className="overflow-hidden rounded-lg border border-gray-200">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 text-left text-[12px] uppercase tracking-wide text-gray-500">
+                    <tr>
+                      <th className="px-3 py-2 font-medium">Project</th>
+                      <th className="px-3 py-2 font-medium">Phase</th>
+                      <th className="px-3 py-2 font-medium">Owner</th>
+                      <th className="px-3 py-2 font-medium">Health</th>
+                      <th className="px-3 py-2 font-medium">Progress</th>
+                      <th className="px-3 py-2 font-medium">Due Date</th>
+                      <th className="px-3 py-2 font-medium">Budget</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 bg-white">
+                    {projects.map((project) => (
+                      <tr key={project.id} className="hover:bg-gray-50">
+                        <td className="px-3 py-2">
+                          <div className="font-medium text-black">{project.name}</div>
+                          {project.description && (
+                            <div className="text-xs text-gray-600 mt-0.5">{project.description}</div>
+                          )}
+                        </td>
+                        <td className="px-3 py-2 text-gray-700">{project.phase}</td>
+                        <td className="px-3 py-2 text-gray-700">{project.owner}</td>
+                        <td className="px-3 py-2">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              project.health === "green"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : project.health === "yellow"
+                                ? "bg-amber-100 text-amber-700"
+                                : "bg-rose-100 text-rose-700"
+                            }`}
+                          >
+                            {project.health === "green" ? "On Track" : project.health === "yellow" ? "At Risk" : "Critical"}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-black"
+                                style={{ width: `${project.progress}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-gray-600">{project.progress}%</span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 text-gray-700">{project.dueDate || "—"}</td>
+                        <td className="px-3 py-2 text-gray-700">
+                          {project.budget ? formatCurrency(project.budget) : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+
+          {projects.length > 0 && (
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+              <Card className="p-4">
+                <div className="text-[11px] uppercase tracking-wide text-gray-500">Total Budget</div>
+                <div className="mt-1 text-xl font-semibold text-black">
+                  {formatCurrency(projects.reduce((sum, p) => sum + (p.budget || 0), 0))}
+                </div>
+              </Card>
+              <Card className="p-4">
+                <div className="text-[11px] uppercase tracking-wide text-gray-500">Total Spent</div>
+                <div className="mt-1 text-xl font-semibold text-black">
+                  {formatCurrency(projects.reduce((sum, p) => sum + (p.spent || 0), 0))}
+                </div>
+              </Card>
+              <Card className="p-4">
+                <div className="text-[11px] uppercase tracking-wide text-gray-500">Avg Progress</div>
+                <div className="mt-1 text-xl font-semibold text-black">
+                  {projects.length > 0
+                    ? Math.round(projects.reduce((sum, p) => sum + p.progress, 0) / projects.length)
+                    : 0}%
+                </div>
+              </Card>
+            </div>
+          )}
         </div>
       )}
 

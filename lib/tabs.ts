@@ -7,7 +7,7 @@ export const PAGE_TABS: Record<string, string[]> = {
   "/content": ["Pipeline", "Ideas", "Scheduled", "Performance"],
   "/agents": ["All", "Projects", "Content", "Clients", "GPT Agents"],
   "/clients": ["Accounts", "Health", "Churn", "QBR", "History"],
-  "/clients/[id]": ["Overview", "RevenueOS", "Data", "Strategy", "Results"],
+  "/clients/[id]": ["Overview", "Projects", "RevenueOS", "Data", "Strategy", "Results"],
 };
 
 export function resolveTabs(pathname: string): string[] {

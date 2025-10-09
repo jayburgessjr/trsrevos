@@ -6,14 +6,15 @@ import Image from "next/image"
 export default function GlobalHeader() {
   return (
     <header className="border-b border-gray-200 bg-white">
-      <div className="h-14 px-3 w-full flex items-center gap-3">
-        <div className="relative h-8 w-auto">
+      <div className="h-16 px-3 w-full flex items-center gap-3">
+        <div className="relative flex items-center" style={{ height: '75px' }}>
           <Image
             src="/images/trs-logo.png"
             alt="The Revenue Scientists"
-            width={180}
-            height={32}
-            className="object-contain"
+            width={468}
+            height={75}
+            className="object-contain w-auto"
+            style={{ height: '75px' }}
             priority
           />
         </div>
