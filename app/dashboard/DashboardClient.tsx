@@ -10,6 +10,8 @@ import { Card } from "@/components/kit/Card";
 import { AreaChart, BarChart } from "@/components/kit/Charts";
 import Link from "next/link";
 import { resolveTabs } from "@/lib/tabs";
+import { cn } from "@/lib/utils";
+import { TRS_CARD } from "@/lib/style";
 import type { ExecDashboard } from "@/core/exec/types";
 
 export default function DashboardClient({ data, exportAction }: { data: ExecDashboard; exportAction: () => Promise<{ ok: boolean; url: string }> }) {
@@ -24,11 +26,8 @@ export default function DashboardClient({ data, exportAction }: { data: ExecDash
   const d = data;
 
   return (
-    <div
-      className="grid min-h-full gap-3 p-3"
-      style={{ gridTemplateColumns: "repeat(12,minmax(0,1fr))" }}
-    >
-      <section className="col-span-12 space-y-4">
+    <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
+      <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <ScopeBar initial={d.scope}/>
           <form action={exportAction}>
@@ -39,8 +38,8 @@ export default function DashboardClient({ data, exportAction }: { data: ExecDash
         {activeTab === "Overview" && (
         <div className="space-y-4">
           {/* Row 1: Health Ribbon - 4 cards across */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <Card className={cn(TRS_CARD, "p-4")}>
               <div className="text-sm font-medium text-black mb-3 border-b border-gray-200 pb-2">Health Ribbon</div>
               <div className="grid grid-cols-2 gap-3">
                 <KpiCard label="North Star Run-rate" value={`$${Math.round(d.ribbon.northStarRunRate/1000)}K`} hint={`${d.ribbon.northStarDeltaVsPlanPct}% vs plan`} />
@@ -49,7 +48,7 @@ export default function DashboardClient({ data, exportAction }: { data: ExecDash
                 <KpiCard label="Risk Index" value={`${d.ribbon.riskIndexPct}%`} hint="Prob. downside"/>
               </div>
             </Card>
-            <Card className="p-4">
+            <Card className={cn(TRS_CARD, "p-4")}>
               <div className="text-sm font-medium text-black mb-3 border-b border-gray-200 pb-2">Sales</div>
               <div className="grid grid-cols-2 gap-3">
                 <KpiCard label="Coverage (x)" value={d.sales.pipelineCoverageX.toFixed(1)} hint="vs target" />
@@ -58,7 +57,7 @@ export default function DashboardClient({ data, exportAction }: { data: ExecDash
                 <KpiCard label="Cycle Time" value={`${d.sales.cycleTimeDaysMedian}d`} />
               </div>
             </Card>
-            <Card className="p-4">
+            <Card className={cn(TRS_CARD, "p-4")}>
               <div className="text-sm font-medium text-black mb-3 border-b border-gray-200 pb-2">Finance</div>
               <div className="grid grid-cols-2 gap-3">
                 <KpiCard label="AR Total" value={`$${Math.round(d.finance.arTotal/1000)}K`} />
@@ -67,15 +66,15 @@ export default function DashboardClient({ data, exportAction }: { data: ExecDash
                 <KpiCard label="Price Realization" value={`${d.finance.priceRealizationPct}%`} />
               </div>
             </Card>
-            <Card className="p-4">
+            <Card className={cn(TRS_CARD, "p-4")}>
               <div className="text-sm font-medium text-black mb-3 border-b border-gray-200 pb-2">Total Revenue</div>
               <div className="h-40"><SmallSpark/></div>
             </Card>
           </div>
 
           {/* Row 2: Forecast cone (wide) + Subscriptions bars */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <Card className="lg:col-span-2">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            <Card className={cn(TRS_CARD, "lg:col-span-2")}>
               <div className="px-4 py-3 flex items-center justify-between border-b border-gray-200">
                 <div className="text-sm font-medium">Forecast Cone</div>
                 <Link href="/pipeline?tab=Analytics&action=commit" className="text-xs px-2 py-1 rounded-md border border-gray-300 hover:bg-gray-100 bg-white">
@@ -85,7 +84,7 @@ export default function DashboardClient({ data, exportAction }: { data: ExecDash
               <div className="h-64 p-4"><AreaChart/></div>
               <div className="px-4 pb-4 text-[11px] text-gray-500">p10 / p50 / p90 weekly bookings cone (stubbed)</div>
             </Card>
-            <Card>
+            <Card className={cn(TRS_CARD)}>
               <div className="px-4 py-3 flex items-center justify-between border-b border-gray-200">
                 <div className="text-sm font-medium">Subscriptions</div>
                 <div className="text-[11px] text-gray-500">+180% MoM</div>
@@ -95,8 +94,8 @@ export default function DashboardClient({ data, exportAction }: { data: ExecDash
           </div>
 
           {/* Row 3: Cash control + Pricing + Content */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <Card className={cn(TRS_CARD)}>
               <div className="px-4 py-3 flex items-center justify-between border-b border-gray-200">
                 <div className="text-sm font-medium">Cash Control</div>
                 <Link href="/finance?tab=Analytics#collections" className="text-xs px-2 py-1 rounded-md border border-gray-300 hover:bg-gray-100 bg-white">
@@ -111,7 +110,7 @@ export default function DashboardClient({ data, exportAction }: { data: ExecDash
               </div>
             </Card>
 
-            <Card>
+            <Card className={cn(TRS_CARD)}>
               <div className="px-4 py-3 flex items-center justify-between border-b border-gray-200">
                 <div className="text-sm font-medium">Pricing Power & Deal Desk</div>
                 <Link href="/pipeline?tab=Reports#deal-desk" className="text-xs px-2 py-1 rounded-md border border-gray-300 hover:bg-gray-100 bg-white">
@@ -135,7 +134,7 @@ export default function DashboardClient({ data, exportAction }: { data: ExecDash
               </div>
             </Card>
 
-            <Card>
+            <Card className={cn(TRS_CARD)}>
               <div className="px-4 py-3 flex items-center justify-between border-b border-gray-200">
                 <div className="text-sm font-medium">Content Influence</div>
                 <Link className="text-xs px-2 py-1 rounded-md border border-gray-300 hover:bg-gray-100" href="/content?tab=Analytics">Open Content</Link>
@@ -158,7 +157,7 @@ export default function DashboardClient({ data, exportAction }: { data: ExecDash
         )}
 
         {activeTab === "Analytics" && (
-        <Card className="p-6">
+        <Card className={cn(TRS_CARD, "p-6")}>
           <div className="text-center space-y-3">
             <h2 className="text-lg font-semibold text-black">Advanced Analytics</h2>
             <p className="text-sm text-gray-600">Deep-dive metrics, cohort analysis, and predictive modeling</p>
@@ -168,7 +167,7 @@ export default function DashboardClient({ data, exportAction }: { data: ExecDash
         )}
 
         {activeTab === "Reports" && (
-        <Card className="p-6">
+        <Card className={cn(TRS_CARD, "p-6")}>
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-black">Executive Reports</h2>
             <p className="text-sm text-gray-600">Board decks, investor updates, and quarterly business reviews</p>
@@ -178,7 +177,7 @@ export default function DashboardClient({ data, exportAction }: { data: ExecDash
         )}
 
         {activeTab === "Notifications" && (
-        <Card className="p-6">
+        <Card className={cn(TRS_CARD, "p-6")}>
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-black">Notifications & Alerts</h2>
             <div className="space-y-3">

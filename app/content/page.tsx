@@ -6,6 +6,8 @@ import Link from "next/link";
 
 import { Card } from "@/components/kit/Card";
 import { resolveTabs } from "@/lib/tabs";
+import { cn } from "@/lib/utils";
+import { TRS_CARD, TRS_SUBTITLE } from "@/lib/style";
 import { listContentPieces, listAdCampaigns, getMarketingKPIs, createAdCampaign } from "@/core/content/store";
 import type { CreateAdCampaignInput } from "@/core/content/types";
 
@@ -82,11 +84,8 @@ export default function ContentStudioPage() {
   };
 
   return (
-    <div
-      className="grid min-h-full gap-3 p-3"
-      style={{ gridTemplateColumns: "repeat(12,minmax(0,1fr))" }}
-    >
-      <section className="col-span-12 space-y-4">
+    <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
+      <section className="space-y-4">
         <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold text-black">Marketing & Content</h1>
         <p className="text-sm text-gray-600">
@@ -96,78 +95,78 @@ export default function ContentStudioPage() {
 
         {activeTab === "Overview" && (
         <div className="space-y-4">
-          <Card className="p-4">
+          <Card className={cn(TRS_CARD, "p-4")}>
             <div className="text-sm font-semibold text-black mb-4">Content Pipeline Overview</div>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-              <div className="rounded-lg border border-gray-200 bg-white p-3">
-                <div className="text-[11px] uppercase tracking-wide text-gray-500">Total Content</div>
+              <div className={cn(TRS_CARD, "p-3")}>
+                <div className={TRS_SUBTITLE}>Total Content</div>
                 <div className="mt-1 text-2xl font-semibold text-black">{kpis.content.total}</div>
                 <div className="text-[11px] text-gray-600">All pieces</div>
               </div>
-              <div className="rounded-lg border border-gray-200 bg-white p-3">
-                <div className="text-[11px] uppercase tracking-wide text-gray-500">Published</div>
+              <div className={cn(TRS_CARD, "p-3")}>
+                <div className={TRS_SUBTITLE}>Published</div>
                 <div className="mt-1 text-2xl font-semibold text-black">{kpis.content.published}</div>
                 <div className="text-[11px] text-gray-600">Live content</div>
               </div>
-              <div className="rounded-lg border border-gray-200 bg-white p-3">
-                <div className="text-[11px] uppercase tracking-wide text-gray-500">Scheduled</div>
+              <div className={cn(TRS_CARD, "p-3")}>
+                <div className={TRS_SUBTITLE}>Scheduled</div>
                 <div className="mt-1 text-2xl font-semibold text-black">{kpis.content.scheduled}</div>
                 <div className="text-[11px] text-gray-600">Ready to ship</div>
               </div>
-              <div className="rounded-lg border border-gray-200 bg-white p-3">
-                <div className="text-[11px] uppercase tracking-wide text-gray-500">In Draft</div>
+              <div className={cn(TRS_CARD, "p-3")}>
+                <div className={TRS_SUBTITLE}>In Draft</div>
                 <div className="mt-1 text-2xl font-semibold text-black">{kpis.content.draft}</div>
                 <div className="text-[11px] text-gray-600">In progress</div>
               </div>
-              <div className="rounded-lg border border-gray-200 bg-white p-3">
-                <div className="text-[11px] uppercase tracking-wide text-gray-500">Ideas</div>
+              <div className={cn(TRS_CARD, "p-3")}>
+                <div className={TRS_SUBTITLE}>Ideas</div>
                 <div className="mt-1 text-2xl font-semibold text-black">{kpis.content.ideas}</div>
                 <div className="text-[11px] text-gray-600">In backlog</div>
               </div>
             </div>
           </Card>
 
-          <Card className="p-4">
+          <Card className={cn(TRS_CARD, "p-4")}>
             <div className="text-sm font-semibold text-black mb-4">Performance Metrics</div>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-              <div className="rounded-lg border border-gray-200 bg-white p-3">
-                <div className="text-[11px] uppercase tracking-wide text-gray-500">Total Views</div>
+              <div className={cn(TRS_CARD, "p-3")}>
+                <div className={TRS_SUBTITLE}>Total Views</div>
                 <div className="mt-1 text-2xl font-semibold text-black">{kpis.content.views.toLocaleString()}</div>
                 <div className="text-[11px] text-gray-600">Across all content</div>
               </div>
-              <div className="rounded-lg border border-gray-200 bg-white p-3">
-                <div className="text-[11px] uppercase tracking-wide text-gray-500">Engagement</div>
+              <div className={cn(TRS_CARD, "p-3")}>
+                <div className={TRS_SUBTITLE}>Engagement</div>
                 <div className="mt-1 text-2xl font-semibold text-black">{kpis.content.engagement.toLocaleString()}</div>
                 <div className="text-[11px] text-gray-600">Interactions</div>
               </div>
-              <div className="rounded-lg border border-gray-200 bg-white p-3">
-                <div className="text-[11px] uppercase tracking-wide text-gray-500">Conversions</div>
+              <div className={cn(TRS_CARD, "p-3")}>
+                <div className={TRS_SUBTITLE}>Conversions</div>
                 <div className="mt-1 text-2xl font-semibold text-black">{kpis.content.conversions}</div>
                 <div className="text-[11px] text-gray-600">Generated leads</div>
               </div>
             </div>
           </Card>
 
-          <Card className="p-4">
+          <Card className={cn(TRS_CARD, "p-4")}>
             <div className="text-sm font-semibold text-black mb-4">Advertising Overview</div>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              <div className="rounded-lg border border-gray-200 bg-white p-3">
-                <div className="text-[11px] uppercase tracking-wide text-gray-500">Active Campaigns</div>
+              <div className={cn(TRS_CARD, "p-3")}>
+                <div className={TRS_SUBTITLE}>Active Campaigns</div>
                 <div className="mt-1 text-2xl font-semibold text-black">{kpis.advertising.activeCampaigns}</div>
                 <div className="text-[11px] text-gray-600">Running now</div>
               </div>
-              <div className="rounded-lg border border-gray-200 bg-white p-3">
-                <div className="text-[11px] uppercase tracking-wide text-gray-500">Ad Spend</div>
+              <div className={cn(TRS_CARD, "p-3")}>
+                <div className={TRS_SUBTITLE}>Ad Spend</div>
                 <div className="mt-1 text-2xl font-semibold text-black">${(kpis.advertising.totalSpend / 1000).toFixed(1)}k</div>
                 <div className="text-[11px] text-gray-600">of ${(kpis.advertising.totalBudget / 1000).toFixed(1)}k budget</div>
               </div>
-              <div className="rounded-lg border border-gray-200 bg-white p-3">
-                <div className="text-[11px] uppercase tracking-wide text-gray-500">Avg CTR</div>
+              <div className={cn(TRS_CARD, "p-3")}>
+                <div className={TRS_SUBTITLE}>Avg CTR</div>
                 <div className="mt-1 text-2xl font-semibold text-black">{kpis.advertising.avgCTR.toFixed(2)}%</div>
                 <div className="text-[11px] text-gray-600">Click-through rate</div>
               </div>
-              <div className="rounded-lg border border-gray-200 bg-white p-3">
-                <div className="text-[11px] uppercase tracking-wide text-gray-500">Avg ROAS</div>
+              <div className={cn(TRS_CARD, "p-3")}>
+                <div className={TRS_SUBTITLE}>Avg ROAS</div>
                 <div className="mt-1 text-2xl font-semibold text-black">{kpis.advertising.avgROAS.toFixed(1)}x</div>
                 <div className="text-[11px] text-gray-600">Return on ad spend</div>
               </div>
@@ -177,7 +176,7 @@ export default function ContentStudioPage() {
       )}
 
       {activeTab === "Pipeline" && (
-        <Card className="p-4">
+        <Card className={cn(TRS_CARD, "p-4")}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <div className="text-sm font-semibold text-black">Active Content Flow</div>
@@ -229,7 +228,7 @@ export default function ContentStudioPage() {
       )}
 
       {activeTab === "Ideas" && (
-        <Card className="p-4">
+        <Card className={cn(TRS_CARD, "p-4")}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <div className="text-sm font-semibold text-black">Content Ideas</div>
@@ -264,7 +263,7 @@ export default function ContentStudioPage() {
       )}
 
       {activeTab === "Scheduled" && (
-        <Card className="p-4">
+        <Card className={cn(TRS_CARD, "p-4")}>
           <div className="text-sm font-semibold text-black mb-4">Scheduled Distribution</div>
           <p className="text-[13px] text-gray-600 mb-4">Content ready to ship: LinkedIn posts, webinars, workshops, and more</p>
           <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
@@ -288,7 +287,7 @@ export default function ContentStudioPage() {
       )}
 
       {activeTab === "Performance" && (
-        <Card className="p-4">
+        <Card className={cn(TRS_CARD, "p-4")}>
           <div className="text-sm font-semibold text-black mb-4">Performance Signals</div>
           <p className="text-[13px] text-gray-600 mb-4">Track engagement, reach, and conversions for published content</p>
           <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
@@ -318,7 +317,7 @@ export default function ContentStudioPage() {
       )}
 
       {activeTab === "Create" && (
-        <Card className="p-4">
+        <Card className={cn(TRS_CARD, "p-4")}>
           <div className="text-sm font-semibold text-black mb-4">Content Creation Studio</div>
           <p className="text-[13px] text-gray-600 mb-4">Generate and edit content for clients, prospects, partners, and marketing</p>
 
@@ -379,7 +378,7 @@ export default function ContentStudioPage() {
 
       {activeTab === "Advertising" && (
         <div className="space-y-4">
-          <Card className="p-4">
+          <Card className={cn(TRS_CARD, "p-4")}>
             <div className="flex items-center justify-between mb-4">
               <div>
                 <div className="text-sm font-semibold text-black">Ad Campaigns</div>
@@ -440,26 +439,26 @@ export default function ContentStudioPage() {
             </div>
           </Card>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Card className="p-4">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <Card className={cn(TRS_CARD, "p-4")}>
               <div className="text-sm font-semibold text-black mb-3">Campaign Performance</div>
               <div className="space-y-3">
-                <div className="rounded-lg border border-gray-200 bg-white p-3">
-                  <div className="text-[11px] uppercase tracking-wide text-gray-500">Total Impressions</div>
+                <div className={cn(TRS_CARD, "p-3")}>
+                  <div className={TRS_SUBTITLE}>Total Impressions</div>
                   <div className="mt-1 text-2xl font-semibold text-black">{kpis.advertising.impressions.toLocaleString()}</div>
                 </div>
-                <div className="rounded-lg border border-gray-200 bg-white p-3">
-                  <div className="text-[11px] uppercase tracking-wide text-gray-500">Total Clicks</div>
+                <div className={cn(TRS_CARD, "p-3")}>
+                  <div className={TRS_SUBTITLE}>Total Clicks</div>
                   <div className="mt-1 text-2xl font-semibold text-black">{kpis.advertising.clicks.toLocaleString()}</div>
                 </div>
-                <div className="rounded-lg border border-gray-200 bg-white p-3">
-                  <div className="text-[11px] uppercase tracking-wide text-gray-500">Total Conversions</div>
+                <div className={cn(TRS_CARD, "p-3")}>
+                  <div className={TRS_SUBTITLE}>Total Conversions</div>
                   <div className="mt-1 text-2xl font-semibold text-black">{kpis.advertising.conversions}</div>
                 </div>
               </div>
             </Card>
 
-            <Card className="p-4">
+            <Card className={cn(TRS_CARD, "p-4")}>
               <div className="text-sm font-semibold text-black mb-3">Budget Overview</div>
               <div className="space-y-4">
                 {adCampaigns.filter(c => c.status === 'Active').map((campaign) => (

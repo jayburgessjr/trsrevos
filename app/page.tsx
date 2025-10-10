@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { cn } from "@/lib/utils";
+import { TRS_CARD } from "@/lib/style";
 import CommandCard from "@/components/morning/CommandCard";
 import KpiTile from "@/components/morning/KpiTile";
 import PriorityRow from "@/components/morning/PriorityRow";
@@ -25,14 +27,9 @@ export default function MorningPage(){
   const greeting = new Date().toLocaleDateString(undefined, { weekday:"long", month:"short", day:"numeric" });
 
   return (
-    <div
-      className="grid min-h-full gap-3 p-3"
-      style={{ gridTemplateColumns: "repeat(12,minmax(0,1fr))" }}
-    >
-      <section className="col-span-12">
-      <div className="mx-auto space-y-3">
+    <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
         {/* Header / Context */}
-        <section className="rounded-xl border border-gray-200 bg-white p-3">
+        <section className={cn(TRS_CARD, "p-3")}>
           <div className="flex items-center justify-between">
             <div>
               <div className="text-lg font-semibold text-black">Good morning</div>
@@ -48,7 +45,7 @@ export default function MorningPage(){
         </section>
 
         {/* Section 1: KPI Cards */}
-        <section className="grid grid-cols-4 gap-3">
+        <section className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
           <KpiTile label="Pipeline Dollars" value={`${s.kpis.pipelineDollars.toLocaleString()}`} hint="vs yesterday" />
           <KpiTile label="Win Rate" value={`${s.kpis.winRatePct}%`} />
           <KpiTile label="Price Realization" value={`${s.kpis.priceRealizationPct}%`} />
@@ -71,7 +68,7 @@ export default function MorningPage(){
             />
           </div>
           <div className="col-span-2">
-            <div className="rounded-xl border border-gray-200 bg-white p-3">
+            <div className={cn(TRS_CARD, "p-3")}>
               <div className="text-sm font-semibold text-black mb-2">Today&apos;s Priorities</div>
               <div className="space-y-2">
                 {s.priorities.length === 0 ? (
@@ -96,7 +93,7 @@ export default function MorningPage(){
               <button onClick={()=>start(async()=>{ await generateRecap(); })} className="text-xs px-2 py-1 rounded-md border">Generate</button>
             }
           />
-          <div className="rounded-xl border border-gray-200 bg-white p-3">
+          <div className={cn(TRS_CARD, "p-3")}>
             <div className="text-sm font-semibold text-black mb-2">Revenue Digest</div>
             <SummaryFeed items={[
               "Pipeline confidence improved +4.2% overnight; education vertical slow approvals.",
@@ -116,8 +113,6 @@ export default function MorningPage(){
         <section className="text-right pb-6">
           <a href="/dashboard" className="text-xs px-2 py-1 rounded-md border">Open Executive Dashboard</a>
         </section>
-      </div>
-      </section>
     </div>
   );
 }

@@ -6,6 +6,8 @@ import Link from "next/link";
 
 import { Card } from "@/components/kit/Card";
 import { resolveTabs } from "@/lib/tabs";
+import { cn } from "@/lib/utils";
+import { TRS_CARD, TRS_SUBTITLE } from "@/lib/style";
 import type { Project } from "@/core/projects/types";
 
 const activeStreams = [
@@ -85,11 +87,8 @@ export default function ProjectsPageClient({
   }, [searchParams, tabs]);
 
   return (
-    <div
-      className="grid min-h-full gap-3 p-3"
-      style={{ gridTemplateColumns: "repeat(12,minmax(0,1fr))" }}
-    >
-      <section className="col-span-12 space-y-4">
+    <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
+      <section className="space-y-4">
         <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold text-black">Projects Control Center</h1>
         <p className="text-sm text-gray-600">
@@ -99,25 +98,25 @@ export default function ProjectsPageClient({
 
         {activeTab === "Overview" && (
         <div className="space-y-4">
-          <Card className="p-4">
+          <Card className={cn(TRS_CARD, "p-4")}>
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <div className="text-sm font-semibold text-black">Live Programs</div>
                 <p className="text-xs text-gray-600">Snapshot of core initiatives and momentum.</p>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div className="rounded-lg border border-gray-200 bg-white p-3">
-                  <div className="text-[11px] uppercase tracking-wide text-gray-500">Active Projects</div>
+                <div className={cn(TRS_CARD, "p-3")}>
+                  <div className={TRS_SUBTITLE}>Active Projects</div>
                   <div className="mt-1 text-xl font-semibold text-black">{stats.active}</div>
                   <div className="text-[11px] text-gray-600">Live delivery</div>
                 </div>
-                <div className="rounded-lg border border-gray-200 bg-white p-3">
-                  <div className="text-[11px] uppercase tracking-wide text-gray-500">On Track</div>
+                <div className={cn(TRS_CARD, "p-3")}>
+                  <div className={TRS_SUBTITLE}>On Track</div>
                   <div className="mt-1 text-xl font-semibold text-black">{stats.onTrack}</div>
                   <div className="text-[11px] text-gray-600">Healthy projects</div>
                 </div>
-                <div className="rounded-lg border border-gray-200 bg-white p-3">
-                  <div className="text-[11px] uppercase tracking-wide text-gray-500">At Risk</div>
+                <div className={cn(TRS_CARD, "p-3")}>
+                  <div className={TRS_SUBTITLE}>At Risk</div>
                   <div className="mt-1 text-xl font-semibold text-black">{stats.atRisk}</div>
                   <div className="text-[11px] text-gray-600">Requires action</div>
                 </div>
@@ -173,9 +172,9 @@ export default function ProjectsPageClient({
       )}
 
       {activeTab === "Active" && (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {activeStreams.map((stream) => (
-            <Card key={stream.title} className="p-4">
+            <Card key={stream.title} className={cn(TRS_CARD, "p-4")}>
               <div className="text-sm font-semibold text-black">{stream.title}</div>
               <div className="mt-3 space-y-3">
                 {stream.items.map((item) => (
@@ -201,16 +200,16 @@ export default function ProjectsPageClient({
 
       {activeTab === "Forecast" && (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             {forecastMetrics.map((metric) => (
-              <Card key={metric.label} className="p-4">
-                <div className="text-[12px] uppercase tracking-wide text-gray-500">{metric.label}</div>
+              <Card key={metric.label} className={cn(TRS_CARD, "p-4")}>
+                <div className={TRS_SUBTITLE}>{metric.label}</div>
                 <div className="mt-2 text-2xl font-semibold text-black">{metric.value}</div>
                 <div className="text-[12px] text-gray-600">{metric.context}</div>
               </Card>
             ))}
           </div>
-          <Card className="p-4">
+          <Card className={cn(TRS_CARD, "p-4")}>
             <div className="text-sm font-semibold text-black">Quarterly outlook</div>
             <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
               {forecastTimeline.map((point) => (
@@ -226,7 +225,7 @@ export default function ProjectsPageClient({
       )}
 
       {activeTab === "Agent" && (
-        <Card className="p-4">
+        <Card className={cn(TRS_CARD, "p-4")}>
           <div className="text-sm font-semibold text-black">Project Intelligence Agent</div>
           <p className="mt-2 text-sm text-gray-600">
             Ask the agent to analyze timelines, forecast budget impact, or surface risk across delivery tracks.

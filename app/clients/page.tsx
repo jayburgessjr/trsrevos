@@ -116,11 +116,8 @@ export default function ClientsPage() {
   const churnSignals = useMemo(() => clients.filter((client) => (client.churnRisk ?? 0) >= 15), [clients])
 
   return (
-    <div
-      className="grid min-h-full gap-3 p-3"
-      style={{ gridTemplateColumns: "repeat(12,minmax(0,1fr))" }}
-    >
-      <section className="col-span-12 space-y-3">
+    <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
+      <section className="space-y-3">
         <div className="space-y-1">
           <PageTitle className="text-xl font-semibold text-black">Client Portfolio</PageTitle>
           <PageDescription className="text-sm text-gray-500">

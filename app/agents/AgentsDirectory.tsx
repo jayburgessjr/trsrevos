@@ -5,6 +5,8 @@ import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 import { Card } from "@/components/kit/Card";
+import { cn } from "@/lib/utils";
+import { TRS_CARD } from "@/lib/style";
 import type { AgentMeta } from "@/core/agents/types";
 import { resolveTabs } from "@/lib/tabs";
 
@@ -140,9 +142,9 @@ export default function AgentsDirectory({ agents }: { agents: AgentRecord[] }) {
       </header>
 
       {activeTab === "GPT Agents" ? (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
           {GPT_AGENTS.map((gptAgent) => (
-            <Card key={gptAgent.name} className="flex h-full flex-col p-4 transition hover:shadow-sm">
+            <Card key={gptAgent.name} className={cn(TRS_CARD, "flex h-full flex-col p-4 transition hover:shadow-sm")}>
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h2 className="text-sm font-semibold text-black">{gptAgent.name}</h2>
@@ -172,18 +174,18 @@ export default function AgentsDirectory({ agents }: { agents: AgentRecord[] }) {
           ))}
         </div>
       ) : filteredAgents.length === 0 ? (
-        <Card className="border-dashed bg-white p-6 text-center text-sm text-gray-600">
+        <Card className={cn(TRS_CARD, "border-dashed bg-white p-6 text-center text-sm text-gray-600")}>
           No agents match the current filters.
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
           {filteredAgents.map((agent) => {
             const enabled = statusOverrides.get(agent.meta.key) ?? agent.status.enabled;
             const status = computeStatus(enabled, agent.status.lastRun);
             const tone = STATUS_TONES[status];
 
             return (
-              <Card key={agent.meta.key} className="flex h-full flex-col p-4 transition hover:shadow-sm">
+              <Card key={agent.meta.key} className={cn(TRS_CARD, "flex h-full flex-col p-4 transition hover:shadow-sm")}>
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h2 className="text-sm font-semibold text-black">{agent.meta.name}</h2>
