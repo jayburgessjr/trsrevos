@@ -48,16 +48,21 @@ CREATE INDEX IF NOT EXISTS idx_sync_log_direction
 -- Enable RLS on sync_log
 ALTER TABLE public.sync_log ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "sync_log_select"
+-- Drop policies if they exist (for idempotency)
+DROP POLICY IF EXISTS "sync_log_select" ON public.sync_log;
+DROP POLICY IF EXISTS "sync_log_insert" ON public.sync_log;
+
+-- Create RLS policies
+CREATE POLICY "sync_log_select"
   ON public.sync_log
   FOR SELECT
   USING (
     public.is_admin() OR auth.role() = 'service_role'
   );
 
-CREATE POLICY IF NOT EXISTS "sync_log_insert"
+CREATE POLICY "sync_log_insert"
   ON public.sync_log
-  FOR INSERT TO service_role
+  FOR INSERT
   WITH CHECK (auth.role() = 'service_role');
 
 -- Function to mark opportunity for sync on update
