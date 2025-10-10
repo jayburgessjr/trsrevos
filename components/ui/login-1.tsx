@@ -121,11 +121,7 @@ export default function LoginScreen() {
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
               {isLogin ? "Welcome Back" : "Join Us Today"}
             </h2>
-            <p className="text-gray-600">
-              {isLogin
-                ? "Welcome back to CreativeStudio — Continue your journey"
-                : "Welcome to CreativeStudio — Start your journey"}
-            </p>
+
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
