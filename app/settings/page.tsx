@@ -184,7 +184,7 @@ export default function ControlCenterPage() {
                     <span className={TRS_SECTION_TITLE}>Mode</span>
                     <div className="flex gap-2">
                       <Button
-                        variant={theme === "light" ? "default" : "outline"}
+                        variant={theme === "light" ? "primary" : "outline"}
                         size="sm"
                         className="rounded-lg px-4 text-xs font-medium"
                         onClick={() => setTheme("light")}
@@ -192,7 +192,7 @@ export default function ControlCenterPage() {
                         Light
                       </Button>
                       <Button
-                        variant={theme === "dark" ? "default" : "outline"}
+                        variant={theme === "dark" ? "primary" : "outline"}
                         size="sm"
                         className="rounded-lg px-4 text-xs font-medium"
                         onClick={() => setTheme("dark")}
