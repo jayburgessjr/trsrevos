@@ -32,16 +32,17 @@ export async function getExecDashboard(
   // Compute live dashboard from database
   const dashboard = await computeLiveDashboard(scope);
 
-  // Save snapshot asynchronously
-  supabase
+  // Save snapshot asynchronously (fire and forget)
+  void supabase
     .from("dashboard_snapshots")
     .insert({
       time_scope: scope.time,
       segment_filter: scope.segment,
       metrics: dashboard,
     })
-    .then(() => {})
-    .catch((err) => console.error("Failed to save dashboard snapshot:", err));
+    .then(({ error }) => {
+      if (error) console.error("Failed to save dashboard snapshot:", error);
+    });
 
   return dashboard;
 }
