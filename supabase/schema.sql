@@ -243,18 +243,21 @@ CREATE POLICY IF NOT EXISTS "focus_sessions_mutate"
 -- ================================================================
 CREATE TABLE IF NOT EXISTS public.analytics_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  organization_id UUID REFERENCES public.organizations(id) ON DELETE SET NULL,
   user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
-  event_key TEXT NOT NULL,
-  payload JSONB DEFAULT '{}'::jsonb,
-  occurred_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  event_type TEXT NOT NULL,
+  entity_type TEXT,
+  entity_id TEXT,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
 );
 
 CREATE INDEX IF NOT EXISTS idx_analytics_events_org_time
-  ON public.analytics_events(organization_id, occurred_at DESC);
-CREATE INDEX IF NOT EXISTS idx_analytics_events_event_key
-  ON public.analytics_events(event_key);
+  ON public.analytics_events(organization_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_event_type
+  ON public.analytics_events(event_type);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_entity
+  ON public.analytics_events(entity_type, entity_id);
 
 ALTER TABLE public.analytics_events ENABLE ROW LEVEL SECURITY;
 
@@ -262,14 +265,18 @@ CREATE POLICY IF NOT EXISTS "analytics_events_select"
   ON public.analytics_events
   FOR SELECT
   USING (
-    public.is_admin() OR auth.role() = 'service_role'
+    auth.role() = 'service_role'
+    OR public.is_admin()
+    OR organization_id IS NULL
   );
 
 CREATE POLICY IF NOT EXISTS "analytics_events_insert"
   ON public.analytics_events
-  FOR INSERT TO authenticated, service_role
+  FOR INSERT TO public
   WITH CHECK (
-    organization_id = public.user_organization_id() OR auth.role() = 'service_role'
+    organization_id = public.user_organization_id()
+    OR organization_id IS NULL
+    OR auth.role() = 'service_role'
   );
 
 -- ================================================================
@@ -448,7 +455,7 @@ CREATE POLICY IF NOT EXISTS "share_space_artifacts_all"
 -- ================================================================
 CREATE TABLE IF NOT EXISTS public.dashboard_snapshots (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
   time_scope TEXT NOT NULL,
   segment_filter JSONB DEFAULT '{}'::jsonb,
   metrics JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -465,15 +472,21 @@ CREATE POLICY IF NOT EXISTS "dashboard_snapshots_select"
   ON public.dashboard_snapshots
   FOR SELECT
   USING (
-    organization_id = public.user_organization_id() OR public.is_super_admin()
+    organization_id = public.user_organization_id()
+    OR organization_id IS NULL
+    OR public.is_super_admin()
   );
 
 CREATE POLICY IF NOT EXISTS "dashboard_snapshots_all"
   ON public.dashboard_snapshots
-  FOR ALL
+  FOR ALL TO public
   USING (
-    auth.role() = 'service_role' OR (organization_id = public.user_organization_id() AND public.is_admin())
+    auth.role() = 'service_role'
+    OR organization_id = public.user_organization_id()
+    OR organization_id IS NULL
   )
   WITH CHECK (
-    auth.role() = 'service_role' OR (organization_id = public.user_organization_id() AND public.is_admin())
+    auth.role() = 'service_role'
+    OR organization_id = public.user_organization_id()
+    OR organization_id IS NULL
   );
