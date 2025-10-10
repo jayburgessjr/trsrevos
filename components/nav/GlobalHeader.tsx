@@ -1,8 +1,30 @@
 "use client"
 
+import { useCallback, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Bell, Search } from "lucide-react"
 
+import { createClient } from "@/lib/supabase/client"
+
 export default function GlobalHeader() {
+  const router = useRouter()
+  const supabase = useMemo(() => createClient(), [])
+  const [isSigningOut, setIsSigningOut] = useState(false)
+
+  const handleSignOut = useCallback(async () => {
+    try {
+      setIsSigningOut(true)
+      const { error } = await supabase.auth.signOut()
+      if (error) {
+        throw error
+      }
+      router.replace("/login")
+    } catch (error) {
+      console.error("Failed to sign out", error)
+      setIsSigningOut(false)
+    }
+  }, [router, supabase])
+
   return (
     <header className="border-b border-gray-200 bg-white">
       <div className="flex h-14 w-full items-center justify-between px-3">
@@ -22,6 +44,13 @@ export default function GlobalHeader() {
             <Bell size={16} />
           </button>
           <div className="h-9 w-9 rounded-full border border-gray-200 bg-white" />
+          <button
+            onClick={handleSignOut}
+            disabled={isSigningOut}
+            className="flex h-9 items-center justify-center rounded-md border border-gray-200 px-3 text-sm font-medium text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSigningOut ? "Logging out…" : "Log out"}
+          </button>
         </div>
       </div>
     </header>
