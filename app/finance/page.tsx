@@ -1,222 +1,785 @@
-import { Badge } from '@/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card'
-import { PageDescription, PageHeader, PageTitle } from '@/ui/page-header'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table'
-import { Button } from '@/ui/button'
+"use client"
 
-const mockInvoices = [
-  { id: '1', client: 'Acme Corp', invoiceNumber: 'INV-2025-1043', status: 'Paid', dueDate: '2025-09-30', amount: 45000, daysOverdue: 0 },
-  { id: '2', client: 'GlobalTech Inc', invoiceNumber: 'INV-2025-1044', status: 'Pending', dueDate: '2025-10-15', amount: 28000, daysOverdue: 0 },
-  { id: '3', client: 'DataFlow Systems', invoiceNumber: 'INV-2025-1045', status: 'Overdue', dueDate: '2025-09-25', amount: 12500, daysOverdue: 13 },
-  { id: '4', client: 'CloudBridge', invoiceNumber: 'INV-2025-1046', status: 'Pending', dueDate: '2025-10-20', amount: 9500, daysOverdue: 0 },
-  { id: '5', client: 'TechVentures LLC', invoiceNumber: 'INV-2025-1047', status: 'Paid', dueDate: '2025-09-15', amount: 52000, daysOverdue: 0 },
-  { id: '6', client: 'Innovation Labs', invoiceNumber: 'INV-2025-1048', status: 'Overdue', dueDate: '2025-10-01', amount: 4500, daysOverdue: 7 },
-]
-
-const currentARR = 2840000
-const monthlyBurn = 185000
-const runway = 18.5
-const burnMultiple = 0.65
-const nrr = 118
-const ruleOf40 = 62
+import { useMemo } from "react"
+import { usePathname, useSearchParams } from "next/navigation"
+import { PageDescription, PageTitle } from "@/ui/page-header"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/ui/card"
+import { Badge } from "@/ui/badge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/ui/table"
+import { Button } from "@/ui/button"
+import { cn } from "@/lib/utils"
+import { TRS_CARD, TRS_SECTION_TITLE, TRS_SUBTITLE } from "@/lib/style"
+import { resolveTabs } from "@/lib/tabs"
+import {
+  getEquityHolders,
+  getInvoices,
+  getSubscriptions,
+  getExpenses,
+  getProfitLoss,
+  getCashFlow,
+  getCashFlowForecast,
+  getFinancialMetrics,
+} from "@/core/finance/store"
 
 export default function FinancePage() {
-  const totalOutstanding = mockInvoices.filter(i => i.status !== 'Paid').reduce((sum, i) => sum + i.amount, 0)
-  const overdueAmount = mockInvoices.filter(i => i.status === 'Overdue').reduce((sum, i) => sum + i.amount, 0)
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const tabs = useMemo(() => resolveTabs(pathname), [pathname])
+  const activeTab = useMemo(() => {
+    const current = searchParams.get("tab")
+    return current && tabs.includes(current) ? current : tabs[0]
+  }, [searchParams, tabs])
+
+  const equityHolders = useMemo(() => getEquityHolders(), [])
+  const invoices = useMemo(() => getInvoices(), [])
+  const subscriptions = useMemo(() => getSubscriptions(), [])
+  const expenses = useMemo(() => getExpenses(), [])
+  const profitLoss = useMemo(() => getProfitLoss(), [])
+  const cashFlow = useMemo(() => getCashFlow(), [])
+  const cashFlowForecast = useMemo(() => getCashFlowForecast(), [])
+  const metrics = useMemo(() => getFinancialMetrics(), [])
+
+  const formatCurrency = (amount: number) => `$${amount.toLocaleString()}`
+  const formatPercent = (value: number) => `${value.toFixed(1)}%`
 
   return (
-    <div className="space-y-6">
-      <PageHeader className="rounded-xl border border-[color:var(--color-outline)]">
+    <div className="flex flex-col gap-6 pb-8">
+      <header className="flex flex-col gap-2">
         <PageTitle>Finance</PageTitle>
         <PageDescription>
-          Monitor efficiency metrics, runway, cash flow, and accounts receivable.
+          Manage equity, billing, subscriptions, expenses, and cash flow for TRS
         </PageDescription>
-        <div className="flex flex-wrap items-center gap-2 text-sm">
-          <Badge variant="success">ARR: ${(currentARR / 1000000).toFixed(1)}M</Badge>
-          <Badge variant="default">Runway: {runway}mo</Badge>
-          {overdueAmount > 0 && <Badge variant="outline">${(overdueAmount / 1000).toFixed(0)}K overdue</Badge>}
-        </div>
-      </PageHeader>
+      </header>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Annual Recurring Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-semibold text-[color:var(--color-text)]">
-              ${(currentARR / 1000000).toFixed(2)}M
-            </p>
-            <p className="mt-1 text-xs text-[color:var(--color-positive)]">↑ 12% MoM</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Net Revenue Retention</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-semibold text-[color:var(--color-text)]">{nrr}%</p>
-            <p className="mt-1 text-xs text-[color:var(--color-text-muted)]">Last 12 months</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Rule of 40</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-semibold text-[color:var(--color-text)]">{ruleOf40}%</p>
-            <p className="mt-1 text-xs text-[color:var(--color-text-muted)]">Growth + margin</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Monthly Burn</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-semibold text-[color:var(--color-text)]">
-              ${(monthlyBurn / 1000).toFixed(0)}K
-            </p>
-            <p className="mt-1 text-xs text-[color:var(--color-text-muted)]">Average last 3 months</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Burn Multiple</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-semibold text-[color:var(--color-text)]">{burnMultiple}x</p>
-            <p className="mt-1 text-xs text-[color:var(--color-positive)]">Efficient</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Cash Runway</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-semibold text-[color:var(--color-text)]">{runway}</p>
-            <p className="mt-1 text-xs text-[color:var(--color-text-muted)]">Months at current burn</p>
-          </CardContent>
-        </Card>
+      <div className={cn("flex gap-1 overflow-x-auto", TRS_CARD, "p-1")}>
+        {tabs.map((tab) => {
+          const isActive = tab === activeTab
+          const href = tab === tabs[0] ? pathname : `${pathname}?tab=${encodeURIComponent(tab)}`
+          return (
+            <a
+              key={tab}
+              href={href}
+              className={cn(
+                "rounded-lg px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap",
+                isActive
+                  ? "bg-white text-black shadow-sm"
+                  : "text-gray-600 hover:text-black hover:bg-gray-50"
+              )}
+            >
+              {tab}
+            </a>
+          )
+        })}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Revenue waterfall (Last 30 days)</CardTitle>
-          <CardDescription>Monthly ARR movement breakdown by expansion, contraction, and churn.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[
-              { label: 'Starting ARR', value: 2720000, change: 0, type: 'base' },
-              { label: 'New business', value: 185000, change: 185000, type: 'positive' },
-              { label: 'Expansion', value: 95000, change: 95000, type: 'positive' },
-              { label: 'Contraction', value: -45000, change: -45000, type: 'negative' },
-              { label: 'Churn', value: -115000, change: -115000, type: 'negative' },
-              { label: 'Ending ARR', value: 2840000, change: 120000, type: 'ending' },
-            ].map((item, index) => (
-              <div key={index}>
-                <div className="mb-1 flex items-center justify-between text-sm">
-                  <span className={`font-medium ${
-                    item.type === 'ending' ? 'text-[color:var(--color-text)]' :
-                    item.type === 'base' ? 'text-[color:var(--color-text-muted)]' :
-                    'text-[color:var(--color-text)]'
-                  }`}>
-                    {item.label}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-sm ${
-                      item.type === 'positive' ? 'text-[color:var(--color-positive)]' :
-                      item.type === 'negative' ? 'text-[color:var(--color-negative)]' :
-                      'text-[color:var(--color-text)]'
-                    }`}>
-                      ${(item.value / 1000).toFixed(0)}K
-                    </span>
+      {activeTab === "Overview" && (
+        <div className="space-y-6">
+          {/* Key Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-gray-600">Cash Balance</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold text-black">{formatCurrency(metrics.cash)}</p>
+                <p className="text-xs text-gray-600 mt-1">{metrics.runway} months runway</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-gray-600">Monthly Recurring Revenue</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold text-black">{formatCurrency(metrics.mrr)}</p>
+                <p className="text-xs text-gray-600 mt-1">ARR: {formatCurrency(metrics.arr)}</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-gray-600">Gross Margin</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold text-black">{formatPercent(metrics.grossMargin)}</p>
+                <p className="text-xs text-gray-600 mt-1">Net: {formatPercent(metrics.netMargin)}</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-gray-600">LTV / CAC Ratio</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold text-black">{metrics.ltvCacRatio.toFixed(1)}x</p>
+                <p className="text-xs text-emerald-600 mt-1">Healthy ratio</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-gray-600">Outstanding AR</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xl font-semibold text-black">{formatCurrency(metrics.outstandingAR)}</p>
+                <p className="text-xs text-gray-600 mt-1">
+                  {invoices.filter(i => i.status === 'Overdue').length} overdue invoices
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-gray-600">Monthly Burn Rate</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xl font-semibold text-black">{formatCurrency(metrics.burnRate)}</p>
+                <p className="text-xs text-gray-600 mt-1">Avg last 3 months</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-gray-600">Active Subscriptions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xl font-semibold text-black">
+                  {subscriptions.filter(s => s.status === 'Active').length}
+                </p>
+                <p className="text-xs text-gray-600 mt-1">
+                  {subscriptions.filter(s => s.status === 'Trial').length} trials
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent Activity */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Cash Flow</CardTitle>
+              <CardDescription>Latest transactions impacting cash position</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="text-right">Balance</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {cashFlow.slice(0, 5).map((entry) => (
+                    <TableRow key={entry.id}>
+                      <TableCell className="text-sm text-gray-600">
+                        {new Date(entry.date).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={entry.type === 'Inflow' ? 'success' : 'default'}>
+                          {entry.type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-medium">{entry.description}</TableCell>
+                      <TableCell className={cn(
+                        "text-right font-medium",
+                        entry.type === 'Inflow' ? 'text-emerald-600' : 'text-rose-600'
+                      )}>
+                        {entry.type === 'Inflow' ? '+' : '-'}{formatCurrency(entry.amount)}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(entry.balance)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {activeTab === "Equity" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className={TRS_SECTION_TITLE}>Cap Table</h2>
+              <p className={TRS_SUBTITLE}>Equity ownership breakdown and vesting schedules</p>
+            </div>
+            <Button variant="primary" size="sm">Add Equity Grant</Button>
+          </div>
+
+          {/* Ownership Summary */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-gray-600">Total Shares</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold text-black">
+                  {equityHolders.reduce((sum, h) => sum + h.shares, 0).toLocaleString()}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-gray-600">Fully Diluted Value</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold text-black">
+                  {formatCurrency(equityHolders.reduce((sum, h) => sum + h.valueAtCurrent, 0))}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-gray-600">Founders</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold text-black">
+                  {formatPercent(equityHolders.filter(h => h.holderType === 'Founder').reduce((sum, h) => sum + h.percentage, 0))}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-gray-600">Investors</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold text-black">
+                  {formatPercent(equityHolders.filter(h => h.holderType === 'Investor').reduce((sum, h) => sum + h.percentage, 0))}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Equity Holders Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Equity Holders</CardTitle>
+              <CardDescription>Complete ownership breakdown with vesting details</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Equity Type</TableHead>
+                    <TableHead className="text-right">Shares</TableHead>
+                    <TableHead className="text-right">%</TableHead>
+                    <TableHead className="text-right">Value</TableHead>
+                    <TableHead>Vesting</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {equityHolders.map((holder) => (
+                    <TableRow key={holder.id}>
+                      <TableCell className="font-medium">{holder.name}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{holder.holderType}</Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-600">{holder.equityType}</TableCell>
+                      <TableCell className="text-right">{holder.shares.toLocaleString()}</TableCell>
+                      <TableCell className="text-right font-medium">{formatPercent(holder.percentage)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(holder.valueAtCurrent)}</TableCell>
+                      <TableCell className="text-sm text-gray-600">
+                        {holder.vestingSchedule ? (
+                          <span>
+                            {holder.vestingSchedule.vestedShares.toLocaleString()} / {holder.vestingSchedule.totalShares.toLocaleString()} vested
+                          </span>
+                        ) : (
+                          '—'
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {activeTab === "Billing" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className={TRS_SECTION_TITLE}>Invoices & Billing</h2>
+              <p className={TRS_SUBTITLE}>Track outstanding invoices and payment collection</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm">Export</Button>
+              <Button variant="primary" size="sm">New Invoice</Button>
+            </div>
+          </div>
+
+          {/* Billing Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-gray-600">Total Outstanding</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold text-black">
+                  {formatCurrency(invoices.filter(i => i.status !== 'Paid').reduce((sum, i) => sum + i.total, 0))}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-gray-600">Overdue</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold text-rose-600">
+                  {formatCurrency(invoices.filter(i => i.status === 'Overdue').reduce((sum, i) => sum + i.total, 0))}
+                </p>
+                <p className="text-xs text-gray-600 mt-1">
+                  {invoices.filter(i => i.status === 'Overdue').length} invoices
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-gray-600">Paid This Month</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold text-emerald-600">
+                  {formatCurrency(invoices.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.total, 0))}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-gray-600">Pending</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold text-black">
+                  {formatCurrency(invoices.filter(i => i.status === 'Sent').reduce((sum, i) => sum + i.total, 0))}
+                </p>
+                <p className="text-xs text-gray-600 mt-1">
+                  {invoices.filter(i => i.status === 'Sent').length} invoices
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Invoices Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>All Invoices</CardTitle>
+              <CardDescription>Complete invoice history and status</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Invoice #</TableHead>
+                    <TableHead>Client</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Issue Date</TableHead>
+                    <TableHead>Due Date</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {invoices.map((invoice) => (
+                    <TableRow key={invoice.id}>
+                      <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
+                      <TableCell>{invoice.clientName}</TableCell>
+                      <TableCell>
+                        <Badge variant={
+                          invoice.status === 'Paid' ? 'success' :
+                          invoice.status === 'Overdue' ? 'destructive' :
+                          invoice.status === 'Sent' ? 'default' :
+                          'outline'
+                        }>
+                          {invoice.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-600">
+                        {new Date(invoice.issueDate).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-600">
+                        {new Date(invoice.dueDate).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right">{formatCurrency(invoice.amount)}</TableCell>
+                      <TableCell className="text-right font-medium">{formatCurrency(invoice.total)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {activeTab === "Subscriptions" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className={TRS_SECTION_TITLE}>Recurring Revenue</h2>
+              <p className={TRS_SUBTITLE}>Subscription management and MRR/ARR tracking</p>
+            </div>
+            <Button variant="primary" size="sm">New Subscription</Button>
+          </div>
+
+          {/* MRR/ARR Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-gray-600">Monthly Recurring Revenue</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold text-black">
+                  {formatCurrency(subscriptions.filter(s => s.status === 'Active').reduce((sum, s) => sum + s.mrr, 0))}
+                </p>
+                <p className="text-xs text-emerald-600 mt-1">+12% vs last month</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-gray-600">Annual Recurring Revenue</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold text-black">
+                  {formatCurrency(subscriptions.filter(s => s.status === 'Active').reduce((sum, s) => sum + s.arr, 0))}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-gray-600">Active Subscriptions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold text-black">
+                  {subscriptions.filter(s => s.status === 'Active').length}
+                </p>
+                <p className="text-xs text-gray-600 mt-1">
+                  {subscriptions.filter(s => s.status === 'Trial').length} in trial
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-gray-600">Avg Contract Value</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold text-black">
+                  {formatCurrency(
+                    subscriptions.filter(s => s.status === 'Active').reduce((sum, s) => sum + s.contractValue, 0) /
+                    subscriptions.filter(s => s.status === 'Active').length
+                  )}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Subscriptions Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>All Subscriptions</CardTitle>
+              <CardDescription>Customer subscriptions and recurring revenue breakdown</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Client</TableHead>
+                    <TableHead>Product</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Billing</TableHead>
+                    <TableHead className="text-right">MRR</TableHead>
+                    <TableHead className="text-right">ARR</TableHead>
+                    <TableHead>Next Billing</TableHead>
+                    <TableHead>Renewal</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {subscriptions.map((sub) => (
+                    <TableRow key={sub.id}>
+                      <TableCell className="font-medium">{sub.clientName}</TableCell>
+                      <TableCell className="text-sm text-gray-600">{sub.productName}</TableCell>
+                      <TableCell>
+                        <Badge variant={
+                          sub.status === 'Active' ? 'success' :
+                          sub.status === 'Trial' ? 'default' :
+                          sub.status === 'Paused' ? 'outline' :
+                          'destructive'
+                        }>
+                          {sub.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-600">{sub.billingFrequency}</TableCell>
+                      <TableCell className="text-right font-medium">{formatCurrency(sub.mrr)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(sub.arr)}</TableCell>
+                      <TableCell className="text-sm text-gray-600">
+                        {new Date(sub.nextBillingDate).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-600">
+                        {new Date(sub.renewalDate).toLocaleDateString()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {activeTab === "Expenses" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className={TRS_SECTION_TITLE}>Expenses & P&L</h2>
+              <p className={TRS_SUBTITLE}>Track expenses and profit/loss statements</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm">Export P&L</Button>
+              <Button variant="primary" size="sm">Add Expense</Button>
+            </div>
+          </div>
+
+          {/* P&L Summary */}
+          {profitLoss[0] && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Profit & Loss - {profitLoss[0].period}</CardTitle>
+                <CardDescription>Income statement for the current period</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 mb-2">Revenue</h3>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Subscriptions</span>
+                        <span className="font-medium">{formatCurrency(profitLoss[0].revenue.subscriptions)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Services</span>
+                        <span className="font-medium">{formatCurrency(profitLoss[0].revenue.services)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Other</span>
+                        <span className="font-medium">{formatCurrency(profitLoss[0].revenue.other)}</span>
+                      </div>
+                      <div className="flex justify-between pt-2 border-t">
+                        <span className="font-semibold text-black">Total Revenue</span>
+                        <span className="font-semibold text-black">{formatCurrency(profitLoss[0].revenue.total)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 mb-2">Expenses</h3>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Payroll & Benefits</span>
+                        <span className="font-medium">{formatCurrency(profitLoss[0].expenses.payroll)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Marketing</span>
+                        <span className="font-medium">{formatCurrency(profitLoss[0].expenses.marketing)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Software & Tools</span>
+                        <span className="font-medium">{formatCurrency(profitLoss[0].expenses.software)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Office & Equipment</span>
+                        <span className="font-medium">{formatCurrency(profitLoss[0].expenses.office)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Professional Services</span>
+                        <span className="font-medium">{formatCurrency(profitLoss[0].expenses.professional)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Hosting & Infrastructure</span>
+                        <span className="font-medium">{formatCurrency(profitLoss[0].expenses.hosting)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Other</span>
+                        <span className="font-medium">{formatCurrency(profitLoss[0].expenses.other)}</span>
+                      </div>
+                      <div className="flex justify-between pt-2 border-t">
+                        <span className="font-semibold text-black">Total Expenses</span>
+                        <span className="font-semibold text-black">{formatCurrency(profitLoss[0].expenses.total)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t-2 border-gray-200">
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-bold text-black">Net Income</span>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-emerald-600">{formatCurrency(profitLoss[0].netIncome)}</div>
+                        <div className="text-sm text-gray-600">{formatPercent(profitLoss[0].profitMargin)} margin</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                {item.type !== 'base' && item.type !== 'ending' && (
-                  <div className="h-2 overflow-hidden rounded-full bg-[color:var(--color-surface-muted)]">
-                    <div
-                      className={`h-full ${
-                        item.type === 'positive' ? 'bg-[color:var(--color-positive)]' :
-                        'bg-[color:var(--color-negative)]'
-                      }`}
-                      style={{ width: `${(Math.abs(item.value) / 185000) * 100}%` }}
-                    />
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              </CardContent>
+            </Card>
+          )}
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          {/* Recent Expenses */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Expenses</CardTitle>
+              <CardDescription>Latest expense transactions</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Vendor</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {expenses.map((expense) => (
+                    <TableRow key={expense.id}>
+                      <TableCell className="text-sm text-gray-600">
+                        {new Date(expense.date).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{expense.category}</Badge>
+                      </TableCell>
+                      <TableCell className="font-medium">{expense.vendor}</TableCell>
+                      <TableCell className="text-sm text-gray-600">{expense.description}</TableCell>
+                      <TableCell className="text-right font-medium">{formatCurrency(expense.amount)}</TableCell>
+                      <TableCell>
+                        <Badge variant={expense.approved ? 'success' : 'default'}>
+                          {expense.approved ? 'Approved' : 'Pending'}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {activeTab === "Cash Flow" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Invoice aging</CardTitle>
-              <CardDescription>Outstanding invoices by aging bucket with collection status.</CardDescription>
+              <h2 className={TRS_SECTION_TITLE}>Cash Flow & Forecasting</h2>
+              <p className={TRS_SUBTITLE}>Monitor cash position and forecast future runway</p>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">Export</Button>
-              <Button variant="primary" size="sm">Send reminders</Button>
-            </div>
+            <Button variant="primary" size="sm">Update Forecast</Button>
           </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Client</TableHead>
-                <TableHead>Invoice #</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Due Date</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead className="text-right">Days Overdue</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {mockInvoices.map((invoice) => (
-                <TableRow key={invoice.id}>
-                  <TableCell className="font-medium">{invoice.client}</TableCell>
-                  <TableCell className="text-sm text-[color:var(--color-text-muted)]">{invoice.invoiceNumber}</TableCell>
-                  <TableCell>
-                    <Badge variant={
-                      invoice.status === 'Paid' ? 'success' :
-                      invoice.status === 'Overdue' ? 'outline' :
-                      'default'
-                    }>
-                      {invoice.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-sm text-[color:var(--color-text-muted)]">
-                    {new Date(invoice.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    ${invoice.amount.toLocaleString()}
-                  </TableCell>
-                  <TableCell className={`text-right text-sm ${
-                    invoice.daysOverdue > 0 ? 'text-[color:var(--color-negative)]' : 'text-[color:var(--color-text-muted)]'
-                  }`}>
-                    {invoice.daysOverdue > 0 ? invoice.daysOverdue : '—'}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <div className="mt-4 flex items-center justify-between rounded-lg bg-[color:var(--color-surface-muted)]/40 p-3 text-sm">
-            <span className="text-[color:var(--color-text-muted)]">Total Outstanding</span>
-            <span className="font-semibold text-[color:var(--color-text)]">
-              ${totalOutstanding.toLocaleString()}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
+
+          {/* Cash Flow Forecast */}
+          <Card>
+            <CardHeader>
+              <CardTitle>3-Month Cash Flow Forecast</CardTitle>
+              <CardDescription>Projected cash position and runway</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Month</TableHead>
+                    <TableHead className="text-right">Beginning Balance</TableHead>
+                    <TableHead className="text-right">Expected Inflows</TableHead>
+                    <TableHead className="text-right">Expected Outflows</TableHead>
+                    <TableHead className="text-right">Ending Balance</TableHead>
+                    <TableHead className="text-right">Runway (months)</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {cashFlowForecast.map((forecast) => (
+                    <TableRow key={forecast.month}>
+                      <TableCell className="font-medium">{forecast.month}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(forecast.beginningBalance)}</TableCell>
+                      <TableCell className="text-right text-emerald-600">
+                        +{formatCurrency(forecast.expectedInflows)}
+                      </TableCell>
+                      <TableCell className="text-right text-rose-600">
+                        -{formatCurrency(forecast.expectedOutflows)}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">
+                        {formatCurrency(forecast.endingBalance)}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">{forecast.runway}mo</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Cash Flow History */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Cash Flow Transactions</CardTitle>
+              <CardDescription>Detailed cash inflows and outflows</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="text-right">Balance</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {cashFlow.map((entry) => (
+                    <TableRow key={entry.id}>
+                      <TableCell className="text-sm text-gray-600">
+                        {new Date(entry.date).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={entry.type === 'Inflow' ? 'success' : 'default'}>
+                          {entry.type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-600">{entry.category}</TableCell>
+                      <TableCell className="font-medium">{entry.description}</TableCell>
+                      <TableCell className={cn(
+                        "text-right font-medium",
+                        entry.type === 'Inflow' ? 'text-emerald-600' : 'text-rose-600'
+                      )}>
+                        {entry.type === 'Inflow' ? '+' : '-'}{formatCurrency(entry.amount)}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">
+                        {formatCurrency(entry.balance)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

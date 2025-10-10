@@ -5,14 +5,15 @@ export const PAGE_TABS: Record<string, string[]> = {
   "/partners": ["Overview", "Directory", "Introductions", "Enablement"],
   "/morning": ["Today", "This Week", "Focus Blocks", "Risks"],
   "/projects": ["Overview", "Active", "Forecast", "Agent"],
-  "/content": ["Pipeline", "Ideas", "Scheduled", "Performance"],
+  "/content": ["Overview", "Pipeline", "Ideas", "Scheduled", "Performance", "Create", "Advertising"],
   "/agents": ["All", "Projects", "Content", "Clients", "GPT Agents"],
   "/mail-calendar": ["Inbox", "Calendar", "Integrations"],
   "/resources": ["Pricing", "Revenue", "Financial Plan", "Profit", "Board Scenarios"],
   "/settings": ["Agents", "Appearance", "Integrations", "AI Config", "Diagnostics"],
   "/clients": ["Overview", "Accounts", "Engagement", "Renewals", "Signals"],
-  "/clients/[id]": ["Overview", "Projects", "RevenueOS", "Data", "Strategy", "Results"],
+  "/clients/[id]": ["Overview", "Projects", "RevenueOS", "Content", "Data", "Strategy", "Results"],
   "/partners/[id]": ["Overview", "Introductions", "Initiatives", "Notes", "Resources"],
+  "/finance": ["Overview", "Equity", "Billing", "Subscriptions", "Expenses", "Cash Flow"],
 };
 
 export function resolveTabs(pathname: string): string[] {

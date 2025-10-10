@@ -2,9 +2,11 @@
 
 import { useMemo } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 import { Card } from "@/components/kit/Card";
 import { resolveTabs } from "@/lib/tabs";
+import { getContentPiecesByClient } from "@/core/content/store";
 import type { Client } from "@/core/clients/types";
 import type { Project } from "@/core/projects/types";
 
@@ -22,6 +24,8 @@ export default function ClientDetailView({ client, projects }: { client: Client;
     const current = searchParams.get("tab");
     return current && tabs.includes(current) ? current : tabs[0];
   }, [searchParams, tabs]);
+
+  const clientContent = useMemo(() => getContentPiecesByClient(client.id), [client.id]);
 
   const healthTone = client.health >= 70 ? "text-emerald-600" : client.health >= 40 ? "text-amber-600" : "text-rose-600";
 
@@ -212,6 +216,73 @@ export default function ClientDetailView({ client, projects }: { client: Client;
               </Card>
             </div>
           )}
+        </div>
+      )}
+
+      {activeTab === "Content" && (
+        <div className="space-y-4">
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="text-sm font-semibold text-black">Client Content</div>
+                <p className="text-[13px] text-gray-600">Marketing content created for {client.name}</p>
+              </div>
+              <Link
+                href={`/content?tab=Create`}
+                className="text-xs px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-100 bg-white"
+              >
+                + New Content
+              </Link>
+            </div>
+
+            {clientContent.length === 0 ? (
+              <div className="text-center py-8 text-sm text-gray-600">
+                No content created for this client yet.
+              </div>
+            ) : (
+              <div className="overflow-hidden rounded-lg border border-gray-200">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 text-left text-[12px] uppercase tracking-wide text-gray-500">
+                    <tr>
+                      <th className="px-3 py-2 font-medium">Title</th>
+                      <th className="px-3 py-2 font-medium">Type</th>
+                      <th className="px-3 py-2 font-medium">Format</th>
+                      <th className="px-3 py-2 font-medium">Status</th>
+                      <th className="px-3 py-2 font-medium">Purpose</th>
+                      <th className="px-3 py-2 font-medium">Created</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 bg-white">
+                    {clientContent.map((content) => (
+                      <tr key={content.id} className="hover:bg-gray-50">
+                        <td className="px-3 py-2 font-medium text-black">
+                          <Link href={`/content/${content.id}`} className="hover:text-blue-600 hover:underline">
+                            {content.title}
+                          </Link>
+                        </td>
+                        <td className="px-3 py-2 text-gray-700">{content.contentType}</td>
+                        <td className="px-3 py-2 text-gray-700">{content.format}</td>
+                        <td className="px-3 py-2">
+                          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                            content.status === 'Published' ? 'bg-emerald-100 text-emerald-800' :
+                            content.status === 'Scheduled' ? 'bg-blue-100 text-blue-800' :
+                            content.status === 'Review' ? 'bg-amber-100 text-amber-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {content.status}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 text-gray-700">{content.purpose}</td>
+                        <td className="px-3 py-2 text-gray-700">
+                          {new Date(content.createdAt).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
         </div>
       )}
 
