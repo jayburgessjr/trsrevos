@@ -109,7 +109,7 @@ export default function LoginScreen() {
       <div className="flex-1 bg-gradient-to-br from-slate-900 via-blue-900 to-orange-600 flex items-center justify-center p-12">
         <div className="text-white max-w-lg">
           <h1 className="text-6xl font-bold mb-8 leading-tight">
-            Build amazing products with our creative team.
+            "The secret of getting ahead is getting started."
           </h1>
         </div>
       </div>
@@ -227,7 +227,7 @@ export default function LoginScreen() {
 
             <button
               type="submit"
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full bg-black hover:bg-gray-800 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 focus:ring-2 focus:ring-black focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
               disabled={isSubmitting}
             >
               {isSubmitting
