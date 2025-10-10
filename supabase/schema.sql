@@ -490,3 +490,27 @@ CREATE POLICY IF NOT EXISTS "dashboard_snapshots_all"
     OR organization_id = public.user_organization_id()
     OR organization_id IS NULL
   );
+
+-- ================================================================
+-- user_integrations
+-- ================================================================
+CREATE TABLE IF NOT EXISTS public.user_integrations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  provider TEXT NOT NULL,
+  access_token TEXT,
+  refresh_token TEXT,
+  scope TEXT,
+  token_type TEXT,
+  expiry_date TIMESTAMPTZ,
+  connected_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  UNIQUE (user_id, provider)
+);
+
+ALTER TABLE public.user_integrations ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY IF NOT EXISTS "user_integrations_manage"
+  ON public.user_integrations
+  FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);

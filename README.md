@@ -29,3 +29,18 @@ pnpm format    # format files with Prettier
 - `styles/` – Tailwind configuration surface.
 
 Everything else has been removed so new modules, data fetching, and auth flows can be rebuilt from scratch.
+
+## Gmail Workspace Integration
+
+The settings wizard at `/settings/integrations` now provisions a Google OAuth flow so users can connect their Gmail Workspace
+account and manage mail inside TRSREVOS. To enable the feature locally, configure the following environment variables:
+
+| Variable | Description |
+| --- | --- |
+| `NEXT_PUBLIC_APP_URL` | Public URL where the app is hosted (used to construct the OAuth callback). |
+| `GOOGLE_CLIENT_ID` | OAuth client ID generated from Google Cloud Console. |
+| `GOOGLE_CLIENT_SECRET` | OAuth client secret from Google Cloud Console. |
+| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Required so the API routes can read/write the Supabase project with the signed-in user context. |
+
+Ensure the Gmail API is enabled for the Google Cloud project and the OAuth consent screen is configured to request the
+`https://www.googleapis.com/auth/gmail.modify` and `https://www.googleapis.com/auth/userinfo.email` scopes.
