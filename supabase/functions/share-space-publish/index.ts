@@ -1,4 +1,4 @@
-const allowedOrigins = new Set([
+const SHARE_SPACE_ALLOWED_ORIGINS = new Set([
   'https://trsrevos.vercel.app',
   'http://localhost:3000',
 ]);
@@ -14,8 +14,8 @@ type ShareSpacePublishResponse = {
   error?: string;
 };
 
-function corsHeaders(origin: string | null) {
-  const resolvedOrigin = origin && allowedOrigins.has(origin)
+function createShareSpaceCorsHeaders(origin: string | null) {
+  const resolvedOrigin = origin && SHARE_SPACE_ALLOWED_ORIGINS.has(origin)
     ? origin
     : 'https://trsrevos.vercel.app';
 
@@ -28,11 +28,14 @@ function corsHeaders(origin: string | null) {
   });
 }
 
-function respond(body: ShareSpacePublishResponse, init: ResponseInit & { headers: Headers }) {
+function respondWithShareSpacePublish(
+  body: ShareSpacePublishResponse,
+  init: ResponseInit & { headers: Headers },
+) {
   return new Response(JSON.stringify(body, null, 2), init);
 }
 
-function logRequest(req: Request, functionName: string) {
+function logShareSpacePublishRequest(req: Request, functionName: string) {
   console.info(
     JSON.stringify({
       event: `${functionName}:request`,
@@ -43,7 +46,7 @@ function logRequest(req: Request, functionName: string) {
   );
 }
 
-function isValidInput(payload: unknown): payload is ShareSpacePublishInput {
+function isValidShareSpacePublishInput(payload: unknown): payload is ShareSpacePublishInput {
   if (!payload || typeof payload !== 'object') return false;
   const data = payload as Record<string, unknown>;
   return typeof data.share_id === 'string';
@@ -51,16 +54,16 @@ function isValidInput(payload: unknown): payload is ShareSpacePublishInput {
 
 Deno.serve(async (req) => {
   const origin = req.headers.get('origin');
-  const headers = corsHeaders(origin);
+  const headers = createShareSpaceCorsHeaders(origin);
 
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers });
   }
 
-  logRequest(req, 'share-space-publish');
+  logShareSpacePublishRequest(req, 'share-space-publish');
 
   if (req.method !== 'POST') {
-    return respond({ ok: false, error: 'Method not allowed' }, { status: 405, headers });
+    return respondWithShareSpacePublish({ ok: false, error: 'Method not allowed' }, { status: 405, headers });
   }
 
   let payload: unknown;
@@ -68,11 +71,14 @@ Deno.serve(async (req) => {
     payload = await req.json();
   } catch (error) {
     console.error('share-space-publish:invalid-json', error);
-    return respond({ ok: false, error: 'Invalid JSON payload' }, { status: 400, headers });
+    return respondWithShareSpacePublish({ ok: false, error: 'Invalid JSON payload' }, { status: 400, headers });
   }
 
-  if (!isValidInput(payload)) {
-    return respond({ ok: false, error: 'Missing required field: share_id' }, { status: 400, headers });
+  if (!isValidShareSpacePublishInput(payload)) {
+    return respondWithShareSpacePublish(
+      { ok: false, error: 'Missing required field: share_id' },
+      { status: 400, headers },
+    );
   }
 
   const { share_id, include_watermark } = payload;
@@ -99,5 +105,5 @@ Deno.serve(async (req) => {
     referenced_tables: ['share_spaces', 'share_space_artifacts', 'dashboard_snapshots', 'content_items', 'projects', 'audit_log'],
   };
 
-  return respond({ ok: true, data: placeholderPublish }, { status: 200, headers });
+  return respondWithShareSpacePublish({ ok: true, data: placeholderPublish }, { status: 200, headers });
 });

@@ -1,4 +1,4 @@
-const allowedOrigins = new Set([
+const ALLOWED_ORIGINS = new Set([
   'https://trsrevos.vercel.app',
   'http://localhost:3000',
 ]);
@@ -16,8 +16,8 @@ type AgentDispatchResponse = {
   error?: string;
 };
 
-function corsHeaders(origin: string | null) {
-  const resolvedOrigin = origin && allowedOrigins.has(origin)
+function createAgentDispatchCorsHeaders(origin: string | null) {
+  const resolvedOrigin = origin && ALLOWED_ORIGINS.has(origin)
     ? origin
     : 'https://trsrevos.vercel.app';
 
@@ -30,11 +30,14 @@ function corsHeaders(origin: string | null) {
   });
 }
 
-function respond(body: AgentDispatchResponse, init: ResponseInit & { headers: Headers }) {
+function respondWithAgentDispatch(
+  body: AgentDispatchResponse,
+  init: ResponseInit & { headers: Headers },
+) {
   return new Response(JSON.stringify(body, null, 2), init);
 }
 
-function logRequest(req: Request, functionName: string) {
+function logAgentDispatchRequest(req: Request, functionName: string) {
   console.info(
     JSON.stringify({
       event: `${functionName}:request`,
@@ -45,7 +48,7 @@ function logRequest(req: Request, functionName: string) {
   );
 }
 
-function isValidInput(payload: unknown): payload is AgentDispatchInput {
+function isValidAgentDispatchInput(payload: unknown): payload is AgentDispatchInput {
   if (!payload || typeof payload !== 'object') return false;
   const data = payload as Record<string, unknown>;
   return (
@@ -58,16 +61,16 @@ function isValidInput(payload: unknown): payload is AgentDispatchInput {
 
 Deno.serve(async (req) => {
   const origin = req.headers.get('origin');
-  const headers = corsHeaders(origin);
+  const headers = createAgentDispatchCorsHeaders(origin);
 
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers });
   }
 
-  logRequest(req, 'agent-dispatch');
+  logAgentDispatchRequest(req, 'agent-dispatch');
 
   if (req.method !== 'POST') {
-    return respond({ ok: false, error: 'Method not allowed' }, { status: 405, headers });
+    return respondWithAgentDispatch({ ok: false, error: 'Method not allowed' }, { status: 405, headers });
   }
 
   let payload: unknown;
@@ -75,14 +78,14 @@ Deno.serve(async (req) => {
     payload = await req.json();
   } catch (error) {
     console.error('agent-dispatch:invalid-json', error);
-    return respond({ ok: false, error: 'Invalid JSON payload' }, { status: 400, headers });
+    return respondWithAgentDispatch({ ok: false, error: 'Invalid JSON payload' }, { status: 400, headers });
   }
 
-  if (!isValidInput(payload)) {
-    return respond({ ok: false, error: 'Missing required fields: agent_key, user_id, organization_id, payload' }, {
-      status: 400,
-      headers,
-    });
+  if (!isValidAgentDispatchInput(payload)) {
+    return respondWithAgentDispatch(
+      { ok: false, error: 'Missing required fields: agent_key, user_id, organization_id, payload' },
+      { status: 400, headers },
+    );
   }
 
   const { agent_key, user_id, organization_id, payload: agentPayload } = payload;
@@ -111,5 +114,5 @@ Deno.serve(async (req) => {
     payload: agentPayload,
   };
 
-  return respond({ ok: true, data: placeholderRun }, { status: 200, headers });
+  return respondWithAgentDispatch({ ok: true, data: placeholderRun }, { status: 200, headers });
 });
