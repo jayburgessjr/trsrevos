@@ -24,17 +24,19 @@ export default function DashboardClient({ data, exportAction }: { data: ExecDash
   const d = data;
 
   return (
-    <div className="w-full px-6 py-6 space-y-4">
-      {/* Scope controls & command bar */}
-      <div className="flex items-center justify-between">
-        <ScopeBar initial={d.scope}/>
-        <form action={exportAction}>
-          <button className="text-xs px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-100 bg-white">Export board deck</button>
-        </form>
-      </div>
+    <div
+      className="grid min-h-full gap-3 p-3"
+      style={{ gridTemplateColumns: "repeat(12,minmax(0,1fr))" }}
+    >
+      <section className="col-span-12 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <ScopeBar initial={d.scope}/>
+          <form action={exportAction}>
+            <button className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs hover:bg-gray-100">Export board deck</button>
+          </form>
+        </div>
 
-      {/* Tab: Overview */}
-      {activeTab === "Overview" && (
+        {activeTab === "Overview" && (
         <div className="space-y-4">
           {/* Row 1: Health Ribbon - 4 cards across */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -118,7 +120,7 @@ export default function DashboardClient({ data, exportAction }: { data: ExecDash
               </div>
               <div className="p-4 text-sm space-y-3">
                 <div className="mb-2 text-[11px] text-gray-500">Discount vs Win vs Margin (stub chart)</div>
-                <div className="h-24 rounded-md border border-gray-200 flex items-center justify-center text-xs text-gray-500 bg-gray-50">Curve</div>
+                <div className="flex h-24 items-center justify-center rounded-md border border-gray-200 bg-white text-xs text-gray-600">Curve</div>
                 <div>
                   <div className="text-[12px] font-medium mb-2">Guardrail Breaches</div>
                   <ul className="text-[12px] space-y-2">
@@ -153,10 +155,9 @@ export default function DashboardClient({ data, exportAction }: { data: ExecDash
             </Card>
           </div>
         </div>
-      )}
+        )}
 
-      {/* Tab: Analytics */}
-      {activeTab === "Analytics" && (
+        {activeTab === "Analytics" && (
         <Card className="p-6">
           <div className="text-center space-y-3">
             <h2 className="text-lg font-semibold text-black">Advanced Analytics</h2>
@@ -164,10 +165,9 @@ export default function DashboardClient({ data, exportAction }: { data: ExecDash
             <div className="text-[11px] text-gray-500 italic">Feature coming soon</div>
           </div>
         </Card>
-      )}
+        )}
 
-      {/* Tab: Reports */}
-      {activeTab === "Reports" && (
+        {activeTab === "Reports" && (
         <Card className="p-6">
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-black">Executive Reports</h2>
@@ -175,10 +175,9 @@ export default function DashboardClient({ data, exportAction }: { data: ExecDash
             <div className="text-[11px] text-gray-500 italic">Report builder coming soon</div>
           </div>
         </Card>
-      )}
+        )}
 
-      {/* Tab: Notifications */}
-      {activeTab === "Notifications" && (
+        {activeTab === "Notifications" && (
         <Card className="p-6">
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-black">Notifications & Alerts</h2>
@@ -187,7 +186,8 @@ export default function DashboardClient({ data, exportAction }: { data: ExecDash
             </div>
           </div>
         </Card>
-      )}
+        )}
+      </section>
     </div>
   );
 }

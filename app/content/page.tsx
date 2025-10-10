@@ -82,40 +82,44 @@ export default function ContentStudioPage() {
   };
 
   return (
-    <div className="w-full px-6 py-6 space-y-6">
-      <header className="flex flex-col gap-2">
+    <div
+      className="grid min-h-full gap-3 p-3"
+      style={{ gridTemplateColumns: "repeat(12,minmax(0,1fr))" }}
+    >
+      <section className="col-span-12 space-y-4">
+        <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold text-black">Marketing & Content</h1>
         <p className="text-sm text-gray-600">
           Create content to inspire, sell, and add value for clients, prospects, partners, and market presence.
         </p>
-      </header>
+        </header>
 
-      {activeTab === "Overview" && (
+        {activeTab === "Overview" && (
         <div className="space-y-4">
           <Card className="p-4">
             <div className="text-sm font-semibold text-black mb-4">Content Pipeline Overview</div>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-              <div className="rounded-lg bg-gray-50 p-3">
+              <div className="rounded-lg border border-gray-200 bg-white p-3">
                 <div className="text-[11px] uppercase tracking-wide text-gray-500">Total Content</div>
                 <div className="mt-1 text-2xl font-semibold text-black">{kpis.content.total}</div>
                 <div className="text-[11px] text-gray-600">All pieces</div>
               </div>
-              <div className="rounded-lg bg-gray-50 p-3">
+              <div className="rounded-lg border border-gray-200 bg-white p-3">
                 <div className="text-[11px] uppercase tracking-wide text-gray-500">Published</div>
                 <div className="mt-1 text-2xl font-semibold text-black">{kpis.content.published}</div>
-                <div className="text-[11px] text-emerald-600">Live content</div>
+                <div className="text-[11px] text-gray-600">Live content</div>
               </div>
-              <div className="rounded-lg bg-gray-50 p-3">
+              <div className="rounded-lg border border-gray-200 bg-white p-3">
                 <div className="text-[11px] uppercase tracking-wide text-gray-500">Scheduled</div>
                 <div className="mt-1 text-2xl font-semibold text-black">{kpis.content.scheduled}</div>
-                <div className="text-[11px] text-blue-600">Ready to ship</div>
+                <div className="text-[11px] text-gray-600">Ready to ship</div>
               </div>
-              <div className="rounded-lg bg-gray-50 p-3">
+              <div className="rounded-lg border border-gray-200 bg-white p-3">
                 <div className="text-[11px] uppercase tracking-wide text-gray-500">In Draft</div>
                 <div className="mt-1 text-2xl font-semibold text-black">{kpis.content.draft}</div>
-                <div className="text-[11px] text-amber-600">In progress</div>
+                <div className="text-[11px] text-gray-600">In progress</div>
               </div>
-              <div className="rounded-lg bg-gray-50 p-3">
+              <div className="rounded-lg border border-gray-200 bg-white p-3">
                 <div className="text-[11px] uppercase tracking-wide text-gray-500">Ideas</div>
                 <div className="mt-1 text-2xl font-semibold text-black">{kpis.content.ideas}</div>
                 <div className="text-[11px] text-gray-600">In backlog</div>
@@ -126,20 +130,20 @@ export default function ContentStudioPage() {
           <Card className="p-4">
             <div className="text-sm font-semibold text-black mb-4">Performance Metrics</div>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-              <div className="rounded-lg bg-gray-50 p-3">
+              <div className="rounded-lg border border-gray-200 bg-white p-3">
                 <div className="text-[11px] uppercase tracking-wide text-gray-500">Total Views</div>
                 <div className="mt-1 text-2xl font-semibold text-black">{kpis.content.views.toLocaleString()}</div>
                 <div className="text-[11px] text-gray-600">Across all content</div>
               </div>
-              <div className="rounded-lg bg-gray-50 p-3">
+              <div className="rounded-lg border border-gray-200 bg-white p-3">
                 <div className="text-[11px] uppercase tracking-wide text-gray-500">Engagement</div>
                 <div className="mt-1 text-2xl font-semibold text-black">{kpis.content.engagement.toLocaleString()}</div>
                 <div className="text-[11px] text-gray-600">Interactions</div>
               </div>
-              <div className="rounded-lg bg-gray-50 p-3">
+              <div className="rounded-lg border border-gray-200 bg-white p-3">
                 <div className="text-[11px] uppercase tracking-wide text-gray-500">Conversions</div>
                 <div className="mt-1 text-2xl font-semibold text-black">{kpis.content.conversions}</div>
-                <div className="text-[11px] text-emerald-600">Generated leads</div>
+                <div className="text-[11px] text-gray-600">Generated leads</div>
               </div>
             </div>
           </Card>
@@ -147,25 +151,25 @@ export default function ContentStudioPage() {
           <Card className="p-4">
             <div className="text-sm font-semibold text-black mb-4">Advertising Overview</div>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              <div className="rounded-lg bg-gray-50 p-3">
+              <div className="rounded-lg border border-gray-200 bg-white p-3">
                 <div className="text-[11px] uppercase tracking-wide text-gray-500">Active Campaigns</div>
                 <div className="mt-1 text-2xl font-semibold text-black">{kpis.advertising.activeCampaigns}</div>
-                <div className="text-[11px] text-emerald-600">Running now</div>
+                <div className="text-[11px] text-gray-600">Running now</div>
               </div>
-              <div className="rounded-lg bg-gray-50 p-3">
+              <div className="rounded-lg border border-gray-200 bg-white p-3">
                 <div className="text-[11px] uppercase tracking-wide text-gray-500">Ad Spend</div>
                 <div className="mt-1 text-2xl font-semibold text-black">${(kpis.advertising.totalSpend / 1000).toFixed(1)}k</div>
                 <div className="text-[11px] text-gray-600">of ${(kpis.advertising.totalBudget / 1000).toFixed(1)}k budget</div>
               </div>
-              <div className="rounded-lg bg-gray-50 p-3">
+              <div className="rounded-lg border border-gray-200 bg-white p-3">
                 <div className="text-[11px] uppercase tracking-wide text-gray-500">Avg CTR</div>
                 <div className="mt-1 text-2xl font-semibold text-black">{kpis.advertising.avgCTR.toFixed(2)}%</div>
                 <div className="text-[11px] text-gray-600">Click-through rate</div>
               </div>
-              <div className="rounded-lg bg-gray-50 p-3">
+              <div className="rounded-lg border border-gray-200 bg-white p-3">
                 <div className="text-[11px] uppercase tracking-wide text-gray-500">Avg ROAS</div>
                 <div className="mt-1 text-2xl font-semibold text-black">{kpis.advertising.avgROAS.toFixed(1)}x</div>
-                <div className="text-[11px] text-emerald-600">Return on ad spend</div>
+                <div className="text-[11px] text-gray-600">Return on ad spend</div>
               </div>
             </div>
           </Card>
@@ -185,7 +189,7 @@ export default function ContentStudioPage() {
           </div>
           <div className="mt-3 overflow-hidden rounded-lg border border-gray-200">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-left text-[12px] uppercase tracking-wide text-gray-500">
+              <thead className="bg-white text-left text-[12px] uppercase tracking-wide text-gray-500">
                 <tr>
                   <th className="px-3 py-2 font-medium">Title</th>
                   <th className="px-3 py-2 font-medium">Type</th>
@@ -200,7 +204,7 @@ export default function ContentStudioPage() {
                 {pipelineContent.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50">
                     <td className="px-3 py-2 font-medium text-black">
-                      <Link href={`/content/${item.id}`} className="hover:text-blue-600 hover:underline">
+                      <Link href={`/content/${item.id}`} className="hover:text-gray-600 hover:underline">
                         {item.title}
                       </Link>
                     </td>
@@ -241,7 +245,7 @@ export default function ContentStudioPage() {
                 <div className="flex items-start justify-between">
                   <div className="text-sm font-medium text-black">{idea.title}</div>
                   {idea.aiGenerated && (
-                    <span className="text-[10px] bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded">AI</span>
+                    <span className="rounded border border-gray-300 px-1.5 py-0.5 text-[10px] text-gray-600">AI</span>
                   )}
                 </div>
                 <div className="mt-1 text-[12px] text-gray-600">{idea.format} • {idea.contentType}</div>
@@ -273,7 +277,7 @@ export default function ContentStudioPage() {
                 </div>
                 <div className="text-[12px] text-gray-600">Owner: {release.assignedTo || release.createdBy}</div>
                 <div className="mt-2">
-                  <span className="inline-flex items-center rounded-full bg-blue-100 text-blue-800 px-2 py-0.5 text-[11px] font-medium">
+                  <span className="inline-flex items-center rounded-full border border-gray-300 bg-white text-gray-700 px-2 py-0.5 text-[11px] font-medium">
                     {release.purpose}
                   </span>
                 </div>
@@ -290,7 +294,7 @@ export default function ContentStudioPage() {
           <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
             {publishedContent.map((content) => (
               <Link key={content.id} href={`/content/${content.id}`} className="rounded-lg border border-gray-200 p-3 block hover:border-gray-400 transition">
-                <div className="text-sm font-medium text-black hover:text-blue-600">{content.title}</div>
+                <div className="text-sm font-medium text-black hover:text-gray-600">{content.title}</div>
                 <div className="mt-1 text-[11px] text-gray-500">{content.format} • {content.channel}</div>
                 {content.performanceMetrics && (
                   <div className="mt-2 space-y-1">
@@ -303,7 +307,7 @@ export default function ContentStudioPage() {
                   </div>
                 )}
                 <div className="mt-3">
-                  <span className="inline-flex items-center rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[11px] font-medium">
+                  <span className="inline-flex items-center rounded-full border border-gray-300 bg-white text-gray-700 px-2 py-0.5 text-[11px] font-medium">
                     Published
                   </span>
                 </div>
@@ -341,7 +345,7 @@ export default function ContentStudioPage() {
               </div>
             </div>
 
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <div className="rounded-lg border border-gray-200 bg-white p-4">
               <div className="text-sm font-medium text-black mb-2">AI Content Generator</div>
               <div className="space-y-3">
                 <textarea
@@ -384,7 +388,7 @@ export default function ContentStudioPage() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowAgentModal(true)}
-                  className="text-xs px-3 py-1.5 rounded-md bg-purple-600 text-white hover:bg-purple-700"
+                  className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
                 >
                   AI Agent
                 </button>
@@ -398,7 +402,7 @@ export default function ContentStudioPage() {
             </div>
             <div className="mt-3 overflow-hidden rounded-lg border border-gray-200">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 text-left text-[12px] uppercase tracking-wide text-gray-500">
+                <thead className="bg-white text-left text-[12px] uppercase tracking-wide text-gray-500">
                   <tr>
                     <th className="px-3 py-2 font-medium">Campaign</th>
                     <th className="px-3 py-2 font-medium">Platform</th>
@@ -417,7 +421,7 @@ export default function ContentStudioPage() {
                       <td className="px-3 py-2 text-gray-700">{campaign.platform}</td>
                       <td className="px-3 py-2">
                         <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                          campaign.status === 'Active' ? 'bg-emerald-100 text-emerald-800' :
+                          campaign.status === 'Active' ? 'border border-gray-300 bg-white text-gray-700' :
                           campaign.status === 'Paused' ? 'bg-amber-100 text-amber-800' :
                           'bg-gray-100 text-gray-800'
                         }`}>
@@ -427,7 +431,7 @@ export default function ContentStudioPage() {
                       <td className="px-3 py-2 text-gray-700">${(campaign.budget / 1000).toFixed(1)}k</td>
                       <td className="px-3 py-2 text-gray-700">${(campaign.spent / 1000).toFixed(1)}k</td>
                       <td className="px-3 py-2 text-gray-700">{campaign.metrics?.ctr?.toFixed(2)}%</td>
-                      <td className="px-3 py-2 text-emerald-600 font-medium">{campaign.metrics?.roas?.toFixed(1)}x</td>
+                      <td className="px-3 py-2 text-gray-600 font-medium">{campaign.metrics?.roas?.toFixed(1)}x</td>
                       <td className="px-3 py-2 text-gray-700">{campaign.metrics?.conversions || 0}</td>
                     </tr>
                   ))}
@@ -440,15 +444,15 @@ export default function ContentStudioPage() {
             <Card className="p-4">
               <div className="text-sm font-semibold text-black mb-3">Campaign Performance</div>
               <div className="space-y-3">
-                <div className="rounded-lg bg-gray-50 p-3">
+                <div className="rounded-lg border border-gray-200 bg-white p-3">
                   <div className="text-[11px] uppercase tracking-wide text-gray-500">Total Impressions</div>
                   <div className="mt-1 text-2xl font-semibold text-black">{kpis.advertising.impressions.toLocaleString()}</div>
                 </div>
-                <div className="rounded-lg bg-gray-50 p-3">
+                <div className="rounded-lg border border-gray-200 bg-white p-3">
                   <div className="text-[11px] uppercase tracking-wide text-gray-500">Total Clicks</div>
                   <div className="mt-1 text-2xl font-semibold text-black">{kpis.advertising.clicks.toLocaleString()}</div>
                 </div>
-                <div className="rounded-lg bg-gray-50 p-3">
+                <div className="rounded-lg border border-gray-200 bg-white p-3">
                   <div className="text-[11px] uppercase tracking-wide text-gray-500">Total Conversions</div>
                   <div className="mt-1 text-2xl font-semibold text-black">{kpis.advertising.conversions}</div>
                 </div>
@@ -468,7 +472,7 @@ export default function ContentStudioPage() {
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
-                        className="bg-emerald-600 h-2 rounded-full"
+                        className="bg-gray-700 h-2 rounded-full"
                         style={{ width: `${Math.min((campaign.spent / campaign.budget) * 100, 100)}%` }}
                       />
                     </div>
@@ -594,16 +598,16 @@ export default function ContentStudioPage() {
                 Tip: Be specific about your target audience, platform preferences, and campaign objectives
               </div>
             </div>
-            <div className="flex gap-2 mt-6">
+            <div className="mt-6 flex gap-2">
               <button
                 onClick={() => setShowAgentModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                className="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleGenerateWithAgent}
-                className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+                className="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
               >
                 Generate with AI
               </button>
@@ -611,6 +615,7 @@ export default function ContentStudioPage() {
           </div>
         </div>
       )}
+      </section>
     </div>
   );
 }

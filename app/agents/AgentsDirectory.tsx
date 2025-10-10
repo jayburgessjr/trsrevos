@@ -20,9 +20,9 @@ type GPTAgent = {
 };
 
 const STATUS_TONES: Record<string, { badge: string }> = {
-  Active: { badge: "bg-emerald-100 text-emerald-700" },
-  Idle: { badge: "bg-amber-100 text-amber-700" },
-  Offline: { badge: "bg-gray-200 text-gray-700" },
+  Active: { badge: "border border-gray-300 bg-white text-gray-700" },
+  Idle: { badge: "border border-gray-300 bg-white text-gray-600" },
+  Offline: { badge: "border border-gray-300 bg-white text-gray-500" },
 };
 
 const GPT_AGENTS: GPTAgent[] = [
@@ -148,7 +148,7 @@ export default function AgentsDirectory({ agents }: { agents: AgentRecord[] }) {
                   <h2 className="text-sm font-semibold text-black">{gptAgent.name}</h2>
                   <p className="mt-1 text-xs leading-relaxed text-gray-600">{gptAgent.description}</p>
                 </div>
-                <span className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide text-purple-700">
+                <span className="inline-flex items-center rounded-full border border-gray-300 bg-white px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide text-gray-700">
                   GPT
                 </span>
               </div>
@@ -172,7 +172,7 @@ export default function AgentsDirectory({ agents }: { agents: AgentRecord[] }) {
           ))}
         </div>
       ) : filteredAgents.length === 0 ? (
-        <Card className="border-dashed bg-gray-50 p-6 text-center text-sm text-gray-600">
+        <Card className="border-dashed bg-white p-6 text-center text-sm text-gray-600">
           No agents match the current filters.
         </Card>
       ) : (
@@ -189,7 +189,7 @@ export default function AgentsDirectory({ agents }: { agents: AgentRecord[] }) {
                     <h2 className="text-sm font-semibold text-black">{agent.meta.name}</h2>
                     <p className="mt-1 text-xs leading-relaxed text-gray-600">{agent.meta.description}</p>
                   </div>
-                  <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide text-gray-700">
+                  <span className="inline-flex items-center rounded-full border border-gray-300 bg-white px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide text-gray-700">
                     {agent.meta.category}
                   </span>
                 </div>
