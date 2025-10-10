@@ -212,6 +212,46 @@ class HubSpotClient {
   }
 
   /**
+   * Update a company's properties
+   */
+  async updateCompany(companyId: string, properties: Partial<HubSpotCompany["properties"]>): Promise<HubSpotCompany> {
+    return this.request<HubSpotCompany>(`/crm/v3/objects/companies/${companyId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ properties }),
+    });
+  }
+
+  /**
+   * Create a new company
+   */
+  async createCompany(properties: Partial<HubSpotCompany["properties"]>): Promise<HubSpotCompany> {
+    return this.request<HubSpotCompany>("/crm/v3/objects/companies", {
+      method: "POST",
+      body: JSON.stringify({ properties }),
+    });
+  }
+
+  /**
+   * Update a contact's properties
+   */
+  async updateContact(contactId: string, properties: Partial<HubSpotContact["properties"]>): Promise<HubSpotContact> {
+    return this.request<HubSpotContact>(`/crm/v3/objects/contacts/${contactId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ properties }),
+    });
+  }
+
+  /**
+   * Create a new contact
+   */
+  async createContact(properties: Partial<HubSpotContact["properties"]>): Promise<HubSpotContact> {
+    return this.request<HubSpotContact>("/crm/v3/objects/contacts", {
+      method: "POST",
+      body: JSON.stringify({ properties }),
+    });
+  }
+
+  /**
    * Fetch deal stages and pipelines
    */
   async getDealStages(): Promise<any> {
