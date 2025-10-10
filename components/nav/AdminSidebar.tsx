@@ -1,56 +1,85 @@
 "use client"
 
-import { useState } from "react"
+import type { ComponentType, SVGProps } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import * as Icons from "lucide-react"
-import type { LucideIcon } from "lucide-react"
-import { MAIN_NAV } from "@/lib/navigation"
-import { canSee, Role } from "@/core/flags/flags"
+import {
+  BarChart3,
+  Book,
+  Bot,
+  CalendarDays,
+  FileText,
+  ListChecks,
+  Settings as SettingsIcon,
+  Sun,
+  TrendingUp,
+  Users,
+  Wallet,
+} from "lucide-react"
 
-const DEFAULT_ROLE: Role = "SuperAdmin"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/tooltip"
+
+type NavItem = {
+  label: string
+  href: string
+  icon: ComponentType<SVGProps<SVGSVGElement>>
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { label: "Morning Brief", href: "/", icon: Sun },
+  { label: "Pipeline", href: "/pipeline", icon: TrendingUp },
+  { label: "Clients", href: "/clients", icon: Users },
+  { label: "Projects", href: "/projects", icon: ListChecks },
+  { label: "Dashboard", href: "/dashboard", icon: BarChart3 },
+  { label: "Agents", href: "/agents", icon: Bot },
+  { label: "Content", href: "/content", icon: FileText },
+  { label: "Resources", href: "/resources", icon: Book },
+  { label: "Mail & Calendar", href: "/mail-calendar", icon: CalendarDays },
+  { label: "Finance", href: "/finance", icon: Wallet },
+  { label: "Settings", href: "/settings", icon: SettingsIcon },
+]
 
 export default function AdminSidebar() {
-  const [open, setOpen] = useState(false)
   const pathname = usePathname()
 
   return (
-    <aside
-      className={`relative hidden h-full shrink-0 border-r border-gray-200 bg-white transition-all duration-200 md:flex ${
-        open ? "w-56" : "w-14"
-      }`}
-    >
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        className="absolute top-3 -right-3 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white text-xs text-gray-600 hover:bg-gray-50"
-        aria-label={open ? "Collapse sidebar" : "Expand sidebar"}
-      >
-        ≡
-      </button>
-      <nav className="flex w-full flex-col gap-1 p-2 text-sm">
-        {MAIN_NAV.map((item) => {
-          if (!canSee(DEFAULT_ROLE, item.roles)) return null
+    <aside className="hidden h-full w-[232px] shrink-0 border-r border-gray-200 bg-white xl:flex">
+      <TooltipProvider delayDuration={0}>
+        <nav className="flex w-full flex-col gap-1 px-3 py-6 text-sm">
+          {NAV_ITEMS.map((item) => {
+            const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
+            const Icon = item.icon
 
-          const iconKey = item.icon as keyof typeof Icons
-          const Icon = (Icons[iconKey] as LucideIcon | undefined) ?? Icons.Circle
-          const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-2 rounded-md px-2 py-2 transition-colors ${
-                active ? "border border-gray-200 bg-white text-black" : "text-gray-600 hover:bg-gray-50"
-              }`}
-            >
-              <span className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 text-gray-600">
-                <Icon size={14} />
-              </span>
-              {open && <span className="text-sm font-medium text-black">{item.label}</span>}
-            </Link>
-          )
-        })}
-      </nav>
+            return (
+              <Tooltip key={item.href} delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <Link
+                    href={item.href}
+                    className={`group relative flex items-center gap-3 rounded-md px-3 py-2 transition-colors hover:bg-gray-50 ${
+                      active ? "font-semibold text-black" : "text-gray-600"
+                    }`}
+                  >
+                    <span
+                      className={`flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-600 transition-colors group-hover:border-gray-300 group-hover:text-black ${
+                        active ? "border-gray-300 text-black" : ""
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <span className="truncate text-sm">{item.label}</span>
+                    {active && (
+                      <span className="absolute left-0 top-1/2 h-6 -translate-y-1/2 border-l-2 border-black" aria-hidden />
+                    )}
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="ml-2">
+                  {item.label}
+                </TooltipContent>
+              </Tooltip>
+            )
+          })}
+        </nav>
+      </TooltipProvider>
     </aside>
   )
 }
