@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils"
 import { TRS_CARD, TRS_SECTION_TITLE, TRS_SUBTITLE } from "@/lib/style"
 import { resolveTabs } from "@/lib/tabs"
+import { useTheme } from "@/lib/theme-provider"
 
 type Agent = {
   id: string
@@ -109,6 +110,7 @@ export default function ControlCenterPage() {
     const current = searchParams.get("tab")
     return current && tabs.includes(current) ? current : tabs[0]
   }, [searchParams, tabs])
+  const { theme, setTheme } = useTheme()
   const [agents, setAgents] = useState<Agent[]>(initialAgents)
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(initialAgents[0]?.id ?? null)
   const [editingAgent, setEditingAgent] = useState<Agent | null>(initialAgents[0] ?? null)
@@ -181,13 +183,19 @@ export default function ControlCenterPage() {
                   <div className="flex items-center justify-between">
                     <span className={TRS_SECTION_TITLE}>Mode</span>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="rounded-lg px-4 text-xs font-medium text-black">
+                      <Button
+                        variant={theme === "light" ? "default" : "outline"}
+                        size="sm"
+                        className="rounded-lg px-4 text-xs font-medium"
+                        onClick={() => setTheme("light")}
+                      >
                         Light
                       </Button>
                       <Button
-                        variant="secondary"
+                        variant={theme === "dark" ? "default" : "outline"}
                         size="sm"
-                        className="rounded-lg bg-gray-900 px-4 text-xs font-medium text-white hover:bg-gray-800"
+                        className="rounded-lg px-4 text-xs font-medium"
+                        onClick={() => setTheme("dark")}
                       >
                         Dark
                       </Button>
