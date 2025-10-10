@@ -110,3 +110,23 @@ export type Client = {
   compounding?: CompoundingMetrics;
   notes?: string;
 };
+
+export type ClientDeliverable = {
+  id: string;
+  client_id: string;
+  name: string;
+  type: string | null;
+  link: string | null;
+  status: string | null;
+  updated_at: string | null;
+};
+
+export type ClientFinancialSnapshot = {
+  id: string;
+  client_id: string;
+  equity_stake: number | null;
+  monthly_revenue: number | null;
+  projected_annual_revenue: number | null;
+  last_updated: string | null;
+  created_at?: string | null;
+};

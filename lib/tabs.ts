@@ -11,7 +11,17 @@ export const PAGE_TABS: Record<string, string[]> = {
   "/resources": ["Pricing", "Revenue", "Financial Plan", "Profit", "Board Scenarios"],
   "/settings": ["Agents", "Appearance", "Integrations", "AI Config", "Diagnostics"],
   "/clients": ["Overview", "Accounts", "Engagement", "Renewals", "Signals"],
-  "/clients/[id]": ["Overview", "Projects", "RevenueOS", "Content", "Data", "Strategy", "Results"],
+  "/clients/[id]": [
+    "Overview",
+    "Projects",
+    "RevenueOS",
+    "Content",
+    "Data",
+    "Strategy",
+    "Results",
+    "Deliverables",
+    "Finance",
+  ],
   "/partners/[id]": ["Overview", "Introductions", "Initiatives", "Notes", "Resources"],
   "/finance": ["Overview", "Equity", "Billing", "Subscriptions", "Expenses", "Cash Flow"],
 };
