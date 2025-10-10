@@ -38,6 +38,10 @@ supabase db seed
 - The script uses `ON CONFLICT DO NOTHING` so it's safe to run multiple times
 - All IDs are deterministic (starting with 00000000, 10000000, etc.) for easy testing
 - The data is designed to showcase the Pipeline and Dashboard features
+- **Schema Alignment**: This script is aligned with migrations through `20251010061014_fix_dashboard_and_pipeline.sql`
+  - Uses `invoices.paid_at` (TIMESTAMPTZ) instead of `paid_date`
+  - Uses lowercase status values ('paid', 'sent', 'overdue') for invoices
+  - Uses `projects.budget` and `projects.spent` fields
 
 ## Resetting Data
 
