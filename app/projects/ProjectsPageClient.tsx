@@ -85,15 +85,19 @@ export default function ProjectsPageClient({
   }, [searchParams, tabs]);
 
   return (
-    <div className="w-full px-6 py-6 space-y-6">
-      <header className="flex flex-col gap-2">
+    <div
+      className="grid min-h-full gap-3 p-3"
+      style={{ gridTemplateColumns: "repeat(12,minmax(0,1fr))" }}
+    >
+      <section className="col-span-12 space-y-4">
+        <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold text-black">Projects Control Center</h1>
         <p className="text-sm text-gray-600">
           Coordinate delivery motions, surface risk, and keep stakeholders aligned across TRS programs.
         </p>
-      </header>
+        </header>
 
-      {activeTab === "Overview" && (
+        {activeTab === "Overview" && (
         <div className="space-y-4">
           <Card className="p-4">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -102,26 +106,26 @@ export default function ProjectsPageClient({
                 <p className="text-xs text-gray-600">Snapshot of core initiatives and momentum.</p>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div className="rounded-lg bg-gray-50 p-3">
+                <div className="rounded-lg border border-gray-200 bg-white p-3">
                   <div className="text-[11px] uppercase tracking-wide text-gray-500">Active Projects</div>
                   <div className="mt-1 text-xl font-semibold text-black">{stats.active}</div>
-                  <div className="text-[11px] text-emerald-600">Live delivery</div>
+                  <div className="text-[11px] text-gray-600">Live delivery</div>
                 </div>
-                <div className="rounded-lg bg-gray-50 p-3">
+                <div className="rounded-lg border border-gray-200 bg-white p-3">
                   <div className="text-[11px] uppercase tracking-wide text-gray-500">On Track</div>
                   <div className="mt-1 text-xl font-semibold text-black">{stats.onTrack}</div>
-                  <div className="text-[11px] text-emerald-600">Healthy projects</div>
+                  <div className="text-[11px] text-gray-600">Healthy projects</div>
                 </div>
-                <div className="rounded-lg bg-gray-50 p-3">
+                <div className="rounded-lg border border-gray-200 bg-white p-3">
                   <div className="text-[11px] uppercase tracking-wide text-gray-500">At Risk</div>
                   <div className="mt-1 text-xl font-semibold text-black">{stats.atRisk}</div>
-                  <div className="text-[11px] text-amber-600">Requires action</div>
+                  <div className="text-[11px] text-gray-600">Requires action</div>
                 </div>
               </div>
             </div>
             <div className="mt-4 overflow-hidden rounded-lg border border-gray-200">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 text-left text-[12px] uppercase tracking-wide text-gray-500">
+                <thead className="bg-white text-left text-[12px] uppercase tracking-wide text-gray-500">
                   <tr>
                     <th className="px-3 py-2 font-medium">Project</th>
                     <th className="px-3 py-2 font-medium">Client</th>
@@ -149,10 +153,10 @@ export default function ProjectsPageClient({
                       <td
                         className={`px-3 py-2 text-sm ${
                           project.health === "green"
-                            ? "text-emerald-600"
+                            ? "text-gray-600"
                             : project.health === "yellow"
-                            ? "text-amber-600"
-                            : "text-rose-600"
+                            ? "text-gray-600"
+                            : "text-gray-600"
                         }`}
                       >
                         {project.health === "green" ? "On Track" : project.health === "yellow" ? "At Risk" : "Critical"}
@@ -228,7 +232,7 @@ export default function ProjectsPageClient({
             Ask the agent to analyze timelines, forecast budget impact, or surface risk across delivery tracks.
           </p>
           <div className="mt-4 space-y-3">
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+            <div className="rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-600">
               Prompt workspace placeholder
             </div>
             <div>
@@ -248,6 +252,7 @@ export default function ProjectsPageClient({
           </div>
         </Card>
       )}
+      </section>
     </div>
   );
 }

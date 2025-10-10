@@ -116,15 +116,19 @@ export default function ClientsPage() {
   const churnSignals = useMemo(() => clients.filter((client) => (client.churnRisk ?? 0) >= 15), [clients])
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
-      <div className="flex flex-col gap-2">
-        <PageTitle className="text-xl font-semibold text-black">Client Portfolio</PageTitle>
-        <PageDescription className="text-sm text-gray-500">
-          Full-funnel visibility into active customers, health trends, and expansion momentum across TRS RevenueOS.
-        </PageDescription>
-      </div>
+    <div
+      className="grid min-h-full gap-3 p-3"
+      style={{ gridTemplateColumns: "repeat(12,minmax(0,1fr))" }}
+    >
+      <section className="col-span-12 space-y-3">
+        <div className="space-y-1">
+          <PageTitle className="text-xl font-semibold text-black">Client Portfolio</PageTitle>
+          <PageDescription className="text-sm text-gray-500">
+            Full-funnel visibility into active customers, health trends, and expansion momentum across TRS RevenueOS.
+          </PageDescription>
+        </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
         <Card className={cn(TRS_CARD)}>
           <CardContent className="p-4 space-y-2">
             <div className={TRS_SUBTITLE}>Portfolio ARR</div>
@@ -166,13 +170,13 @@ export default function ClientsPage() {
                 </PageDescription>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <Button variant="primary" size="sm" onClick={() => router.push("/partners")}>Sync partners</Button>
+                <Button variant="outline" size="sm" onClick={() => router.push("/partners")}>Sync partners</Button>
                 <Button variant="outline" size="sm" onClick={() => router.push("/projects")}>Open delivery board</Button>
               </div>
             </div>
 
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-              <div className="rounded-lg border border-gray-200 p-3">
+              <div className="rounded-lg border border-gray-200 bg-white p-3">
                 <div className={TRS_SECTION_TITLE}>Health spotlight</div>
                 <ul className="mt-3 space-y-2 text-sm text-gray-700">
                   {clients
@@ -190,7 +194,7 @@ export default function ClientsPage() {
                     ))}
                 </ul>
               </div>
-              <div className="rounded-lg border border-gray-200 p-3">
+              <div className="rounded-lg border border-gray-200 bg-white p-3">
                 <div className={TRS_SECTION_TITLE}>Next 30 days</div>
                 <ul className="mt-3 space-y-2 text-sm text-gray-700">
                   {upcomingQbrs.slice(0, 4).map((client) => (
@@ -206,7 +210,7 @@ export default function ClientsPage() {
                   ))}
                 </ul>
               </div>
-              <div className="rounded-lg border border-gray-200 p-3">
+              <div className="rounded-lg border border-gray-200 bg-white p-3">
                 <div className={TRS_SECTION_TITLE}>Expansion focus</div>
                 <div className="mt-3 space-y-2 text-sm text-gray-700">
                   {clients
@@ -243,7 +247,7 @@ export default function ClientsPage() {
                   </div>
                 ) : (
                   outstandingInvoices.map((invoice) => (
-                    <div key={invoice.id} className="rounded-lg border border-gray-200 p-3">
+                    <div key={invoice.id} className="rounded-lg border border-gray-200 bg-white p-3">
                       <div className="flex items-center justify-between text-sm">
                         <span className="font-semibold text-black">{invoice.clientName}</span>
                         <span className="text-xs text-gray-500">{invoice.status}</span>
@@ -411,7 +415,7 @@ export default function ClientsPage() {
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-gray-700">
               {clients.map((client) => (
-                <div key={client.id} className="rounded-lg border border-gray-200 p-3">
+                <div key={client.id} className="rounded-lg border border-gray-200 bg-white p-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="font-semibold text-black">{client.name}</div>
@@ -439,7 +443,7 @@ export default function ClientsPage() {
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-gray-700">
               {clients.map((client) => (
-                <div key={client.id} className="rounded-lg border border-gray-200 p-3">
+                <div key={client.id} className="rounded-lg border border-gray-200 bg-white p-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="font-semibold text-black">{client.name}</div>
@@ -475,7 +479,7 @@ export default function ClientsPage() {
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-gray-700">
               {upcomingQbrs.map((client) => (
-                <div key={client.id} className="rounded-lg border border-gray-200 p-3">
+                <div key={client.id} className="rounded-lg border border-gray-200 bg-white p-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="font-semibold text-black">{client.name}</div>
@@ -501,7 +505,7 @@ export default function ClientsPage() {
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-gray-700">
               {clients.map((client) => (
-                <div key={client.id} className="rounded-lg border border-gray-200 p-3">
+                <div key={client.id} className="rounded-lg border border-gray-200 bg-white p-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="font-semibold text-black">{client.name}</div>
@@ -536,7 +540,7 @@ export default function ClientsPage() {
                 </div>
               ) : (
                 churnSignals.map((client) => (
-                  <div key={client.id} className="rounded-lg border border-gray-200 p-3">
+                  <div key={client.id} className="rounded-lg border border-gray-200 bg-white p-3">
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-semibold text-black">{client.name}</span>
                       <Badge variant="outline">{client.churnRisk}% risk</Badge>
@@ -558,7 +562,7 @@ export default function ClientsPage() {
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-gray-700">
               {clients.map((client) => (
-                <div key={client.id} className="rounded-lg border border-gray-200 p-3">
+                <div key={client.id} className="rounded-lg border border-gray-200 bg-white p-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="font-semibold text-black">{client.name}</div>
@@ -584,6 +588,7 @@ export default function ClientsPage() {
           </Card>
         </div>
       )}
+      </section>
     </div>
   )
 }

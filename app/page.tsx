@@ -25,8 +25,12 @@ export default function MorningPage(){
   const greeting = new Date().toLocaleDateString(undefined, { weekday:"long", month:"short", day:"numeric" });
 
   return (
-    <div className="w-full h-screen overflow-y-auto">
-      <div className="p-3 space-y-3 max-w-[1800px] mx-auto">
+    <div
+      className="grid min-h-full gap-3 p-3"
+      style={{ gridTemplateColumns: "repeat(12,minmax(0,1fr))" }}
+    >
+      <section className="col-span-12">
+      <div className="mx-auto space-y-3">
         {/* Header / Context */}
         <section className="rounded-xl border border-gray-200 bg-white p-3">
           <div className="flex items-center justify-between">
@@ -113,6 +117,7 @@ export default function MorningPage(){
           <a href="/dashboard" className="text-xs px-2 py-1 rounded-md border">Open Executive Dashboard</a>
         </section>
       </div>
+      </section>
     </div>
   );
 }
