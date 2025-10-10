@@ -32,7 +32,8 @@ export default function AdminSidebar() {
         {MAIN_NAV.map((item) => {
           if (!canSee(DEFAULT_ROLE, item.roles)) return null
 
-          const Icon = (Icons as Record<string, LucideIcon>)[item.icon] || Icons.Circle
+          const iconKey = item.icon as keyof typeof Icons
+          const Icon = (Icons[iconKey] as LucideIcon | undefined) ?? Icons.Circle
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
           return (
             <Link
