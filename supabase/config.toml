@@ -345,3 +345,27 @@ s3_region = "env(S3_REGION)"
 s3_access_key = "env(S3_ACCESS_KEY)"
 # Configures AWS_SECRET_ACCESS_KEY for S3 bucket
 s3_secret_key = "env(S3_SECRET_KEY)"
+
+[functions]
+enabled = true
+source = "./supabase/functions"
+
+[[functions.functions]]
+name = "agent-dispatch"
+verify_jwt = true
+
+[[functions.functions]]
+name = "morning-brief"
+verify_jwt = true
+
+[[functions.functions]]
+name = "exec-dashboard-refresh"
+verify_jwt = true
+
+[[functions.functions]]
+name = "content-recommend"
+verify_jwt = true
+
+[[functions.functions]]
+name = "share-space-publish"
+verify_jwt = true
