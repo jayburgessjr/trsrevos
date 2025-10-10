@@ -1,9 +1,9 @@
 export const PAGE_TABS: Record<string, string[]> = {
-  "/": ["Today", "This Week", "Focus Blocks", "Risks"],
+  "/": ["Today", "This Week", "Focus Blocks", "Risks", "Morning Brief"],
   "/dashboard": ["Overview", "Analytics", "Reports", "Notifications"],
   "/pipeline": ["Overview", "Deals", "Commit", "Forecast", "Health"],
   "/partners": ["Overview", "Directory", "Introductions", "Enablement"],
-  "/morning": ["Today", "This Week", "Focus Blocks", "Risks"],
+  "/morning": ["Today", "This Week", "Focus Blocks", "Risks", "Morning Brief"],
   "/projects": ["Overview", "Active", "Forecast", "Agent"],
   "/content": ["Overview", "Pipeline", "Ideas", "Scheduled", "Performance", "Create", "Advertising"],
   "/agents": ["All", "Projects", "Content", "Clients", "GPT Agents"],
