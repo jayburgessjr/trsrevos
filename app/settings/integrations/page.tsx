@@ -1,47 +1,90 @@
-import { redirect } from 'next/navigation'
+import IntegrationCard from "@/components/integrations/IntegrationCard";
+import { connectIntegration, disconnectIntegration, listLabels, listEvents } from "@/lib/integrations";
+import { useState } from "react";
 
-import { getGmailIntegration, getSupabaseUser } from '@/lib/gmail/server'
-import { GmailIntegrationWizard } from '@/components/settings/gmail/GmailIntegrationWizard'
+export default function IntegrationsPage() {
+  const [integrations, setIntegrations] = useState([
+    {
+      provider: "Google",
+      description: "Sync Gmail, Calendar, Drive, and Docs.",
+      connected: false,
+      lastSync: "Never",
+    },
+    {
+      provider: "HubSpot",
+      description: "Sync CRM data automatically.",
+      connected: true,
+      lastSync: "10 mins ago",
+    },
+    {
+      provider: "QuickBooks",
+      description: "Sync invoices and financial data.",
+      connected: false,
+      lastSync: "Never",
+    },
+    {
+      provider: "Slack",
+      description: "Send alerts and pipeline notifications.",
+      connected: false,
+      lastSync: "Never",
+    },
+  ]);
+  const [accessToken, setAccessToken] = useState("");
 
-export const dynamic = 'force-dynamic'
+  const handleConnect = async (provider: string) => {
+    await connectIntegration(provider as any);
+    setIntegrations((prev) =>
+      prev.map((i) => (i.provider === provider ? { ...i, connected: true } : i))
+    );
+  };
 
-interface IntegrationsPageProps {
-  searchParams: Record<string, string | string[] | undefined>
-}
+  const handleDisconnect = async (provider: string) => {
+    await disconnectIntegration(provider as any);
+    setIntegrations((prev) =>
+      prev.map((i) => (i.provider === provider ? { ...i, connected: false } : i))
+    );
+  };
 
-export default async function GmailIntegrationsPage({ searchParams }: IntegrationsPageProps) {
-  const { supabase, user } = await getSupabaseUser()
+  const handleListLabels = async () => {
+    const labels = await listLabels(accessToken);
+    console.log(labels);
+  };
 
-  if (!user) {
-    redirect('/settings')
-  }
-
-  const integration = await getGmailIntegration(supabase, user.id)
-
-  const connected = Boolean(integration?.refresh_token)
-  const connectedAt = integration?.connected_at ?? null
-  const scope = integration?.scope ?? null
-
-  const success = searchParams.connected === 'gmail'
-  const error = typeof searchParams.error === 'string' ? searchParams.error : null
+  const handleListEvents = async () => {
+    const events = await listEvents(accessToken);
+    console.log(events);
+  };
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-[var(--color-text, #0f172a)]">Gmail Workspace Integration</h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Securely connect your Gmail account to orchestrate email sending, inbox triage, and thread governance directly inside
-          TRSREVOS.
-        </p>
+    <div className="p-8">
+      <h1 className="text-2xl font-bold mb-4">Integrations</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {integrations.map((integration) => (
+          <IntegrationCard
+            key={integration.provider}
+            provider={integration.provider}
+            description={integration.description}
+            connected={integration.connected}
+            lastSync={integration.lastSync}
+            onConnect={() => handleConnect(integration.provider)}
+            onDisconnect={() => handleDisconnect(integration.provider)}
+          />
+        ))}
       </div>
-
-      <GmailIntegrationWizard
-        connected={connected}
-        connectedAt={connectedAt}
-        scope={scope}
-        success={success}
-        error={error}
-      />
+      <div className="mt-8">
+        <h2 className="text-xl font-bold mb-4">Google API</h2>
+        <div className="flex gap-4">
+          <input
+            type="text"
+            placeholder="Access Token"
+            value={accessToken}
+            onChange={(e) => setAccessToken(e.target.value)}
+            className="border rounded-lg p-2 w-full"
+          />
+          <button onClick={handleListLabels} className="bg-blue-500 text-white py-2 px-4 rounded-lg">List Labels</button>
+          <button onClick={handleListEvents} className="bg-blue-500 text-white py-2 px-4 rounded-lg">List Events</button>
+        </div>
+      </div>
     </div>
-  )
+  );
 }
