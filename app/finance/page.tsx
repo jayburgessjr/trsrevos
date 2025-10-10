@@ -43,123 +43,72 @@ export default function FinancePage() {
   const formatPercent = (value: number) => `${value.toFixed(1)}%`
 
   return (
-    <div className="flex flex-col gap-6 pb-8">
-      <header className="flex flex-col gap-2">
-        <PageTitle>Finance</PageTitle>
-        <PageDescription>
-          Manage equity, billing, subscriptions, expenses, and cash flow for TRS
-        </PageDescription>
-      </header>
+    <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
+      {/* KPI Cards - Always Visible */}
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+        <Card className={cn(TRS_CARD)}>
+          <CardContent className="p-4 space-y-2">
+            <div className={TRS_SUBTITLE}>Cash Balance</div>
+            <div className="text-2xl font-semibold text-black">{formatCurrency(metrics.cash)}</div>
+            <div className="flex items-center gap-2 text-xs text-gray-600">
+              <span className="font-medium text-gray-700">{metrics.runway} months</span>
+              <span>runway</span>
+            </div>
+          </CardContent>
+        </Card>
 
-      <div className={cn("flex gap-1 overflow-x-auto", TRS_CARD, "p-1")}>
-        {tabs.map((tab) => {
-          const isActive = tab === activeTab
-          const href = tab === tabs[0] ? pathname : `${pathname}?tab=${encodeURIComponent(tab)}`
-          return (
-            <a
-              key={tab}
-              href={href}
-              className={cn(
-                "rounded-lg px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap",
-                isActive
-                  ? "bg-white text-black shadow-sm"
-                  : "text-gray-600 hover:text-black hover:bg-gray-50"
-              )}
-            >
-              {tab}
-            </a>
-          )
-        })}
+        <Card className={cn(TRS_CARD)}>
+          <CardContent className="p-4 space-y-2">
+            <div className={TRS_SUBTITLE}>MRR</div>
+            <div className="text-2xl font-semibold text-black">${(metrics.mrr / 1000).toFixed(0)}K</div>
+            <div className="flex items-center gap-2 text-xs text-gray-600">
+              <span className="font-medium text-gray-700">ARR</span>
+              <span>${(metrics.arr / 1000).toFixed(0)}K</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className={cn(TRS_CARD)}>
+          <CardContent className="p-4 space-y-2">
+            <div className={TRS_SUBTITLE}>Gross Margin</div>
+            <div className="text-2xl font-semibold text-black">{formatPercent(metrics.grossMargin)}</div>
+            <div className="flex items-center gap-2 text-xs text-gray-600">
+              <span className="font-medium text-gray-700">Net</span>
+              <span>{formatPercent(metrics.netMargin)}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className={cn(TRS_CARD)}>
+          <CardContent className="p-4 space-y-2">
+            <div className={TRS_SUBTITLE}>LTV / CAC</div>
+            <div className="text-2xl font-semibold text-black">{metrics.ltvCacRatio.toFixed(1)}x</div>
+            <div className="flex items-center gap-2 text-xs text-gray-600">
+              <span className="font-medium text-gray-700">Burn</span>
+              <span>${(metrics.burnRate / 1000).toFixed(0)}K/mo</span>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
+      {/* Tab Content */}
       {activeTab === "Overview" && (
-        <div className="space-y-6">
-          {/* Key Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium text-gray-600">Cash Balance</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-semibold text-black">{formatCurrency(metrics.cash)}</p>
-                <p className="text-xs text-gray-600 mt-1">{metrics.runway} months runway</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium text-gray-600">Monthly Recurring Revenue</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-semibold text-black">{formatCurrency(metrics.mrr)}</p>
-                <p className="text-xs text-gray-600 mt-1">ARR: {formatCurrency(metrics.arr)}</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium text-gray-600">Gross Margin</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-semibold text-black">{formatPercent(metrics.grossMargin)}</p>
-                <p className="text-xs text-gray-600 mt-1">Net: {formatPercent(metrics.netMargin)}</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium text-gray-600">LTV / CAC Ratio</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-semibold text-black">{metrics.ltvCacRatio.toFixed(1)}x</p>
-                <p className="text-xs text-emerald-600 mt-1">Healthy ratio</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium text-gray-600">Outstanding AR</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-xl font-semibold text-black">{formatCurrency(metrics.outstandingAR)}</p>
-                <p className="text-xs text-gray-600 mt-1">
-                  {invoices.filter(i => i.status === 'Overdue').length} overdue invoices
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium text-gray-600">Monthly Burn Rate</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-xl font-semibold text-black">{formatCurrency(metrics.burnRate)}</p>
-                <p className="text-xs text-gray-600 mt-1">Avg last 3 months</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium text-gray-600">Active Subscriptions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-xl font-semibold text-black">
-                  {subscriptions.filter(s => s.status === 'Active').length}
-                </p>
-                <p className="text-xs text-gray-600 mt-1">
-                  {subscriptions.filter(s => s.status === 'Trial').length} trials
-                </p>
-              </CardContent>
-            </Card>
+        <div className="space-y-4">
+          <div className={cn(TRS_CARD, "p-4 space-y-3")}>
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="space-y-1">
+                <PageTitle className="text-lg font-semibold text-black">Financial Overview</PageTitle>
+                <PageDescription className="text-sm text-gray-500">
+                  Comprehensive view of equity, revenue, expenses, and cash flow
+                </PageDescription>
+              </div>
+            </div>
           </div>
 
           {/* Recent Activity */}
-          <Card>
+          <Card className={cn(TRS_CARD)}>
             <CardHeader>
-              <CardTitle>Recent Cash Flow</CardTitle>
+              <CardTitle className="text-sm font-medium">Recent Cash Flow</CardTitle>
               <CardDescription>Latest transactions impacting cash position</CardDescription>
             </CardHeader>
             <CardContent>
@@ -204,69 +153,45 @@ export default function FinancePage() {
       )}
 
       {activeTab === "Equity" && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className={TRS_SECTION_TITLE}>Cap Table</h2>
-              <p className={TRS_SUBTITLE}>Equity ownership breakdown and vesting schedules</p>
-            </div>
-            <Button variant="primary" size="sm">Add Equity Grant</Button>
-          </div>
-
-          {/* Ownership Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium text-gray-600">Total Shares</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-semibold text-black">
-                  {equityHolders.reduce((sum, h) => sum + h.shares, 0).toLocaleString()}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium text-gray-600">Fully Diluted Value</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-semibold text-black">
-                  {formatCurrency(equityHolders.reduce((sum, h) => sum + h.valueAtCurrent, 0))}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium text-gray-600">Founders</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-semibold text-black">
-                  {formatPercent(equityHolders.filter(h => h.holderType === 'Founder').reduce((sum, h) => sum + h.percentage, 0))}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium text-gray-600">Investors</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-semibold text-black">
-                  {formatPercent(equityHolders.filter(h => h.holderType === 'Investor').reduce((sum, h) => sum + h.percentage, 0))}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Equity Holders Table */}
-          <Card>
+        <div className="space-y-4">
+          <Card className={cn(TRS_CARD)}>
             <CardHeader>
-              <CardTitle>Equity Holders</CardTitle>
-              <CardDescription>Complete ownership breakdown with vesting details</CardDescription>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <CardTitle>Cap Table</CardTitle>
+                  <CardDescription>Equity ownership and vesting schedules</CardDescription>
+                </div>
+                <Button variant="primary" size="sm">Add Equity Grant</Button>
+              </div>
             </CardHeader>
             <CardContent>
+              <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-4">
+                <div>
+                  <div className="text-xs text-gray-500">Total Shares</div>
+                  <div className="text-lg font-semibold text-black">
+                    {equityHolders.reduce((sum, h) => sum + h.shares, 0).toLocaleString()}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500">Fully Diluted Value</div>
+                  <div className="text-lg font-semibold text-black">
+                    {formatCurrency(equityHolders.reduce((sum, h) => sum + h.valueAtCurrent, 0))}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500">Founders</div>
+                  <div className="text-lg font-semibold text-black">
+                    {formatPercent(equityHolders.filter(h => h.holderType === 'Founder').reduce((sum, h) => sum + h.percentage, 0))}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500">Investors</div>
+                  <div className="text-lg font-semibold text-black">
+                    {formatPercent(equityHolders.filter(h => h.holderType === 'Investor').reduce((sum, h) => sum + h.percentage, 0))}
+                  </div>
+                </div>
+              </div>
+
               <Table>
                 <TableHeader>
                   <TableRow>
