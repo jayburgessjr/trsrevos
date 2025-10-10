@@ -1,4 +1,4 @@
-const allowedOrigins = new Set([
+const EXEC_DASHBOARD_ALLOWED_ORIGINS = new Set([
   'https://trsrevos.vercel.app',
   'http://localhost:3000',
 ]);
@@ -15,8 +15,8 @@ type ExecDashboardRefreshResponse = {
   error?: string;
 };
 
-function corsHeaders(origin: string | null) {
-  const resolvedOrigin = origin && allowedOrigins.has(origin)
+function createExecDashboardCorsHeaders(origin: string | null) {
+  const resolvedOrigin = origin && EXEC_DASHBOARD_ALLOWED_ORIGINS.has(origin)
     ? origin
     : 'https://trsrevos.vercel.app';
 
@@ -29,11 +29,14 @@ function corsHeaders(origin: string | null) {
   });
 }
 
-function respond(body: ExecDashboardRefreshResponse, init: ResponseInit & { headers: Headers }) {
+function respondWithExecDashboard(
+  body: ExecDashboardRefreshResponse,
+  init: ResponseInit & { headers: Headers },
+) {
   return new Response(JSON.stringify(body, null, 2), init);
 }
 
-function logRequest(req: Request, functionName: string) {
+function logExecDashboardRequest(req: Request, functionName: string) {
   console.info(
     JSON.stringify({
       event: `${functionName}:request`,
@@ -44,7 +47,7 @@ function logRequest(req: Request, functionName: string) {
   );
 }
 
-function isValidInput(payload: unknown): payload is ExecDashboardRefreshInput {
+function isValidExecDashboardInput(payload: unknown): payload is ExecDashboardRefreshInput {
   if (!payload || typeof payload !== 'object') return false;
   const data = payload as Record<string, unknown>;
   return typeof data.organization_id === 'string' && typeof data.time_scope === 'string';
@@ -52,16 +55,16 @@ function isValidInput(payload: unknown): payload is ExecDashboardRefreshInput {
 
 Deno.serve(async (req) => {
   const origin = req.headers.get('origin');
-  const headers = corsHeaders(origin);
+  const headers = createExecDashboardCorsHeaders(origin);
 
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers });
   }
 
-  logRequest(req, 'exec-dashboard-refresh');
+  logExecDashboardRequest(req, 'exec-dashboard-refresh');
 
   if (req.method !== 'POST') {
-    return respond({ ok: false, error: 'Method not allowed' }, { status: 405, headers });
+    return respondWithExecDashboard({ ok: false, error: 'Method not allowed' }, { status: 405, headers });
   }
 
   let payload: unknown;
@@ -69,14 +72,14 @@ Deno.serve(async (req) => {
     payload = await req.json();
   } catch (error) {
     console.error('exec-dashboard-refresh:invalid-json', error);
-    return respond({ ok: false, error: 'Invalid JSON payload' }, { status: 400, headers });
+    return respondWithExecDashboard({ ok: false, error: 'Invalid JSON payload' }, { status: 400, headers });
   }
 
-  if (!isValidInput(payload)) {
-    return respond({ ok: false, error: 'Missing required fields: organization_id, time_scope' }, {
-      status: 400,
-      headers,
-    });
+  if (!isValidExecDashboardInput(payload)) {
+    return respondWithExecDashboard(
+      { ok: false, error: 'Missing required fields: organization_id, time_scope' },
+      { status: 400, headers },
+    );
   }
 
   const { organization_id, time_scope, segment_filter } = payload;
@@ -116,5 +119,5 @@ Deno.serve(async (req) => {
     ],
   };
 
-  return respond({ ok: true, data: placeholderSnapshot }, { status: 200, headers });
+  return respondWithExecDashboard({ ok: true, data: placeholderSnapshot }, { status: 200, headers });
 });

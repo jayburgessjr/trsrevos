@@ -1,4 +1,4 @@
-const allowedOrigins = new Set([
+const CONTENT_RECOMMEND_ALLOWED_ORIGINS = new Set([
   'https://trsrevos.vercel.app',
   'http://localhost:3000',
 ]);
@@ -15,8 +15,9 @@ type ContentRecommendResponse = {
   error?: string;
 };
 
-function corsHeaders(origin: string | null) {
-  const resolvedOrigin = origin && allowedOrigins.has(origin)
+function createContentRecommendCorsHeaders(origin: string | null) {
+  const resolvedOrigin =
+    origin && CONTENT_RECOMMEND_ALLOWED_ORIGINS.has(origin)
     ? origin
     : 'https://trsrevos.vercel.app';
 
@@ -29,11 +30,14 @@ function corsHeaders(origin: string | null) {
   });
 }
 
-function respond(body: ContentRecommendResponse, init: ResponseInit & { headers: Headers }) {
+function respondWithContentRecommend(
+  body: ContentRecommendResponse,
+  init: ResponseInit & { headers: Headers },
+) {
   return new Response(JSON.stringify(body, null, 2), init);
 }
 
-function logRequest(req: Request, functionName: string) {
+function logContentRecommendRequest(req: Request, functionName: string) {
   console.info(
     JSON.stringify({
       event: `${functionName}:request`,
@@ -44,7 +48,7 @@ function logRequest(req: Request, functionName: string) {
   );
 }
 
-function isValidInput(payload: unknown): payload is ContentRecommendInput {
+function isValidContentRecommendInput(payload: unknown): payload is ContentRecommendInput {
   if (!payload || typeof payload !== 'object') return false;
   const data = payload as Record<string, unknown>;
   return (
@@ -56,16 +60,16 @@ function isValidInput(payload: unknown): payload is ContentRecommendInput {
 
 Deno.serve(async (req) => {
   const origin = req.headers.get('origin');
-  const headers = corsHeaders(origin);
+  const headers = createContentRecommendCorsHeaders(origin);
 
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers });
   }
 
-  logRequest(req, 'content-recommend');
+  logContentRecommendRequest(req, 'content-recommend');
 
   if (req.method !== 'POST') {
-    return respond({ ok: false, error: 'Method not allowed' }, { status: 405, headers });
+    return respondWithContentRecommend({ ok: false, error: 'Method not allowed' }, { status: 405, headers });
   }
 
   let payload: unknown;
@@ -73,14 +77,14 @@ Deno.serve(async (req) => {
     payload = await req.json();
   } catch (error) {
     console.error('content-recommend:invalid-json', error);
-    return respond({ ok: false, error: 'Invalid JSON payload' }, { status: 400, headers });
+    return respondWithContentRecommend({ ok: false, error: 'Invalid JSON payload' }, { status: 400, headers });
   }
 
-  if (!isValidInput(payload)) {
-    return respond({ ok: false, error: 'Missing required fields: organization_id, persona, stage' }, {
-      status: 400,
-      headers,
-    });
+  if (!isValidContentRecommendInput(payload)) {
+    return respondWithContentRecommend(
+      { ok: false, error: 'Missing required fields: organization_id, persona, stage' },
+      { status: 400, headers },
+    );
   }
 
   const { organization_id, persona, stage } = payload;
@@ -109,5 +113,5 @@ Deno.serve(async (req) => {
     items: [],
   };
 
-  return respond({ ok: true, data: placeholderRecommendations }, { status: 200, headers });
+  return respondWithContentRecommend({ ok: true, data: placeholderRecommendations }, { status: 200, headers });
 });

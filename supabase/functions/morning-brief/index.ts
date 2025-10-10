@@ -1,4 +1,4 @@
-const allowedOrigins = new Set([
+const MORNING_BRIEF_ALLOWED_ORIGINS = new Set([
   'https://trsrevos.vercel.app',
   'http://localhost:3000',
 ]);
@@ -15,8 +15,8 @@ type MorningBriefResponse = {
   error?: string;
 };
 
-function corsHeaders(origin: string | null) {
-  const resolvedOrigin = origin && allowedOrigins.has(origin)
+function createMorningBriefCorsHeaders(origin: string | null) {
+  const resolvedOrigin = origin && MORNING_BRIEF_ALLOWED_ORIGINS.has(origin)
     ? origin
     : 'https://trsrevos.vercel.app';
 
@@ -29,11 +29,14 @@ function corsHeaders(origin: string | null) {
   });
 }
 
-function respond(body: MorningBriefResponse, init: ResponseInit & { headers: Headers }) {
+function respondWithMorningBrief(
+  body: MorningBriefResponse,
+  init: ResponseInit & { headers: Headers },
+) {
   return new Response(JSON.stringify(body, null, 2), init);
 }
 
-function logRequest(req: Request, functionName: string) {
+function logMorningBriefRequest(req: Request, functionName: string) {
   console.info(
     JSON.stringify({
       event: `${functionName}:request`,
@@ -44,7 +47,7 @@ function logRequest(req: Request, functionName: string) {
   );
 }
 
-function isValidInput(payload: unknown): payload is MorningBriefInput {
+function isValidMorningBriefInput(payload: unknown): payload is MorningBriefInput {
   if (!payload || typeof payload !== 'object') return false;
   const data = payload as Record<string, unknown>;
   return typeof data.user_id === 'string' && typeof data.organization_id === 'string';
@@ -52,16 +55,16 @@ function isValidInput(payload: unknown): payload is MorningBriefInput {
 
 Deno.serve(async (req) => {
   const origin = req.headers.get('origin');
-  const headers = corsHeaders(origin);
+  const headers = createMorningBriefCorsHeaders(origin);
 
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers });
   }
 
-  logRequest(req, 'morning-brief');
+  logMorningBriefRequest(req, 'morning-brief');
 
   if (req.method !== 'POST') {
-    return respond({ ok: false, error: 'Method not allowed' }, { status: 405, headers });
+    return respondWithMorningBrief({ ok: false, error: 'Method not allowed' }, { status: 405, headers });
   }
 
   let payload: unknown;
@@ -69,14 +72,14 @@ Deno.serve(async (req) => {
     payload = await req.json();
   } catch (error) {
     console.error('morning-brief:invalid-json', error);
-    return respond({ ok: false, error: 'Invalid JSON payload' }, { status: 400, headers });
+    return respondWithMorningBrief({ ok: false, error: 'Invalid JSON payload' }, { status: 400, headers });
   }
 
-  if (!isValidInput(payload)) {
-    return respond({ ok: false, error: 'Missing required fields: user_id, organization_id' }, {
-      status: 400,
-      headers,
-    });
+  if (!isValidMorningBriefInput(payload)) {
+    return respondWithMorningBrief(
+      { ok: false, error: 'Missing required fields: user_id, organization_id' },
+      { status: 400, headers },
+    );
   }
 
   const { user_id, organization_id, time_horizon } = payload;
@@ -115,5 +118,5 @@ Deno.serve(async (req) => {
     },
   };
 
-  return respond({ ok: true, data: placeholderBrief }, { status: 200, headers });
+  return respondWithMorningBrief({ ok: true, data: placeholderBrief }, { status: 200, headers });
 });
