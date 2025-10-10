@@ -1,0 +1,30 @@
+{
+  "rosie": {
+    "tone": "Professional",
+    "verbosity": "Balanced",
+    "temperature": 0.6,
+    "maxTokens": 1400,
+    "responseDelayMs": 120
+  },
+  "revenue-architect": {
+    "tone": "Analytical",
+    "verbosity": "Detailed",
+    "temperature": 0.55,
+    "maxTokens": 1800,
+    "responseDelayMs": 200
+  },
+  "prospecting-agent": {
+    "tone": "Warm",
+    "verbosity": "Short",
+    "temperature": 0.4,
+    "maxTokens": 900,
+    "responseDelayMs": 80
+  },
+  "client-intel": {
+    "tone": "Analytical",
+    "verbosity": "Balanced",
+    "temperature": 0.35,
+    "maxTokens": 1200,
+    "responseDelayMs": 150
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "agents": [
+    {
+      "id": "rosie",
+      "name": "Rosie",
+      "purpose": "Revenue Planning Copilot",
+      "buildVersion": "2024.10.1",
+      "status": "active",
+      "lastDeployAt": "2024-10-09T12:00:00.000Z",
+      "parameters": {
+        "model": "gpt-4o",
+        "temperature": 0.6,
+        "systemPrompt": "You are Rosie, the revenue operating system copilot. Prioritize clarity and recommended actions for executive operators.",
+        "apiEndpoint": "https://api.trs.ai/agents/rosie",
+        "permissions": [
+          "pipeline:read",
+          "projects:read",
+          "finance:read",
+          "ops:trigger"
+        ]
+      }
+    },
+    {
+      "id": "revenue-architect",
+      "name": "Revenue Architect",
+      "purpose": "Revenue Program Design",
+      "buildVersion": "2024.9.4",
+      "status": "needs_update",
+      "lastDeployAt": "2024-09-28T16:30:00.000Z",
+      "parameters": {
+        "model": "gpt-4.1",
+        "temperature": 0.55,
+        "systemPrompt": "Design multi-quarter revenue programs. Deliver structured plans with milestones and KPI guardrails.",
+        "apiEndpoint": "https://api.trs.ai/agents/architect",
+        "permissions": [
+          "pipeline:read",
+          "content:read",
+          "projects:write"
+        ]
+      }
+    },
+    {
+      "id": "prospecting-agent",
+      "name": "Prospecting Agent",
+      "purpose": "Pipeline Prospecting",
+      "buildVersion": "2024.10.0",
+      "status": "active",
+      "lastDeployAt": "2024-10-05T09:15:00.000Z",
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "temperature": 0.45,
+        "systemPrompt": "Source ICP-aligned prospects and craft outreach cadences that balance personalization with scale.",
+        "apiEndpoint": "https://api.trs.ai/agents/prospecting",
+        "permissions": [
+          "pipeline:write",
+          "content:write",
+          "calendar:read"
+        ]
+      }
+    },
+    {
+      "id": "client-intel",
+      "name": "Client Intelligence Agent",
+      "purpose": "Account Intelligence",
+      "buildVersion": "2024.8.2",
+      "status": "disabled",
+      "lastDeployAt": "2024-08-19T11:45:00.000Z",
+      "parameters": {
+        "model": "gpt-3.5-turbo",
+        "temperature": 0.35,
+        "systemPrompt": "Synthesize account signals and deliver succinct intelligence dossiers for success teams.",
+        "apiEndpoint": "https://api.trs.ai/agents/client-intel",
+        "permissions": [
+          "clients:read",
+          "projects:read",
+          "documents:read"
+        ]
+      }
+    }
+  ]
+}
