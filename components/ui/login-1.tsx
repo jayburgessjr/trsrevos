@@ -117,7 +117,7 @@ export default function LoginScreen() {
       <div className="flex-1 bg-gray-50 flex items-center justify-center p-12">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <img src="/images/trs_main_logo.png" alt="TRS Logo" className="w-[145px] mx-auto mb-4" />
+            <img src="/images/trs_main_logo.png" alt="TRS Logo" className="w-[175px] h-[175px] mx-auto mb-4" />
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
               {isLogin ? "Welcome Back" : "Join Us Today"}
             </h2>

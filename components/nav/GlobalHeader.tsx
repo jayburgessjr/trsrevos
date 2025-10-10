@@ -30,7 +30,7 @@ export default function GlobalHeader() {
       <div className="flex h-14 w-full items-center justify-between px-3">
         <div className="flex items-center gap-3">
           <img src="/images/trs_main_logo.png" alt="TRS Logo" className="h-8" />
-          <span className="text-base font-semibold text-black">Control Center</span>
+
         </div>
         <div className="flex items-center gap-2 text-sm">
           <div className="flex h-9 w-64 items-center gap-2 rounded-md border border-gray-200 bg-white px-3 text-sm">
