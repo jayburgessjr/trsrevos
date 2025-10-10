@@ -19,14 +19,22 @@ CREATE INDEX IF NOT EXISTS idx_audit_log_resource
 
 ALTER TABLE public.audit_log ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "audit_log_select"
+DO $$ BEGIN
+  CREATE POLICY "audit_log_select"
   ON public.audit_log
   FOR SELECT
   USING (
     public.is_admin() OR auth.role() = 'service_role'
   );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY IF NOT EXISTS "audit_log_insert"
+DO $$ BEGIN
+  CREATE POLICY "audit_log_insert"
   ON public.audit_log
   FOR INSERT TO service_role
   WITH CHECK (auth.role() = 'service_role');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;

@@ -18,16 +18,24 @@ CREATE INDEX IF NOT EXISTS idx_analytics_events_event_key
 
 ALTER TABLE public.analytics_events ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "analytics_events_select"
+DO $$ BEGIN
+  CREATE POLICY "analytics_events_select"
   ON public.analytics_events
   FOR SELECT
   USING (
     public.is_admin() OR auth.role() = 'service_role'
   );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY IF NOT EXISTS "analytics_events_insert"
+DO $$ BEGIN
+  CREATE POLICY "analytics_events_insert"
   ON public.analytics_events
   FOR INSERT TO authenticated, service_role
   WITH CHECK (
     organization_id = public.user_organization_id() OR auth.role() = 'service_role'
   );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;

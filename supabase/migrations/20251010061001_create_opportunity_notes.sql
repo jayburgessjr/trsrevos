@@ -13,25 +13,33 @@ CREATE INDEX IF NOT EXISTS idx_opportunity_notes_opportunity_id
 
 ALTER TABLE public.opportunity_notes ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "opportunity_notes_select"
-  ON public.opportunity_notes
-  FOR SELECT
-  USING (
-    opportunity_id IN (
-      SELECT id FROM public.opportunities
-    )
-  );
+DO $$ BEGIN
+  CREATE POLICY "opportunity_notes_select"
+    ON public.opportunity_notes
+    FOR SELECT
+    USING (
+      opportunity_id IN (
+        SELECT id FROM public.opportunities
+      )
+    );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY IF NOT EXISTS "opportunity_notes_all"
-  ON public.opportunity_notes
-  FOR ALL
-  USING (
-    opportunity_id IN (
-      SELECT id FROM public.opportunities
+DO $$ BEGIN
+  CREATE POLICY "opportunity_notes_all"
+    ON public.opportunity_notes
+    FOR ALL
+    USING (
+      opportunity_id IN (
+        SELECT id FROM public.opportunities
+      )
     )
-  )
-  WITH CHECK (
-    opportunity_id IN (
-      SELECT id FROM public.opportunities
-    )
-  );
+    WITH CHECK (
+      opportunity_id IN (
+        SELECT id FROM public.opportunities
+      )
+    );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;

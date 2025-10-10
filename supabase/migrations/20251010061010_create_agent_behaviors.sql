@@ -14,14 +14,19 @@ CREATE INDEX IF NOT EXISTS idx_agent_behaviors_org_agent
 
 ALTER TABLE public.agent_behaviors ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "agent_behaviors_select"
+DO $$ BEGIN
+  CREATE POLICY "agent_behaviors_select"
   ON public.agent_behaviors
   FOR SELECT
   USING (
     organization_id = public.user_organization_id() OR public.is_super_admin()
   );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY IF NOT EXISTS "agent_behaviors_all"
+DO $$ BEGIN
+  CREATE POLICY "agent_behaviors_all"
   ON public.agent_behaviors
   FOR ALL
   USING (
@@ -30,3 +35,6 @@ CREATE POLICY IF NOT EXISTS "agent_behaviors_all"
   WITH CHECK (
     organization_id = public.user_organization_id() AND public.is_admin()
   );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;

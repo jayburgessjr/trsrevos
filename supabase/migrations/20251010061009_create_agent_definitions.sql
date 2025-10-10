@@ -15,14 +15,19 @@ CREATE INDEX IF NOT EXISTS idx_agent_definitions_org_key
 
 ALTER TABLE public.agent_definitions ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "agent_definitions_select"
+DO $$ BEGIN
+  CREATE POLICY "agent_definitions_select"
   ON public.agent_definitions
   FOR SELECT
   USING (
     organization_id = public.user_organization_id() OR public.is_super_admin()
   );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY IF NOT EXISTS "agent_definitions_all"
+DO $$ BEGIN
+  CREATE POLICY "agent_definitions_all"
   ON public.agent_definitions
   FOR ALL
   USING (
@@ -31,3 +36,6 @@ CREATE POLICY IF NOT EXISTS "agent_definitions_all"
   WITH CHECK (
     organization_id = public.user_organization_id() AND public.is_admin()
   );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;

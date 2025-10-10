@@ -18,7 +18,8 @@ CREATE INDEX IF NOT EXISTS idx_content_metrics_content_date
 
 ALTER TABLE public.content_metrics ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "content_metrics_select"
+DO $$ BEGIN
+  CREATE POLICY "content_metrics_select"
   ON public.content_metrics
   FOR SELECT
   USING (
@@ -26,14 +27,25 @@ CREATE POLICY IF NOT EXISTS "content_metrics_select"
       SELECT id FROM public.content_items
     )
   );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY IF NOT EXISTS "content_metrics_insert"
+DO $$ BEGIN
+  CREATE POLICY "content_metrics_insert"
   ON public.content_metrics
   FOR INSERT TO authenticated, service_role
   WITH CHECK (auth.role() = 'service_role');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY IF NOT EXISTS "content_metrics_update"
+DO $$ BEGIN
+  CREATE POLICY "content_metrics_update"
   ON public.content_metrics
   FOR UPDATE
   USING (auth.role() = 'service_role')
   WITH CHECK (auth.role() = 'service_role');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;

@@ -15,14 +15,19 @@ CREATE INDEX IF NOT EXISTS idx_focus_sessions_user_day
 
 ALTER TABLE public.focus_sessions ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "focus_sessions_select"
+DO $$ BEGIN
+  CREATE POLICY "focus_sessions_select"
   ON public.focus_sessions
   FOR SELECT
   USING (
     user_id = auth.uid() OR public.is_admin()
   );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY IF NOT EXISTS "focus_sessions_mutate"
+DO $$ BEGIN
+  CREATE POLICY "focus_sessions_mutate"
   ON public.focus_sessions
   FOR ALL
   USING (
@@ -31,3 +36,6 @@ CREATE POLICY IF NOT EXISTS "focus_sessions_mutate"
   WITH CHECK (
     user_id = auth.uid() OR public.is_admin()
   );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;

@@ -15,14 +15,19 @@ CREATE INDEX IF NOT EXISTS idx_dashboard_snapshots_org_scope
 
 ALTER TABLE public.dashboard_snapshots ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "dashboard_snapshots_select"
+DO $$ BEGIN
+  CREATE POLICY "dashboard_snapshots_select"
   ON public.dashboard_snapshots
   FOR SELECT
   USING (
     organization_id = public.user_organization_id() OR public.is_super_admin()
   );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY IF NOT EXISTS "dashboard_snapshots_all"
+DO $$ BEGIN
+  CREATE POLICY "dashboard_snapshots_all"
   ON public.dashboard_snapshots
   FOR ALL
   USING (
@@ -31,3 +36,6 @@ CREATE POLICY IF NOT EXISTS "dashboard_snapshots_all"
   WITH CHECK (
     auth.role() = 'service_role' OR (organization_id = public.user_organization_id() AND public.is_admin())
   );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;

@@ -16,7 +16,8 @@ CREATE INDEX IF NOT EXISTS idx_client_health_history_client_date
 
 ALTER TABLE public.client_health_history ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "client_health_history_select"
+DO $$ BEGIN
+  CREATE POLICY "client_health_history_select"
   ON public.client_health_history
   FOR SELECT
   USING (
@@ -24,16 +25,27 @@ CREATE POLICY IF NOT EXISTS "client_health_history_select"
       SELECT id FROM public.clients
     )
   );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY IF NOT EXISTS "client_health_history_write"
+DO $$ BEGIN
+  CREATE POLICY "client_health_history_write"
   ON public.client_health_history
   FOR INSERT TO authenticated, service_role
   WITH CHECK (
     auth.role() = 'service_role' OR public.is_admin()
   );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY IF NOT EXISTS "client_health_history_update"
+DO $$ BEGIN
+  CREATE POLICY "client_health_history_update"
   ON public.client_health_history
   FOR UPDATE
   USING (auth.role() = 'service_role' OR public.is_admin())
   WITH CHECK (auth.role() = 'service_role' OR public.is_admin());
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;

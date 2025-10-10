@@ -14,7 +14,8 @@ CREATE INDEX IF NOT EXISTS idx_share_space_artifacts_share_id
 
 ALTER TABLE public.share_space_artifacts ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "share_space_artifacts_select"
+DO $$ BEGIN
+  CREATE POLICY "share_space_artifacts_select"
   ON public.share_space_artifacts
   FOR SELECT
   USING (
@@ -22,8 +23,12 @@ CREATE POLICY IF NOT EXISTS "share_space_artifacts_select"
       SELECT id FROM public.share_spaces
     )
   );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY IF NOT EXISTS "share_space_artifacts_all"
+DO $$ BEGIN
+  CREATE POLICY "share_space_artifacts_all"
   ON public.share_space_artifacts
   FOR ALL
   USING (
@@ -36,3 +41,6 @@ CREATE POLICY IF NOT EXISTS "share_space_artifacts_all"
       SELECT id FROM public.share_spaces
     )
   );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;

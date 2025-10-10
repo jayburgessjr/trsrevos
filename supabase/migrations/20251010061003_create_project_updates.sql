@@ -15,7 +15,8 @@ CREATE INDEX IF NOT EXISTS idx_project_updates_project_id
 
 ALTER TABLE public.project_updates ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "project_updates_select"
+DO $$ BEGIN
+  CREATE POLICY "project_updates_select"
   ON public.project_updates
   FOR SELECT
   USING (
@@ -23,8 +24,12 @@ CREATE POLICY IF NOT EXISTS "project_updates_select"
       SELECT id FROM public.projects
     )
   );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY IF NOT EXISTS "project_updates_mutate"
+DO $$ BEGIN
+  CREATE POLICY "project_updates_mutate"
   ON public.project_updates
   FOR ALL
   USING (
@@ -37,3 +42,6 @@ CREATE POLICY IF NOT EXISTS "project_updates_mutate"
       SELECT id FROM public.projects WHERE owner_id = auth.uid() OR public.is_admin()
     )
   );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;

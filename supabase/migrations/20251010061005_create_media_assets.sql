@@ -14,7 +14,8 @@ CREATE INDEX IF NOT EXISTS idx_media_assets_project_id
 
 ALTER TABLE public.media_assets ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "media_assets_select"
+DO $$ BEGIN
+  CREATE POLICY "media_assets_select"
   ON public.media_assets
   FOR SELECT
   USING (
@@ -22,8 +23,12 @@ CREATE POLICY IF NOT EXISTS "media_assets_select"
       SELECT id FROM public.media_projects
     )
   );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY IF NOT EXISTS "media_assets_all"
+DO $$ BEGIN
+  CREATE POLICY "media_assets_all"
   ON public.media_assets
   FOR ALL
   USING (
@@ -36,3 +41,6 @@ CREATE POLICY IF NOT EXISTS "media_assets_all"
       SELECT id FROM public.media_projects
     )
   );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
