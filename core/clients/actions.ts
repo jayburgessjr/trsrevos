@@ -2,7 +2,10 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { RevOSPhase, Client } from "./types";
+import { RevOSPhase, Client, ClientDeliverable, ClientFinancialSnapshot } from "./types";
+
+const hasSupabaseCredentials = () =>
+  Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 /**
  * Fetch all clients with their relationships
@@ -253,6 +256,133 @@ export async function getClientStats(): Promise<{
   const churned = clients.filter((client) => client.status === "churned").length;
 
   return { avgHealth, atRisk, expansions, churned };
+}
+
+export async function actionListDeliverables(clientId: string): Promise<ClientDeliverable[]> {
+  if (!hasSupabaseCredentials()) {
+    return [];
+  }
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("deliverables")
+    .select("*")
+    .eq("client_id", clientId)
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching deliverables:", error);
+    return [];
+  }
+
+  return data ?? [];
+}
+
+export async function actionCreateDeliverable(input: {
+  clientId: string;
+  name: string;
+  type?: string;
+  link?: string;
+  status?: string;
+}): Promise<ClientDeliverable | null> {
+  if (!hasSupabaseCredentials()) {
+    return {
+      id: crypto.randomUUID(),
+      client_id: input.clientId,
+      name: input.name,
+      type: input.type?.trim() || null,
+      link: input.link?.trim() || null,
+      status: input.status?.trim() || null,
+      updated_at: new Date().toISOString(),
+    };
+  }
+  const supabase = await createClient();
+
+  const payload = {
+    client_id: input.clientId,
+    name: input.name,
+    type: input.type?.trim() || null,
+    link: input.link?.trim() || null,
+    status: input.status?.trim() || null,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data, error } = await supabase
+    .from("deliverables")
+    .insert(payload)
+    .select("*")
+    .single();
+
+  if (error) {
+    console.error("Error creating deliverable:", error);
+    return null;
+  }
+
+  revalidatePath(`/clients/${input.clientId}`);
+  return data;
+}
+
+export async function actionListClientFinancials(clientId: string): Promise<ClientFinancialSnapshot[]> {
+  if (!hasSupabaseCredentials()) {
+    return [];
+  }
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("client_financials")
+    .select("*")
+    .eq("client_id", clientId)
+    .order("last_updated", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching client financials:", error);
+    return [];
+  }
+
+  return data ?? [];
+}
+
+export async function actionRecordClientFinancials(input: {
+  clientId: string;
+  equityStake?: number | null;
+  monthlyRevenue?: number | null;
+  projectedAnnualRevenue?: number | null;
+  lastUpdated?: string | null;
+}): Promise<ClientFinancialSnapshot | null> {
+  if (!hasSupabaseCredentials()) {
+    return {
+      id: crypto.randomUUID(),
+      client_id: input.clientId,
+      equity_stake: input.equityStake ?? null,
+      monthly_revenue: input.monthlyRevenue ?? null,
+      projected_annual_revenue: input.projectedAnnualRevenue ?? null,
+      last_updated: input.lastUpdated ?? new Date().toISOString(),
+    };
+  }
+  const supabase = await createClient();
+
+  const payload = {
+    client_id: input.clientId,
+    equity_stake: input.equityStake ?? null,
+    monthly_revenue: input.monthlyRevenue ?? null,
+    projected_annual_revenue: input.projectedAnnualRevenue ?? null,
+    last_updated: input.lastUpdated ?? new Date().toISOString(),
+  };
+
+  const { data, error } = await supabase
+    .from("client_financials")
+    .insert(payload)
+    .select("*")
+    .single();
+
+  if (error) {
+    console.error("Error recording client financials:", error);
+    return null;
+  }
+
+  revalidatePath(`/clients/${input.clientId}`);
+  revalidatePath(`/finance`);
+  return data;
 }
 
 /**
