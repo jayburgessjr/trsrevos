@@ -3,16 +3,12 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart2, Briefcase, FileText, PieChart, Settings, Users } from "lucide-react"
+import * as Icons from "lucide-react"
+import type { LucideIcon } from "lucide-react"
+import { MAIN_NAV } from "@/lib/navigation"
+import { canSee, Role } from "@/core/flags/flags"
 
-const NAV_ITEMS = [
-  { label: "Dashboard", href: "/dashboard", icon: PieChart },
-  { label: "Pipeline", href: "/pipeline", icon: BarChart2 },
-  { label: "Clients", href: "/clients", icon: Users },
-  { label: "Content", href: "/content", icon: FileText },
-  { label: "Projects", href: "/projects", icon: Briefcase },
-  { label: "Settings", href: "/settings", icon: Settings },
-]
+const DEFAULT_ROLE: Role = "SuperAdmin"
 
 export default function AdminSidebar() {
   const [open, setOpen] = useState(false)
@@ -33,8 +29,10 @@ export default function AdminSidebar() {
         ≡
       </button>
       <nav className="flex w-full flex-col gap-1 p-2 text-sm">
-        {NAV_ITEMS.map((item) => {
-          const Icon = item.icon
+        {MAIN_NAV.map((item) => {
+          if (!canSee(DEFAULT_ROLE, item.roles)) return null
+
+          const Icon = (Icons as Record<string, LucideIcon>)[item.icon] || Icons.Circle
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
           return (
             <Link
