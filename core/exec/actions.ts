@@ -113,13 +113,13 @@ async function computeLiveDashboard(scope: {
         : 76;
 
     // Calculate Capacity Metrics
-    const activeProjects = projects.filter((p) => p.status === "active");
+    const activeProjects = projects.filter((p) => p.status === "Active");
     const totalCapacity = activeProjects.reduce(
-      (sum, p) => sum + (p.hours_budgeted || 0),
+      (sum, p) => sum + (p.budget || 0),
       0
     );
     const usedCapacity = activeProjects.reduce(
-      (sum, p) => sum + (p.hours_actual || 0),
+      (sum, p) => sum + (p.spent || 0),
       0
     );
     const utilizationPct =

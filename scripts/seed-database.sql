@@ -108,12 +108,12 @@ INSERT INTO public.invoices (id, invoice_number, client_id, status, issue_date, 
 ON CONFLICT (id) DO NOTHING;
 
 -- Step 8: Insert test projects
-INSERT INTO public.projects (id, client_id, name, status, hours_budgeted, hours_actual) VALUES
-('50000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'Discovery Phase', 'active', 120, 95),
-('50000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002', 'Data Integration', 'active', 200, 150),
-('50000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000003', 'Algorithm Development', 'active', 160, 140),
-('50000000-0000-0000-0000-000000000004', '20000000-0000-0000-0000-000000000004', 'Architecture Design', 'active', 180, 120),
-('50000000-0000-0000-0000-000000000005', '20000000-0000-0000-0000-000000000005', 'Compounding Implementation', 'completed', 240, 235)
+INSERT INTO public.projects (id, name, client_id, owner_id, status, phase, health, progress, start_date, due_date, budget, spent) VALUES
+('50000000-0000-0000-0000-000000000001', 'Discovery Phase', '20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000002', 'Active', 'Discovery', 'green', 79, '2025-09-01', '2025-11-30', 120000, 95000),
+('50000000-0000-0000-0000-000000000002', 'Data Integration', '20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000003', 'Active', 'Data', 'yellow', 75, '2025-08-15', '2025-12-15', 200000, 150000),
+('50000000-0000-0000-0000-000000000003', 'Algorithm Development', '20000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000002', 'Active', 'Algorithm', 'green', 88, '2025-07-01', '2025-10-31', 160000, 140000),
+('50000000-0000-0000-0000-000000000004', 'Architecture Design', '20000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000002', 'Active', 'Architecture', 'yellow', 67, '2025-08-01', '2025-12-31', 180000, 120000),
+('50000000-0000-0000-0000-000000000005', 'Compounding Implementation', '20000000-0000-0000-0000-000000000005', '10000000-0000-0000-0000-000000000003', 'Completed', 'Compounding', 'green', 100, '2025-06-01', '2025-09-30', 240000, 235000)
 ON CONFLICT (id) DO NOTHING;
 
 -- Step 9: Insert test client health history
