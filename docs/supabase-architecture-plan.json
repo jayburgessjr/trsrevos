@@ -1,0 +1,1017 @@
+{
+  "edge_functions": [
+    {
+      "name": "agent-dispatch",
+      "purpose": "Coordinate long-running agent executions, persist run metadata, and fan out to AI models or downstream webhooks.",
+      "inputs": {
+        "agent_key": "text",
+        "user_id": "uuid",
+        "organization_id": "uuid",
+        "payload": "jsonb"
+      },
+      "tables": [
+        "agent_runs",
+        "agent_definitions",
+        "agent_behaviors",
+        "clients",
+        "projects",
+        "content_items",
+        "events"
+      ],
+      "ai_or_analytics_dependencies": [
+        "openai:gpt-4o-mini",
+        "service_webhooks"
+      ],
+      "status": "missing"
+    },
+    {
+      "name": "morning-brief",
+      "purpose": "Generate the prioritized morning plan, compute ROI scores, and lock the operator's focus schedule.",
+      "inputs": {
+        "user_id": "uuid",
+        "organization_id": "uuid",
+        "time_horizon": "text"
+      },
+      "tables": [
+        "daily_plans",
+        "priority_items",
+        "focus_sessions",
+        "events",
+        "clients",
+        "opportunities",
+        "cash_flow_entries",
+        "projects"
+      ],
+      "ai_or_analytics_dependencies": [
+        "analytics_pipeline"
+      ],
+      "status": "missing"
+    },
+    {
+      "name": "exec-dashboard-refresh",
+      "purpose": "Recompute executive dashboard metrics and persist time-series snapshots for scoped segments.",
+      "inputs": {
+        "organization_id": "uuid",
+        "time_scope": "text",
+        "segment_filter": "jsonb"
+      },
+      "tables": [
+        "dashboard_snapshots",
+        "clients",
+        "opportunities",
+        "invoices",
+        "cash_flow_entries",
+        "content_touches",
+        "ad_campaigns",
+        "projects",
+        "events"
+      ],
+      "ai_or_analytics_dependencies": [
+        "analytics_pipeline"
+      ],
+      "status": "missing"
+    },
+    {
+      "name": "content-recommend",
+      "purpose": "Score and return next-best content briefs using engagement telemetry and persona-stage demand signals.",
+      "inputs": {
+        "organization_id": "uuid",
+        "persona": "text",
+        "stage": "text"
+      },
+      "tables": [
+        "content_items",
+        "content_touches",
+        "content_metrics",
+        "media_projects"
+      ],
+      "ai_or_analytics_dependencies": [
+        "openai:gpt-4o-mini"
+      ],
+      "status": "missing"
+    },
+    {
+      "name": "rosie-chat",
+      "purpose": "Serve the Rosie copilot chat interface via a secured edge runtime, orchestrating retrieval augmented responses.",
+      "inputs": {
+        "messages": "jsonb",
+        "user_id": "uuid"
+      },
+      "tables": [
+        "clients",
+        "projects",
+        "media_projects",
+        "opportunities",
+        "daily_plans",
+        "events"
+      ],
+      "ai_or_analytics_dependencies": [
+        "openai:gpt-4o-mini",
+        "web_search"
+      ],
+      "status": "replace_route"
+    },
+    {
+      "name": "share-space-publish",
+      "purpose": "Assemble share space bundles, watermark assets, and emit audit trails for external previews.",
+      "inputs": {
+        "share_id": "uuid",
+        "include_watermark": "boolean"
+      },
+      "tables": [
+        "share_spaces",
+        "share_space_artifacts",
+        "dashboard_snapshots",
+        "content_items",
+        "projects"
+      ],
+      "ai_or_analytics_dependencies": [],
+      "status": "missing"
+    }
+  ],
+  "tables": [
+    {
+      "name": "organizations",
+      "fields": ["id uuid pk", "name text", "type text", "settings jsonb", "created_at timestamptz", "updated_at timestamptz"],
+      "rls": "Maintain existing policies; ensure super-admin override only.",
+      "indexes": ["idx_organizations_type"],
+      "status": "existing"
+    },
+    {
+      "name": "users",
+      "fields": ["id uuid pk", "email text", "name text", "role text", "organization_id uuid", "avatar_url text", "created_at timestamptz", "updated_at timestamptz"],
+      "rls": "Restrict SELECT/UPDATE to same organization or higher role using user_organization_id().",
+      "indexes": ["idx_users_organization_id", "idx_users_email"],
+      "status": "existing"
+    },
+    {
+      "name": "clients",
+      "fields": ["id uuid pk", "organization_id uuid", "name text", "segment text", "arr numeric", "industry text", "region text", "phase text", "owner_id uuid", "health integer", "churn_risk integer", "qbr_date date", "status text", "is_expansion boolean", "notes text", "created_at timestamptz", "updated_at timestamptz"],
+      "rls": "Update policies to filter by organization_id via joined owner_id; allow owners and admins to mutate.",
+      "indexes": ["idx_clients_owner_id", "idx_clients_phase", "idx_clients_status", "idx_clients_organization_phase"],
+      "status": "needs_update"
+    },
+    {
+      "name": "contacts",
+      "fields": ["id uuid pk", "client_id uuid", "name text", "role text", "email text", "phone text", "power text", "notes text", "created_at timestamptz", "updated_at timestamptz"],
+      "rls": "Tighten policies so client_id must belong to caller's organization (join through clients).",
+      "indexes": ["idx_contacts_client_id"],
+      "status": "needs_update"
+    },
+    {
+      "name": "client_commercials",
+      "fields": ["id uuid pk", "client_id uuid", "plan text", "price numeric", "term_months integer", "discount_pct numeric", "renewal_date date", "payment_terms text", "approvals text[]", "created_at timestamptz", "updated_at timestamptz"],
+      "rls": "Match organization-filtered client access; allow owner/admin updates only.",
+      "indexes": [],
+      "status": "needs_update"
+    },
+    {
+      "name": "opportunities",
+      "fields": ["id uuid pk", "client_id uuid", "name text", "amount numeric", "stage text", "next_step text", "next_step_date date", "probability integer", "close_date date", "owner_id uuid", "company text", "notes jsonb", "created_at timestamptz", "updated_at timestamptz"],
+      "rls": "Ensure SELECT only for members tied to the client's organization or the deal owner; tighten ALL policy.",
+      "indexes": ["idx_opportunities_client_id", "idx_opportunities_owner_id", "idx_opportunities_stage"],
+      "status": "needs_update"
+    },
+    {
+      "name": "opportunity_notes",
+      "fields": ["id uuid pk", "opportunity_id uuid", "author_id uuid", "body text", "created_at timestamptz"],
+      "rls": "Allow insert/read for organization members with access to the parent opportunity.",
+      "indexes": ["idx_opportunity_notes_opportunity_id"],
+      "status": "new"
+    },
+    {
+      "name": "discovery_questions",
+      "fields": ["id uuid pk", "client_id uuid", "question text", "answer text", "lever text", "expected_impact numeric", "created_at timestamptz", "updated_at timestamptz"],
+      "rls": "Match client organization scoping; limit writes to account team.",
+      "indexes": [],
+      "status": "needs_update"
+    },
+    {
+      "name": "data_sources",
+      "fields": ["id uuid pk", "client_id uuid", "name text", "category text", "status text", "notes text", "created_at timestamptz", "updated_at timestamptz"],
+      "rls": "Restrict to organization via client join; enable owner/admin writes.",
+      "indexes": [],
+      "status": "needs_update"
+    },
+    {
+      "name": "qra_strategies",
+      "fields": ["id uuid pk", "client_id uuid", "pricing text[]", "offers text[]", "retention text[]", "partners text[]", "expected_impact numeric", "created_at timestamptz", "updated_at timestamptz"],
+      "rls": "Restrict to organization; writes limited to admins and project owners.",
+      "indexes": [],
+      "status": "needs_update"
+    },
+    {
+      "name": "kanban_items",
+      "fields": ["id uuid pk", "client_id uuid", "title text", "status text", "owner text", "due_date date", "created_at timestamptz", "updated_at timestamptz"],
+      "rls": "Restrict by client organization; writes for project team.",
+      "indexes": ["idx_kanban_items_client_id"],
+      "status": "needs_update"
+    },
+    {
+      "name": "compounding_metrics",
+      "fields": ["id uuid pk", "client_id uuid", "baseline_mrr numeric", "current_mrr numeric", "net_new numeric", "forecast_qtd numeric", "drivers jsonb", "created_at timestamptz", "updated_at timestamptz"],
+      "rls": "Restrict by client organization; analytics role may read.",
+      "indexes": [],
+      "status": "needs_update"
+    },
+    {
+      "name": "client_health_history",
+      "fields": ["id uuid pk", "client_id uuid", "snapshot_date date", "health integer", "churn_risk integer", "trs_score integer", "notes text", "created_at timestamptz"],
+      "rls": "Readable within organization; writes limited to analytics service role and admins.",
+      "indexes": ["idx_client_health_history_client_date"],
+      "status": "new"
+    },
+    {
+      "name": "projects",
+      "fields": ["id uuid pk", "organization_id uuid", "name text", "client_id uuid", "description text", "owner_id uuid", "status text", "phase text", "health text", "progress integer", "start_date date", "due_date date", "completed_date date", "budget numeric", "spent numeric", "deliverables text[]", "notes text", "created_at timestamptz", "updated_at timestamptz"],
+      "rls": "Add organization_id column and scope select/update by org; enforce owner/admin mutability.",
+      "indexes": ["idx_projects_client_id", "idx_projects_owner_id", "idx_projects_status", "idx_projects_organization_status"],
+      "status": "needs_update"
+    },
+    {
+      "name": "project_updates",
+      "fields": ["id uuid pk", "project_id uuid", "author_id uuid", "status text", "summary text", "risk_level text", "created_at timestamptz"],
+      "rls": "Allow contributors in organization; restrict writes to project owner/admin.",
+      "indexes": ["idx_project_updates_project_id"],
+      "status": "new"
+    },
+    {
+      "name": "content_items",
+      "fields": ["id uuid pk", "organization_id uuid", "title text", "type text", "status text", "persona text", "stage text", "objection text", "owner_id uuid", "cost numeric", "created_at timestamptz", "published_at timestamptz", "sla text", "brief jsonb", "updated_at timestamptz"],
+      "rls": "Restrict by organization; allow creators, assigned owners, and admins to mutate.",
+      "indexes": ["idx_content_items_owner_id", "idx_content_items_status", "idx_content_items_org_stage"],
+      "status": "needs_update"
+    },
+    {
+      "name": "content_variants",
+      "fields": ["id uuid pk", "content_id uuid", "kind text", "headline text", "cta text", "variant_group text", "status text", "created_at timestamptz"],
+      "rls": "Join through content_items for organization scoping.",
+      "indexes": ["idx_content_variants_content_id"],
+      "status": "needs_update"
+    },
+    {
+      "name": "content_distribution",
+      "fields": ["id uuid pk", "content_id uuid", "channel text", "scheduled_at timestamptz", "published_at timestamptz", "utm text", "clicks integer", "created_at timestamptz", "updated_at timestamptz"],
+      "rls": "Restrict by organization via content join; allow marketing role to write.",
+      "indexes": ["idx_content_distribution_content_id", "idx_content_distribution_channel_time"],
+      "status": "needs_update"
+    },
+    {
+      "name": "content_touches",
+      "fields": ["id uuid pk", "content_id uuid", "opportunity_id uuid", "actor text", "action text", "timestamp timestamptz", "created_at timestamptz"],
+      "rls": "Restrict to organization via content/opportunity join; allow revenue team inserts.",
+      "indexes": ["idx_content_touches_content_id", "idx_content_touches_opportunity_id"],
+      "status": "needs_update"
+    },
+    {
+      "name": "content_metrics",
+      "fields": ["id uuid pk", "content_id uuid", "metric_date date", "influenced numeric", "advanced numeric", "closed_won numeric", "usage_rate numeric", "views integer", "ctr numeric", "created_at timestamptz"],
+      "rls": "Readable within organization; writes via analytics pipeline.",
+      "indexes": ["idx_content_metrics_content_date"],
+      "status": "new"
+    },
+    {
+      "name": "media_ideas",
+      "fields": ["id uuid pk", "organization_id uuid", "title text", "persona text", "stage text", "objection text", "expected_impact text", "effort text", "created_at timestamptz"],
+      "rls": "Restrict to organization.",
+      "indexes": [],
+      "status": "existing"
+    },
+    {
+      "name": "media_projects",
+      "fields": ["id uuid pk", "organization_id uuid", "idea_id uuid", "status text", "jellypod_url text", "transcript text", "artifacts jsonb", "created_at timestamptz", "updated_at timestamptz"],
+      "rls": "Restrict by organization; allow media owners to update.",
+      "indexes": ["idx_media_projects_idea_id", "idx_media_projects_status"],
+      "status": "needs_update"
+    },
+    {
+      "name": "media_assets",
+      "fields": ["id uuid pk", "project_id uuid", "asset_type text", "uri text", "metadata jsonb", "created_at timestamptz"],
+      "rls": "Join through media_projects for organization scope.",
+      "indexes": ["idx_media_assets_project_id"],
+      "status": "new"
+    },
+    {
+      "name": "media_distribution",
+      "fields": ["id uuid pk", "project_id uuid", "channel text", "scheduled_at timestamptz", "published_at timestamptz", "utm text", "created_at timestamptz"],
+      "rls": "Restrict via media_projects join; marketing role writes.",
+      "indexes": ["idx_media_distribution_project_id"],
+      "status": "needs_update"
+    },
+    {
+      "name": "daily_plans",
+      "fields": ["id uuid pk", "user_id uuid", "organization_id uuid", "date_iso date", "items jsonb", "locked_at timestamptz", "created_at timestamptz", "updated_at timestamptz"],
+      "rls": "Allow owner read/write; admins can read within organization.",
+      "indexes": ["idx_daily_plans_user_id", "idx_daily_plans_date"],
+      "status": "existing"
+    },
+    {
+      "name": "priority_items",
+      "fields": ["id uuid pk", "daily_plan_id uuid", "title text", "expected_impact numeric", "effort_hours numeric", "probability numeric", "urgency integer", "confidence numeric", "strategic_weight text", "next_action text", "module_href text", "status text", "roi_dollars numeric", "created_at timestamptz", "updated_at timestamptz"],
+      "rls": "Join through daily_plans for ownership enforcement.",
+      "indexes": ["idx_priority_items_plan_id"],
+      "status": "existing"
+    },
+    {
+      "name": "focus_sessions",
+      "fields": ["id uuid pk", "daily_plan_id uuid", "user_id uuid", "started_at timestamptz", "completed_at timestamptz", "duration_minutes integer"],
+      "rls": "Owner read/write; admins read for reporting.",
+      "indexes": ["idx_focus_sessions_user_day"],
+      "status": "new"
+    },
+    {
+      "name": "events",
+      "fields": ["id uuid pk", "entity text", "action text", "user_id uuid", "organization_id uuid", "timestamp timestamptz", "metadata jsonb", "created_at timestamptz"],
+      "rls": "Add organization_id and restrict to org members; allow service_role inserts.",
+      "indexes": ["idx_events_timestamp", "idx_events_entity", "idx_events_user_id", "idx_events_organization_id"],
+      "status": "needs_update"
+    },
+    {
+      "name": "analytics_events",
+      "fields": ["id uuid pk", "organization_id uuid", "user_id uuid", "event_key text", "payload jsonb", "occurred_at timestamptz"],
+      "rls": "Insert allowed for authenticated users in org; read restricted to analytics role and admins.",
+      "indexes": ["idx_analytics_events_org_time", "idx_analytics_events_event_key"],
+      "status": "new"
+    },
+    {
+      "name": "audit_log",
+      "fields": ["id uuid pk", "organization_id uuid", "actor_id uuid", "action text", "resource_type text", "resource_id uuid", "metadata jsonb", "created_at timestamptz"],
+      "rls": "Read restricted to admins; insert allowed for service_role and trusted edge functions only.",
+      "indexes": ["idx_audit_log_org_time", "idx_audit_log_resource"],
+      "status": "new"
+    },
+    {
+      "name": "agent_runs",
+      "fields": ["id uuid pk", "agent_key text", "user_id uuid", "organization_id uuid", "payload jsonb", "result jsonb", "started_at timestamptz", "completed_at timestamptz", "error text"],
+      "rls": "Restrict to owner/org; allow service_role inserts for automation.",
+      "indexes": ["idx_agent_runs_user_id", "idx_agent_runs_agent_key", "idx_agent_runs_started_at"],
+      "status": "existing"
+    },
+    {
+      "name": "agent_definitions",
+      "fields": ["id uuid pk", "agent_key text unique", "organization_id uuid", "definition jsonb", "auto_runnable boolean", "created_at timestamptz", "updated_at timestamptz"],
+      "rls": "Admins manage; read allowed to org members.",
+      "indexes": ["idx_agent_definitions_org_key"],
+      "status": "new"
+    },
+    {
+      "name": "agent_behaviors",
+      "fields": ["id uuid pk", "agent_key text", "organization_id uuid", "behavior jsonb", "created_at timestamptz", "updated_at timestamptz"],
+      "rls": "Admins and automation can write; members read.",
+      "indexes": ["idx_agent_behaviors_org_agent"],
+      "status": "new"
+    },
+    {
+      "name": "integration_settings",
+      "fields": ["id uuid pk", "organization_id uuid", "settings jsonb", "created_at timestamptz", "updated_at timestamptz"],
+      "rls": "Service role write; admins read.",
+      "indexes": ["idx_integration_settings_org"],
+      "status": "new"
+    },
+    {
+      "name": "share_spaces",
+      "fields": ["id uuid pk", "title text", "summary text", "watermark boolean", "created_by uuid", "created_at timestamptz"],
+      "rls": "Restrict to creator's organization; allow revocation by owner/admin.",
+      "indexes": ["idx_share_spaces_created_by"],
+      "status": "existing"
+    },
+    {
+      "name": "share_space_artifacts",
+      "fields": ["id uuid pk", "share_id uuid", "artifact_type text", "uri text", "metadata jsonb", "created_at timestamptz"],
+      "rls": "Join through share_spaces for organization scope.",
+      "indexes": ["idx_share_space_artifacts_share_id"],
+      "status": "new"
+    },
+    {
+      "name": "feature_flags",
+      "fields": ["id uuid pk", "name text", "description text", "is_enabled boolean", "access_level text", "created_at timestamptz", "updated_at timestamptz", "updated_by uuid"],
+      "rls": "Maintain service_role management; add audit triggers into audit_log.",
+      "indexes": ["idx_feature_flags_name"],
+      "status": "existing"
+    },
+    {
+      "name": "dashboard_snapshots",
+      "fields": ["id uuid pk", "organization_id uuid", "time_scope text", "segment_filter jsonb", "metrics jsonb", "computed_at timestamptz", "created_at timestamptz"],
+      "rls": "Readable by organization members; write via exec-dashboard-refresh edge function.",
+      "indexes": ["idx_dashboard_snapshots_org_scope"],
+      "status": "new"
+    }
+  ],
+  "functions": [
+    {
+      "name": "getExecDashboard",
+      "normalized_name": "get_exec_dashboard",
+      "purpose": "Fetches the executive dashboard payload for the current scope.",
+      "sources": ["app/dashboard/page.tsx"],
+      "tables": ["dashboard_snapshots", "clients", "opportunities", "invoices", "cash_flow_entries", "content_touches", "projects"],
+      "ai_or_analytics_dependencies": ["analytics_pipeline"]
+    },
+    {
+      "name": "setExecScope",
+      "normalized_name": "set_exec_scope",
+      "purpose": "Stores the selected time and segment filters for dashboard views.",
+      "sources": ["components/exec/ScopeBar.tsx"],
+      "tables": ["dashboard_snapshots"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "exportBoardDeck",
+      "normalized_name": "export_board_deck",
+      "purpose": "Triggers export of the exec board packet and returns download metadata.",
+      "sources": ["app/dashboard/DashboardClient.tsx"],
+      "tables": ["dashboard_snapshots", "share_space_artifacts"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "computePlan",
+      "normalized_name": "compute_morning_plan",
+      "purpose": "Generates daily priorities and ROI estimates for the operator.",
+      "sources": ["app/page.tsx"],
+      "tables": ["daily_plans", "priority_items", "focus_sessions", "clients", "opportunities", "events"],
+      "ai_or_analytics_dependencies": ["analytics_pipeline"]
+    },
+    {
+      "name": "lockPlan",
+      "normalized_name": "lock_morning_plan",
+      "purpose": "Locks a daily plan and seeds focus sessions.",
+      "sources": ["app/page.tsx"],
+      "tables": ["daily_plans", "focus_sessions"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "startFocusBlock",
+      "normalized_name": "start_focus_block",
+      "purpose": "Starts a focus session timer for the operator.",
+      "sources": ["app/page.tsx"],
+      "tables": ["focus_sessions"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "completeFocusBlock",
+      "normalized_name": "complete_focus_block",
+      "purpose": "Marks a focus session as completed and increments counters.",
+      "sources": ["app/page.tsx"],
+      "tables": ["focus_sessions", "daily_plans"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "downloadIcal",
+      "normalized_name": "download_ical_feed",
+      "purpose": "Delivers an iCal export for the locked plan.",
+      "sources": ["app/page.tsx"],
+      "tables": ["daily_plans", "share_space_artifacts"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "generateRecap",
+      "normalized_name": "generate_daily_recap",
+      "purpose": "Builds an end-of-day recap summary from captured events.",
+      "sources": ["app/page.tsx"],
+      "tables": ["events", "audit_log"],
+      "ai_or_analytics_dependencies": ["openai:gpt-4o-mini"]
+    },
+    {
+      "name": "getMorningState",
+      "normalized_name": "get_morning_state",
+      "purpose": "Returns cached morning dashboard state for the operator.",
+      "sources": ["app/page.tsx"],
+      "tables": ["daily_plans", "priority_items", "focus_sessions"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "actionListAgents",
+      "normalized_name": "list_agents",
+      "purpose": "Lists registered agents and their status for the agents hub.",
+      "sources": ["app/agents/page.tsx", "app/agents/[key]/page.tsx"],
+      "tables": ["agent_definitions", "agent_behaviors", "agent_runs"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "actionRunAgent",
+      "normalized_name": "run_agent",
+      "purpose": "Executes a selected agent with optional payload overrides.",
+      "sources": ["app/agents/[key]/page.tsx"],
+      "tables": ["agent_runs", "agent_definitions", "clients", "projects"],
+      "ai_or_analytics_dependencies": ["openai:gpt-4o-mini"]
+    },
+    {
+      "name": "actionLogs",
+      "normalized_name": "list_agent_logs",
+      "purpose": "Returns recent agent execution logs for inspection.",
+      "sources": ["app/agents/[key]/page.tsx"],
+      "tables": ["agent_runs"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "actionToggleAgent",
+      "normalized_name": "toggle_agent",
+      "purpose": "Enables or disables auto-run for a specific agent.",
+      "sources": ["app/agents/[key]/page.tsx"],
+      "tables": ["agent_behaviors", "agent_definitions"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "actionSuggestIdeas",
+      "normalized_name": "suggest_media_ideas",
+      "purpose": "Generates recommended media ideas from pipeline and content signals.",
+      "sources": ["app/content/content-studio.tsx"],
+      "tables": ["media_ideas", "content_metrics"],
+      "ai_or_analytics_dependencies": ["analytics_pipeline"]
+    },
+    {
+      "name": "actionCreateProjectFromIdea",
+      "normalized_name": "create_media_project_from_idea",
+      "purpose": "Creates a media project skeleton for a selected idea.",
+      "sources": ["app/content/content-studio.tsx"],
+      "tables": ["media_projects", "media_ideas"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "actionMarkRecording",
+      "normalized_name": "mark_media_project_recording",
+      "purpose": "Updates a media project status to recording.",
+      "sources": ["app/content/content-studio.tsx"],
+      "tables": ["media_projects"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "actionIngestTranscript",
+      "normalized_name": "ingest_media_transcript",
+      "purpose": "Stores transcripts for generated media projects.",
+      "sources": ["app/content/content-studio.tsx"],
+      "tables": ["media_projects", "media_assets"],
+      "ai_or_analytics_dependencies": ["openai:speech_to_text"]
+    },
+    {
+      "name": "actionGenerateAssets",
+      "normalized_name": "generate_media_assets",
+      "purpose": "Produces derivative media assets and stores artifact metadata.",
+      "sources": ["app/content/content-studio.tsx"],
+      "tables": ["media_assets", "media_projects"],
+      "ai_or_analytics_dependencies": ["openai:gpt-4o-mini", "image_generation"]
+    },
+    {
+      "name": "actionScheduleDistribution",
+      "normalized_name": "schedule_media_distribution",
+      "purpose": "Schedules multi-channel distribution for media projects.",
+      "sources": ["app/content/content-studio.tsx"],
+      "tables": ["media_distribution"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "actionMediaMetrics",
+      "normalized_name": "get_media_metrics",
+      "purpose": "Returns aggregated media performance metrics.",
+      "sources": ["app/content/content-studio.tsx"],
+      "tables": ["media_distribution", "content_metrics"],
+      "ai_or_analytics_dependencies": ["analytics_pipeline"]
+    },
+    {
+      "name": "actionMediaState",
+      "normalized_name": "get_media_state",
+      "purpose": "Fetches ideas, projects, and distribution state for the studio.",
+      "sources": ["app/content/content-studio.tsx"],
+      "tables": ["media_ideas", "media_projects", "media_distribution"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "createItem",
+      "normalized_name": "create_content_item",
+      "purpose": "Creates a new content item with optional brief.",
+      "sources": ["app/content/content-studio.tsx"],
+      "tables": ["content_items"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "saveBrief",
+      "normalized_name": "save_content_brief",
+      "purpose": "Persists a content brief for an existing item.",
+      "sources": ["app/content/content-studio.tsx"],
+      "tables": ["content_items"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "updateStatus",
+      "normalized_name": "update_content_status",
+      "purpose": "Updates the production status of a content item.",
+      "sources": ["app/content/content-studio.tsx"],
+      "tables": ["content_items"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "updateItem",
+      "normalized_name": "update_content_item",
+      "purpose": "Patches owner/SLA metadata for a content item.",
+      "sources": ["app/content/content-studio.tsx"],
+      "tables": ["content_items"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "createVariant",
+      "normalized_name": "create_content_variant",
+      "purpose": "Adds a new experiment variant to a content item.",
+      "sources": ["app/content/content-studio.tsx"],
+      "tables": ["content_variants"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "markExperimentOutcome",
+      "normalized_name": "mark_content_variant_status",
+      "purpose": "Marks experiment results for a content variant.",
+      "sources": ["app/content/content-studio.tsx"],
+      "tables": ["content_variants", "content_metrics"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "recordTouch",
+      "normalized_name": "record_content_touch",
+      "purpose": "Logs a revenue touch that used a specific asset.",
+      "sources": ["app/content/content-studio.tsx"],
+      "tables": ["content_touches", "opportunities"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "scheduleDistribution",
+      "normalized_name": "schedule_content_distribution",
+      "purpose": "Schedules content distribution for a channel.",
+      "sources": ["app/content/content-studio.tsx"],
+      "tables": ["content_distribution"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "getMetrics",
+      "normalized_name": "get_content_metrics",
+      "purpose": "Returns aggregate content performance metrics.",
+      "sources": ["app/content/content-studio.tsx"],
+      "tables": ["content_metrics"],
+      "ai_or_analytics_dependencies": ["analytics_pipeline"]
+    },
+    {
+      "name": "getContentSnapshot",
+      "normalized_name": "get_content_snapshot",
+      "purpose": "Returns current state of content items, variants, distribution, and touches.",
+      "sources": ["app/content/content-studio.tsx"],
+      "tables": ["content_items", "content_variants", "content_distribution", "content_touches"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "getSuggestions",
+      "normalized_name": "get_content_suggestions",
+      "purpose": "Delivers AI-curated suggestions for next content moves.",
+      "sources": ["app/content/content-studio.tsx"],
+      "tables": ["content_items", "content_metrics"],
+      "ai_or_analytics_dependencies": ["openai:gpt-4o-mini"]
+    },
+    {
+      "name": "actionComputePlan",
+      "normalized_name": "compute_daily_plan",
+      "purpose": "Computes the daily plan for the operator from candidates.",
+      "sources": ["components/morning/CommandCard.tsx"],
+      "tables": ["daily_plans", "priority_items", "events"],
+      "ai_or_analytics_dependencies": ["analytics_pipeline"]
+    },
+    {
+      "name": "actionGetPlan",
+      "normalized_name": "get_daily_plan",
+      "purpose": "Fetches the active daily plan for the user.",
+      "sources": ["components/morning/CoPilotDrawer.tsx"],
+      "tables": ["daily_plans", "priority_items"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "actionLockPlan",
+      "normalized_name": "lock_daily_plan",
+      "purpose": "Locks the daily plan to prevent further edits and schedule focus blocks.",
+      "sources": ["components/morning/CommandCard.tsx"],
+      "tables": ["daily_plans", "focus_sessions"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "actionGetFocus",
+      "normalized_name": "get_focus_blocks",
+      "purpose": "Returns focus block schedule for the day.",
+      "sources": ["components/morning/CoPilotDrawer.tsx"],
+      "tables": ["focus_sessions"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "actionGenerateRecap",
+      "normalized_name": "generate_recap",
+      "purpose": "Generates recap markdown using the event stream.",
+      "sources": ["components/morning/CommandCard.tsx"],
+      "tables": ["events", "audit_log"],
+      "ai_or_analytics_dependencies": ["openai:gpt-4o-mini"]
+    },
+    {
+      "name": "getShareById",
+      "normalized_name": "get_share_space",
+      "purpose": "Fetches a share space payload for public viewing.",
+      "sources": ["app/share/[id]/page.tsx"],
+      "tables": ["share_spaces", "share_space_artifacts"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "createShareAction",
+      "normalized_name": "create_share_space",
+      "purpose": "Creates a tokenized share space bundle from current data.",
+      "sources": ["app/share/new/page.tsx"],
+      "tables": ["share_spaces", "share_space_artifacts", "dashboard_snapshots"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "revokeShareAction",
+      "normalized_name": "revoke_share_space",
+      "purpose": "Revokes an existing share space and invalidates tokens.",
+      "sources": ["app/share/[id]/page.tsx"],
+      "tables": ["share_spaces", "share_space_artifacts"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "updateAgentParameters",
+      "normalized_name": "update_agent_parameters",
+      "purpose": "Persists agent parameter overrides from settings.",
+      "sources": ["app/settings/actions.ts"],
+      "tables": ["agent_definitions"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "performAgentAction",
+      "normalized_name": "perform_agent_action",
+      "purpose": "Handles deploy/retrain workflows for agents.",
+      "sources": ["app/settings/actions.ts"],
+      "tables": ["agent_definitions", "agent_behaviors", "agent_runs"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "saveIntegrations",
+      "normalized_name": "save_integration_settings",
+      "purpose": "Stores integration credentials for org-level connectors.",
+      "sources": ["app/settings/actions.ts"],
+      "tables": ["integration_settings"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "updateAgentBehavior",
+      "normalized_name": "update_agent_behavior",
+      "purpose": "Persists behavior tuning metadata per agent.",
+      "sources": ["app/settings/actions.ts"],
+      "tables": ["agent_behaviors"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "updateFeatureFlagState",
+      "normalized_name": "update_feature_flag_state",
+      "purpose": "Toggles feature flag enablement via service role.",
+      "sources": ["app/settings/actions.ts"],
+      "tables": ["feature_flags", "audit_log"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "updateFeatureFlagAccess",
+      "normalized_name": "update_feature_flag_access",
+      "purpose": "Updates feature flag audience access level.",
+      "sources": ["app/settings/actions.ts"],
+      "tables": ["feature_flags", "audit_log"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "getClients",
+      "normalized_name": "list_clients",
+      "purpose": "Returns the list of clients for portfolio dashboards.",
+      "sources": ["app/clients/page.tsx", "components/clients/QBRPanel.tsx", "components/clients/HealthPanel.tsx", "components/clients/ChurnPanel.tsx"],
+      "tables": ["clients", "client_commercials", "opportunities", "contacts", "invoices", "discovery_questions", "data_sources", "qra_strategies", "kanban_items", "compounding_metrics"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "getClientStats",
+      "normalized_name": "get_client_stats",
+      "purpose": "Aggregates client portfolio health metrics.",
+      "sources": ["app/clients/page.tsx", "components/clients/HealthPanel.tsx"],
+      "tables": ["clients", "client_health_history"],
+      "ai_or_analytics_dependencies": ["analytics_pipeline"]
+    },
+    {
+      "name": "getClient",
+      "normalized_name": "get_client",
+      "purpose": "Fetches a single client with related records for detail views.",
+      "sources": ["app/clients/[id]/page.tsx", "app/api/rosie/route.ts"],
+      "tables": ["clients", "client_commercials", "opportunities", "contacts", "discovery_questions", "data_sources", "qra_strategies", "kanban_items", "compounding_metrics", "invoices"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "getProjectsByClient",
+      "normalized_name": "get_projects_by_client",
+      "purpose": "Lists projects associated with a client for account context.",
+      "sources": ["app/clients/[id]/page.tsx", "app/api/rosie/route.ts"],
+      "tables": ["projects"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "listProjects",
+      "normalized_name": "list_projects",
+      "purpose": "Returns all active projects for the portfolio view.",
+      "sources": ["app/projects/page.tsx", "app/api/rosie/route.ts"],
+      "tables": ["projects"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "getProjectStats",
+      "normalized_name": "get_project_stats",
+      "purpose": "Calculates aggregate project KPIs for overview cards.",
+      "sources": ["app/projects/page.tsx"],
+      "tables": ["projects", "project_updates"],
+      "ai_or_analytics_dependencies": ["analytics_pipeline"]
+    },
+    {
+      "name": "listContentPieces",
+      "normalized_name": "list_content_pieces",
+      "purpose": "Returns marketing content pieces for lifecycle dashboards.",
+      "sources": ["app/content/page.tsx", "app/clients/[id]/ClientDetailView.tsx"],
+      "tables": ["content_pieces"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "getContentPiece",
+      "normalized_name": "get_content_piece",
+      "purpose": "Fetches a single content piece for editing.",
+      "sources": ["app/content/[id]/page.tsx"],
+      "tables": ["content_pieces"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "updateContentPiece",
+      "normalized_name": "update_content_piece",
+      "purpose": "Updates metadata on a marketing content piece.",
+      "sources": ["app/content/[id]/page.tsx"],
+      "tables": ["content_pieces"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "listAdCampaigns",
+      "normalized_name": "list_ad_campaigns",
+      "purpose": "Returns paid campaign metadata for ROI tracking.",
+      "sources": ["app/content/page.tsx"],
+      "tables": ["ad_campaigns"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "createAdCampaign",
+      "normalized_name": "create_ad_campaign",
+      "purpose": "Creates a new advertising campaign entry.",
+      "sources": ["app/content/page.tsx"],
+      "tables": ["ad_campaigns"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "getMarketingKPIs",
+      "normalized_name": "get_marketing_kpis",
+      "purpose": "Calculates marketing KPIs for the content overview.",
+      "sources": ["app/content/page.tsx"],
+      "tables": ["content_metrics", "ad_campaigns"],
+      "ai_or_analytics_dependencies": ["analytics_pipeline"]
+    },
+    {
+      "name": "getPartners",
+      "normalized_name": "list_partners",
+      "purpose": "Returns ecosystem partner data for the partners workspace.",
+      "sources": ["app/partners/page.tsx"],
+      "tables": ["partners", "partner_contacts", "partner_opportunities", "partner_initiatives", "partner_interactions", "partner_resources"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "getPartner",
+      "normalized_name": "get_partner",
+      "purpose": "Fetches a partner record with related interactions for detail view.",
+      "sources": ["app/partners/[id]/page.tsx"],
+      "tables": ["partners", "partner_contacts", "partner_opportunities", "partner_initiatives", "partner_interactions", "partner_resources"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "getEquityHolders",
+      "normalized_name": "get_equity_holders",
+      "purpose": "Returns cap table data for finance dashboards.",
+      "sources": ["app/finance/page.tsx"],
+      "tables": ["equity_holders"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "getInvoices",
+      "normalized_name": "get_invoices",
+      "purpose": "Lists invoices for finance receivables tracking.",
+      "sources": ["app/finance/page.tsx"],
+      "tables": ["invoices", "invoice_line_items"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "getSubscriptions",
+      "normalized_name": "get_subscriptions",
+      "purpose": "Returns subscription contracts and renewal data.",
+      "sources": ["app/finance/page.tsx"],
+      "tables": ["subscriptions"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "getExpenses",
+      "normalized_name": "get_expenses",
+      "purpose": "Returns expenses for cash flow tracking.",
+      "sources": ["app/finance/page.tsx"],
+      "tables": ["expenses"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "getProfitLoss",
+      "normalized_name": "get_profit_loss",
+      "purpose": "Returns P&L breakdown for finance reporting.",
+      "sources": ["app/finance/page.tsx"],
+      "tables": ["profit_loss_periods"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "getCashFlow",
+      "normalized_name": "get_cash_flow",
+      "purpose": "Returns historical cash flow entries.",
+      "sources": ["app/finance/page.tsx"],
+      "tables": ["cash_flow_entries"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "getCashFlowForecast",
+      "normalized_name": "get_cash_flow_forecast",
+      "purpose": "Returns forward-looking cash flow projections.",
+      "sources": ["app/finance/page.tsx"],
+      "tables": ["cash_flow_forecast"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "getFinancialMetrics",
+      "normalized_name": "get_financial_metrics",
+      "purpose": "Returns aggregated finance KPIs for top-line cards.",
+      "sources": ["app/finance/page.tsx"],
+      "tables": ["invoices", "subscriptions", "expenses", "cash_flow_entries"],
+      "ai_or_analytics_dependencies": ["analytics_pipeline"]
+    },
+    {
+      "name": "emitEvent",
+      "normalized_name": "emit_event",
+      "purpose": "Client-side helper to append structured events to the activity stream.",
+      "sources": ["app/pipeline/page.tsx", "core/recap/service.ts"],
+      "tables": ["events", "analytics_events"],
+      "ai_or_analytics_dependencies": []
+    },
+    {
+      "name": "POST /api/rosie",
+      "normalized_name": "rosie_chat_api",
+      "purpose": "Streams Rosie copilot responses using OpenAI with RevOS context.",
+      "sources": ["app/api/rosie/route.ts"],
+      "tables": ["clients", "projects", "media_projects", "daily_plans"],
+      "ai_or_analytics_dependencies": ["openai:gpt-4o-mini"]
+    }
+  ],
+  "actions": [
+    {"task": "create table", "target": "opportunity_notes"},
+    {"task": "create table", "target": "client_health_history"},
+    {"task": "create table", "target": "project_updates"},
+    {"task": "create table", "target": "content_metrics"},
+    {"task": "create table", "target": "media_assets"},
+    {"task": "create table", "target": "focus_sessions"},
+    {"task": "create table", "target": "analytics_events"},
+    {"task": "create table", "target": "audit_log"},
+    {"task": "create table", "target": "agent_definitions"},
+    {"task": "create table", "target": "agent_behaviors"},
+    {"task": "create table", "target": "integration_settings"},
+    {"task": "create table", "target": "share_space_artifacts"},
+    {"task": "create table", "target": "dashboard_snapshots"},
+    {"task": "update rls", "target": "clients and client_* tables"},
+    {"task": "update rls", "target": "projects and project dependencies"},
+    {"task": "update rls", "target": "content_* tables"},
+    {"task": "update rls", "target": "media_* tables"},
+    {"task": "update rls", "target": "events"},
+    {"task": "add column", "target": "events.organization_id"},
+    {"task": "add column", "target": "projects.organization_id"},
+    {"task": "add column", "target": "content_items.organization_id"},
+    {"task": "add column", "target": "media_projects.organization_id"},
+    {"task": "add column", "target": "media_ideas.organization_id"},
+    {"task": "add column", "target": "daily_plans.organization_id"},
+    {"task": "create function", "target": "agent-dispatch edge function"},
+    {"task": "create function", "target": "morning-brief edge function"},
+    {"task": "create function", "target": "exec-dashboard-refresh edge function"},
+    {"task": "create function", "target": "content-recommend edge function"},
+    {"task": "create function", "target": "rosie-chat edge function"},
+    {"task": "create function", "target": "share-space-publish edge function"},
+    {"task": "add index", "target": "idx_clients_organization_phase"},
+    {"task": "add index", "target": "idx_projects_organization_status"},
+    {"task": "add index", "target": "idx_content_items_org_stage"},
+    {"task": "add index", "target": "idx_events_organization_id"},
+    {"task": "replace in-memory store", "target": "core/clients/* -> Supabase queries"},
+    {"task": "replace in-memory store", "target": "core/projects/* -> Supabase queries"},
+    {"task": "replace in-memory store", "target": "core/content/* -> Supabase queries"},
+    {"task": "replace in-memory store", "target": "core/mediaAgent/* -> Supabase queries"},
+    {"task": "replace in-memory store", "target": "core/finance/* -> Supabase queries"},
+    {"task": "replace in-memory store", "target": "core/partners/* -> Supabase queries"},
+    {"task": "replace in-memory store", "target": "core/morning/* -> Supabase stored procedures"},
+    {"task": "replace in-memory store", "target": "core/flags/flags.ts -> feature_flags table"},
+    {"task": "wire supabase client", "target": "core/events/emit.ts"},
+    {"task": "add audit trigger", "target": "feature_flags -> audit_log"},
+    {"task": "add audit trigger", "target": "agent_runs -> audit_log"}
+  ]
+}
