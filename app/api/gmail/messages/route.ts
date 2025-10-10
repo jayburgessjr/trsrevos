@@ -5,6 +5,8 @@ import { getGmailClient, persistOAuthCredentials, requireGmailContext } from '@/
 import { toMessageSummary } from '@/lib/gmail/messages'
 import { mapGmailError } from '@/lib/gmail/errors'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const { oauthClient, supabase, user, integration } = await requireGmailContext()

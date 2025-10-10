@@ -35,12 +35,32 @@ type SupabaseUserResult = {
   user: Awaited<ReturnType<SupabaseClient['auth']['getUser']>>['data']['user']
 }
 
-export function getAppUrl() {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL
-  if (!appUrl) {
-    throw new Error('NEXT_PUBLIC_APP_URL is not configured')
+function normalizeBaseUrl(url: string) {
+  if (!url) {
+    return url
   }
-  return appUrl
+
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`
+}
+
+export function getAppUrl(fallback?: string) {
+  const candidates = [
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.URL,
+    process.env.NEXT_PUBLIC_VERCEL_URL,
+    process.env.VERCEL_URL,
+    fallback,
+  ]
+
+  const resolved = candidates.find((value) => value && value.trim().length > 0)
+
+  if (resolved) {
+    return normalizeBaseUrl(resolved)
+  }
+
+  const defaultUrl = 'http://localhost:3000'
+  console.warn('NEXT_PUBLIC_APP_URL is not configured; defaulting to http://localhost:3000')
+  return defaultUrl
 }
 
 export function createOAuthClient() {

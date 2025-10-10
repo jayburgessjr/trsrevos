@@ -4,6 +4,8 @@ import { getGmailClient, persistOAuthCredentials, requireGmailContext } from '@/
 import { toMessageDetail } from '@/lib/gmail/messages'
 import { mapGmailError } from '@/lib/gmail/errors'
 
+export const dynamic = 'force-dynamic'
+
 type RouteContext = {
   params: { id: string }
 }
