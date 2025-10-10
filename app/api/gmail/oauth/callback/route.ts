@@ -10,8 +10,10 @@ import {
 
 const STATE_COOKIE = 'gmail_oauth_state'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
-  const appUrl = getAppUrl()
+  const appUrl = getAppUrl(request.nextUrl.origin)
   const url = new URL(request.url)
   const storedState = request.cookies.get(STATE_COOKIE)?.value
   const state = url.searchParams.get('state')

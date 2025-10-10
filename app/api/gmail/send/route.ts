@@ -4,6 +4,8 @@ import { getGmailClient, persistOAuthCredentials, requireGmailContext } from '@/
 import { createRawEmail } from '@/lib/gmail/utils'
 import { mapGmailError } from '@/lib/gmail/errors'
 
+export const dynamic = 'force-dynamic'
+
 type SendPayload = {
   to: string | string[]
   subject: string
