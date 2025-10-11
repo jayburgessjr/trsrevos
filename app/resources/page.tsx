@@ -1,12 +1,12 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
+import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 
 import { PageTemplate } from "@/components/layout/PageTemplate";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { Badge } from "@/ui/badge";
-import { Button } from "@/ui/button";
 import {
   Card,
   CardContent,
@@ -16,6 +16,7 @@ import {
 } from "@/ui/card";
 import { TRS_CARD } from "@/lib/style";
 import { resolveTabs } from "@/lib/tabs";
+import { cn } from "@/lib/utils";
 
 const pricingScenarios = [
   {
@@ -40,6 +41,9 @@ const pricingScenarios = [
     packaging: "Seats + governance + support",
   },
 ];
+
+const outlineButtonClass =
+  "inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-outline)] border border-[color:var(--color-outline)] bg-white text-[color:var(--color-text)] hover:bg-[color:var(--color-surface-muted)] h-9 px-4 text-sm";
 
 const revenueDrivers = [
   { id: "rd1", name: "Net new ARR", amount: 185000, change: "+12% MoM" },
@@ -194,12 +198,12 @@ export default function ResourcesPage() {
                         <dd>{scenario.discountGuard}</dd>
                       </div>
                     </dl>
-                    <Button
-                      variant="outline"
-                      className="mt-4 self-start text-sm"
+                    <Link
+                      href="/content?tab=Pipeline"
+                      className={cn(outlineButtonClass, "mt-4 self-start")}
                     >
                       Export playbook
-                    </Button>
+                    </Link>
                   </div>
                 ))}
               </div>
@@ -359,9 +363,12 @@ export default function ResourcesPage() {
                   {item}
                 </div>
               ))}
-              <Button variant="outline" className="self-start text-sm">
+              <Link
+                href="/finance?tab=Cash%20Flow"
+                className={cn(outlineButtonClass, "self-start")}
+              >
                 Open planner workspace
-              </Button>
+              </Link>
             </CardContent>
           </Card>
         </div>
@@ -443,9 +450,12 @@ export default function ResourcesPage() {
                     </p>
                     <p className="mt-1 text-sm text-gray-600">{pack.summary}</p>
                   </div>
-                  <Button variant="outline" className="mt-4 self-start text-sm">
+                  <Link
+                    href="/dashboard?tab=Reports"
+                    className={cn(outlineButtonClass, "mt-4 self-start")}
+                  >
                     Generate pack
-                  </Button>
+                  </Link>
                 </div>
               ))}
             </CardContent>

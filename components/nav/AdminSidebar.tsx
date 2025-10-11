@@ -5,9 +5,8 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   BarChart3,
-  Book,
   Bot,
-  CalendarDays,
+  Building2,
   FileText,
   ListChecks,
   Settings as SettingsIcon,
@@ -28,15 +27,14 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { label: "Morning Brief", href: "/", icon: Sun },
   { label: "Pipeline", href: "/pipeline", icon: TrendingUp },
-  { label: "Clients", href: "/clients", icon: Users },
   { label: "Projects", href: "/projects", icon: ListChecks },
-  { label: "Dashboard", href: "/dashboard", icon: BarChart3 },
-  { label: "Agents", href: "/agents", icon: Bot },
   { label: "Content", href: "/content", icon: FileText },
-  { label: "Resources", href: "/resources", icon: Book },
-  { label: "Mail & Calendar", href: "/mail-calendar", icon: CalendarDays },
   { label: "Finance", href: "/finance", icon: Wallet },
+  { label: "Partners", href: "/partners", icon: Building2 },
+  { label: "Clients", href: "/clients", icon: Users },
+  { label: "Agents", href: "/agents", icon: Bot },
   { label: "Settings", href: "/settings", icon: SettingsIcon },
+  { label: "Dashboard", href: "/dashboard", icon: BarChart3 },
 ]
 
 export default function AdminSidebar() {
