@@ -129,6 +129,59 @@ CREATE POLICY IF NOT EXISTS "clients_delete"
   USING (public.is_admin() OR public.is_super_admin());
 
 -- ================================================================
+-- pipeline
+-- ================================================================
+CREATE TABLE IF NOT EXISTS public.pipeline (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  stage TEXT NOT NULL DEFAULT 'Discovery'
+    CHECK (stage IN ('Discovery', 'Qualification', 'Proposal', 'Negotiation', 'Closed Won', 'Closed Lost')),
+  deal_value NUMERIC(14,2) NOT NULL DEFAULT 0,
+  probability NUMERIC(5,2) NOT NULL DEFAULT 0.5 CHECK (probability >= 0 AND probability <= 1),
+  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_pipeline_client_id
+  ON public.pipeline(client_id);
+CREATE INDEX IF NOT EXISTS idx_pipeline_stage
+  ON public.pipeline(stage);
+CREATE INDEX IF NOT EXISTS idx_pipeline_user_id
+  ON public.pipeline(user_id);
+
+DROP TRIGGER IF EXISTS set_pipeline_updated_at ON public.pipeline;
+CREATE TRIGGER set_pipeline_updated_at
+  BEFORE UPDATE ON public.pipeline
+  FOR EACH ROW
+  EXECUTE FUNCTION public.touch_updated_at();
+
+ALTER TABLE public.pipeline ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY IF NOT EXISTS "pipeline_select"
+  ON public.pipeline
+  FOR SELECT
+  USING (
+    user_id = auth.uid()
+    OR public.is_admin()
+    OR public.is_super_admin()
+  );
+
+CREATE POLICY IF NOT EXISTS "pipeline_manage"
+  ON public.pipeline
+  FOR ALL
+  USING (
+    user_id = auth.uid()
+    OR public.is_admin()
+    OR public.is_super_admin()
+  )
+  WITH CHECK (
+    user_id = auth.uid()
+    OR public.is_admin()
+    OR public.is_super_admin()
+  );
+
+-- ================================================================
 -- deliverables
 -- ================================================================
 CREATE TABLE IF NOT EXISTS public.deliverables (
@@ -307,6 +360,56 @@ CREATE POLICY IF NOT EXISTS "client_financials_all"
         OR public.is_admin()
         OR public.is_super_admin()
     )
+  );
+
+-- ================================================================
+-- finance
+-- ================================================================
+CREATE TABLE IF NOT EXISTS public.finance (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  monthly_recurring_revenue NUMERIC(14,2) NOT NULL DEFAULT 0,
+  outstanding_invoices NUMERIC(14,2) NOT NULL DEFAULT 0,
+  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  UNIQUE (client_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_finance_user_id
+  ON public.finance(user_id);
+CREATE INDEX IF NOT EXISTS idx_finance_mrr
+  ON public.finance(monthly_recurring_revenue DESC);
+
+DROP TRIGGER IF EXISTS set_finance_updated_at ON public.finance;
+CREATE TRIGGER set_finance_updated_at
+  BEFORE UPDATE ON public.finance
+  FOR EACH ROW
+  EXECUTE FUNCTION public.touch_updated_at();
+
+ALTER TABLE public.finance ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY IF NOT EXISTS "finance_select"
+  ON public.finance
+  FOR SELECT
+  USING (
+    user_id = auth.uid()
+    OR public.is_admin()
+    OR public.is_super_admin()
+  );
+
+CREATE POLICY IF NOT EXISTS "finance_manage"
+  ON public.finance
+  FOR ALL
+  USING (
+    user_id = auth.uid()
+    OR public.is_admin()
+    OR public.is_super_admin()
+  )
+  WITH CHECK (
+    user_id = auth.uid()
+    OR public.is_admin()
+    OR public.is_super_admin()
   );
 
 -- ================================================================
@@ -780,6 +883,58 @@ CREATE POLICY IF NOT EXISTS "audit_log_insert"
   WITH CHECK (auth.role() = 'service_role');
 
 -- ================================================================
+-- agents
+-- ================================================================
+CREATE TABLE IF NOT EXISTS public.agents (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID REFERENCES public.organizations(id) ON DELETE SET NULL,
+  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'idle'
+    CHECK (status IN ('idle', 'running', 'completed', 'failed')),
+  last_run_at TIMESTAMPTZ,
+  run_metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_agents_user_id
+  ON public.agents(user_id);
+CREATE INDEX IF NOT EXISTS idx_agents_status
+  ON public.agents(status);
+
+DROP TRIGGER IF EXISTS set_agents_updated_at ON public.agents;
+CREATE TRIGGER set_agents_updated_at
+  BEFORE UPDATE ON public.agents
+  FOR EACH ROW
+  EXECUTE FUNCTION public.touch_updated_at();
+
+ALTER TABLE public.agents ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY IF NOT EXISTS "agents_select"
+  ON public.agents
+  FOR SELECT
+  USING (
+    user_id = auth.uid()
+    OR public.is_admin()
+    OR public.is_super_admin()
+  );
+
+CREATE POLICY IF NOT EXISTS "agents_manage"
+  ON public.agents
+  FOR ALL
+  USING (
+    user_id = auth.uid()
+    OR public.is_admin()
+    OR public.is_super_admin()
+  )
+  WITH CHECK (
+    user_id = auth.uid()
+    OR public.is_admin()
+    OR public.is_super_admin()
+  );
+
+-- ================================================================
 -- agent_definitions
 -- ================================================================
 CREATE TABLE IF NOT EXISTS public.agent_definitions (
@@ -981,3 +1136,8 @@ CREATE POLICY IF NOT EXISTS "user_integrations_manage"
   FOR ALL
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
+
+-- ================================================================
+-- automation triggers & orchestration
+-- ================================================================
+\ir ./triggers.sql
