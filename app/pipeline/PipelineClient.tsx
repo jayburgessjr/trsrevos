@@ -1,19 +1,14 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
-import { PageDescription, PageTitle } from "@/ui/page-header";
+import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/ui/card";
 import { Badge } from "@/ui/badge";
 import { Button } from "@/ui/button";
 import { cn } from "@/lib/utils";
 import { TRS_CARD, TRS_SUBTITLE } from "@/lib/style";
-import {
-  OpportunityWithNotes,
-  moveOpportunityStage,
-  addOpportunityNote,
-} from "@/core/pipeline/actions";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/ui/table";
-import { Input } from "@/ui/input";
+import { PipelineKanban } from "@/components/pipeline/PipelineKanban";
+import { AddProspectModal } from "@/components/pipeline/AddProspectModal";
+import type { OpportunityWithNotes } from "@/core/pipeline/actions";
 
 type Props = {
   opportunities: OpportunityWithNotes[];
@@ -25,80 +20,59 @@ type Props = {
     winRate: number;
     avgSalesCycle: number;
   };
+  userId: string;
 };
 
-export default function PipelineClient({ opportunities, metrics }: Props) {
+export default function PipelineClient({ opportunities, metrics, userId }: Props) {
   const [activeTab, setActiveTab] = useState("Overview");
-  const [selectedDeal, setSelectedDeal] = useState<OpportunityWithNotes | null>(null);
-  const [newNote, setNewNote] = useState("");
-  const [stageFilter, setStageFilter] = useState<string>("All");
-  const [sortBy, setSortBy] = useState<string>("amount-desc");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isPending, startTransition] = useTransition();
+  const [showAddProspect, setShowAddProspect] = useState(false);
 
-  const stages = ["All", "New", "Qualify", "Proposal", "Negotiation", "ClosedWon", "ClosedLost"];
+  const handleOpenModal = () => {
+    console.log("Opening Add Prospect modal");
+    setShowAddProspect(true);
+  };
 
-  // Filter and sort
-  const filteredDeals = useMemo(() => {
-    let filtered = opportunities;
+  // Group opportunities by stage for Kanban
+  const opportunitiesByStage = useMemo(() => {
+    const stages = ["Prospect", "Qualify", "Proposal", "Negotiation", "ClosedWon", "ClosedLost"];
+    const grouped: { [stage: string]: OpportunityWithNotes[] } = {};
 
-    if (stageFilter !== "All") {
-      filtered = filtered.filter((d) => d.stage === stageFilter);
-    }
-
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (d) =>
-          d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          d.client?.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    return filtered.sort((a, b) => {
-      switch (sortBy) {
-        case "amount-desc":
-          return b.amount - a.amount;
-        case "amount-asc":
-          return a.amount - b.amount;
-        case "probability-desc":
-          return (b.probability || 0) - (a.probability || 0);
-        case "probability-asc":
-          return (a.probability || 0) - (b.probability || 0);
-        case "name-asc":
-          return a.name.localeCompare(b.name);
-        case "name-desc":
-          return b.name.localeCompare(a.name);
-        default:
-          return 0;
-      }
+    stages.forEach((stage) => {
+      grouped[stage] = opportunities.filter((opp) => opp.stage === stage);
     });
-  }, [opportunities, stageFilter, searchQuery, sortBy]);
 
-  // Calculate quarterly target and coverage
+    return grouped;
+  }, [opportunities]);
+
+  // Calculate additional metrics
   const quarterlyTarget = 1200000; // $1.2M target
   const coverage = (metrics.totalWeighted / quarterlyTarget) * 100;
 
-  const handleMoveStage = async (dealId: string, newStage: string) => {
-    startTransition(async () => {
-      const result = await moveOpportunityStage(dealId, newStage);
-      if (!result.success) {
-        alert(`Error: ${result.error}`);
-      }
-    });
-  };
+  // Get at-risk deals (stalled >30 days)
+  const atRiskDeals = useMemo(() => {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  const handleAddNote = async (opportunityId: string, authorId: string) => {
-    if (!newNote.trim()) return;
-
-    startTransition(async () => {
-      const result = await addOpportunityNote(opportunityId, newNote, authorId);
-      if (result.success) {
-        setNewNote("");
-      } else {
-        alert(`Error: ${result.error}`);
-      }
+    return opportunities.filter((opp) => {
+      const updated = new Date(opp.updated_at);
+      return (
+        updated < thirtyDaysAgo &&
+        opp.stage !== "ClosedWon" &&
+        opp.stage !== "ClosedLost"
+      );
     });
-  };
+  }, [opportunities]);
+
+  // Calculate velocity (deals moved in last 7 days)
+  const recentlyMovedDeals = useMemo(() => {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    return opportunities.filter((opp) => {
+      const updated = new Date(opp.updated_at);
+      return updated > sevenDaysAgo;
+    });
+  }, [opportunities]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
@@ -111,8 +85,9 @@ export default function PipelineClient({ opportunities, metrics }: Props) {
               ${(metrics.totalWeighted / 1000).toFixed(0)}K
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-600">
-              <span className="font-medium text-gray-700">↑ 18%</span>
-              <span>vs last month</span>
+              <Badge variant={coverage >= 100 ? "success" : "outline"}>
+                {coverage.toFixed(0)}% of goal
+              </Badge>
             </div>
           </CardContent>
         </Card>
@@ -122,8 +97,15 @@ export default function PipelineClient({ opportunities, metrics }: Props) {
             <div className={TRS_SUBTITLE}>Win Rate</div>
             <div className="text-2xl font-semibold text-black">{metrics.winRate.toFixed(0)}%</div>
             <div className="flex items-center gap-2 text-xs text-gray-600">
-              <span className="font-medium text-gray-700">↑ 5%</span>
-              <span>vs last quarter</span>
+              <span className="font-medium text-gray-700">
+                {(opportunitiesByStage.ClosedWon?.length || 0)} won
+              </span>
+              <span>/</span>
+              <span>
+                {(opportunitiesByStage.ClosedWon?.length || 0) +
+                  (opportunitiesByStage.ClosedLost?.length || 0)}{" "}
+                closed
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -135,8 +117,7 @@ export default function PipelineClient({ opportunities, metrics }: Props) {
               ${(metrics.avgDealSize / 1000).toFixed(0)}K
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-600">
-              <span className="font-medium text-gray-700">↑ 12%</span>
-              <span>vs target</span>
+              <span>{metrics.dealCount} active deals</span>
             </div>
           </CardContent>
         </Card>
@@ -148,8 +129,9 @@ export default function PipelineClient({ opportunities, metrics }: Props) {
               {metrics.avgSalesCycle.toFixed(0)} days
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-600">
-              <span className="font-medium text-gray-700">↓ 8 days</span>
-              <span>faster</span>
+              <Badge variant={atRiskDeals.length > 0 ? "warning" : "success"}>
+                {atRiskDeals.length} at risk
+              </Badge>
             </div>
           </CardContent>
         </Card>
@@ -157,7 +139,7 @@ export default function PipelineClient({ opportunities, metrics }: Props) {
 
       {/* Tab Navigation */}
       <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
-        {["Overview", "Commit", "Forecast", "Health"].map((tab) => (
+        {["Overview", "Pipeline", "Forecast"].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -176,219 +158,144 @@ export default function PipelineClient({ opportunities, metrics }: Props) {
       {/* Tab Content */}
       {activeTab === "Overview" && (
         <div className="space-y-4">
-          <div className={cn(TRS_CARD, "p-4 space-y-3")}>
+          {/* Header with Add Prospect Button */}
+          <div className={cn(TRS_CARD, "p-4")}>
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="space-y-1">
-                <PageTitle className="text-lg font-semibold text-black">
-                  Pipeline & Sales Intelligence
-                </PageTitle>
-                <PageDescription className="text-sm text-gray-500">
-                  AI-powered forecasting, coverage analysis, and proactive deal insights
-                </PageDescription>
+                <h2 className="text-lg font-semibold text-black">
+                  Sales Pipeline Overview
+                </h2>
+                <p className="text-sm text-gray-500">
+                  Track prospects through your sales funnel
+                </p>
               </div>
-              <Button variant="primary" size="sm">
+              <Button variant="primary" size="sm" onClick={handleOpenModal}>
                 + New Prospect
               </Button>
             </div>
-            <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
-              <Badge variant={coverage >= 100 ? "success" : "outline"}>
-                Coverage: {coverage.toFixed(0)}%
-              </Badge>
-              <span>${(metrics.totalWeighted / 1000).toFixed(0)}K weighted pipeline</span>
-            </div>
           </div>
 
-          {/* Filters */}
-          <div className="flex flex-wrap items-center gap-3">
-            <Input
-              placeholder="Search deals..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="max-w-xs"
-            />
-            <select
-              value={stageFilter}
-              onChange={(e) => setStageFilter(e.target.value)}
-              className="rounded-md border border-gray-200 px-3 py-2 text-sm"
-            >
-              {stages.map((stage) => (
-                <option key={stage} value={stage}>
-                  {stage}
-                </option>
-              ))}
-            </select>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="rounded-md border border-gray-200 px-3 py-2 text-sm"
-            >
-              <option value="amount-desc">Amount (High to Low)</option>
-              <option value="amount-asc">Amount (Low to High)</option>
-              <option value="probability-desc">Probability (High to Low)</option>
-              <option value="probability-asc">Probability (Low to High)</option>
-              <option value="name-asc">Name (A-Z)</option>
-              <option value="name-desc">Name (Z-A)</option>
-            </select>
+          {/* Pipeline Funnel */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
+            {["Prospect", "Qualify", "Proposal", "Negotiation", "ClosedWon"].map((stage) => {
+              const count = opportunitiesByStage[stage]?.length || 0;
+              const value = opportunitiesByStage[stage]?.reduce(
+                (sum, opp) => sum + opp.amount,
+                0
+              ) || 0;
+
+              return (
+                <Card key={stage} className={cn(TRS_CARD)}>
+                  <CardContent className="p-4">
+                    <div className="text-xs font-medium text-gray-500 uppercase mb-2">
+                      {stage === "ClosedWon" ? "Closed Won" : stage}
+                    </div>
+                    <div className="text-2xl font-semibold text-black mb-1">{count}</div>
+                    <div className="text-sm text-gray-600">
+                      ${(value / 1000).toFixed(0)}K
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
 
-          {/* Pipeline Table */}
-          <Card className={cn(TRS_CARD)}>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Deal</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Stage</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Probability</TableHead>
-                    <TableHead>Weighted</TableHead>
-                    <TableHead>Owner</TableHead>
-                    <TableHead>Close Date</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredDeals.map((deal) => (
-                    <TableRow key={deal.id} onClick={() => setSelectedDeal(deal)} className="cursor-pointer">
-                      <TableCell className="font-medium">{deal.name}</TableCell>
-                      <TableCell>{deal.client?.name || "N/A"}</TableCell>
-                      <TableCell>
+          {/* Velocity and At-Risk Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Recent Activity */}
+            <Card className={cn(TRS_CARD)}>
+              <CardContent className="p-4">
+                <h3 className="font-semibold mb-3">Recent Activity (7 days)</h3>
+                <div className="space-y-2">
+                  {recentlyMovedDeals.length === 0 ? (
+                    <p className="text-sm text-gray-500">No recent activity</p>
+                  ) : (
+                    recentlyMovedDeals.slice(0, 5).map((deal) => (
+                      <div
+                        key={deal.id}
+                        className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded"
+                      >
+                        <div>
+                          <div className="font-medium">{deal.name}</div>
+                          <div className="text-xs text-gray-500">{deal.client?.name}</div>
+                        </div>
                         <Badge variant="outline">{deal.stage}</Badge>
-                      </TableCell>
-                      <TableCell>${(deal.amount / 1000).toFixed(0)}K</TableCell>
-                      <TableCell>{deal.probability}%</TableCell>
-                      <TableCell>
-                        ${((deal.amount * (deal.probability || 0)) / 100000).toFixed(0)}K
-                      </TableCell>
-                      <TableCell>{deal.owner?.name || "N/A"}</TableCell>
-                      <TableCell>
-                        {deal.close_date
-                          ? new Date(deal.close_date).toLocaleDateString()
-                          : "TBD"}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedDeal(deal);
-                          }}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* At-Risk Deals */}
+            <Card className={cn(TRS_CARD)}>
+              <CardContent className="p-4">
+                <h3 className="font-semibold mb-3">At-Risk Deals (30+ days)</h3>
+                <div className="space-y-2">
+                  {atRiskDeals.length === 0 ? (
+                    <p className="text-sm text-gray-500">No deals at risk</p>
+                  ) : (
+                    atRiskDeals.slice(0, 5).map((deal) => {
+                      const updated = new Date(deal.updated_at);
+                      const daysStale = Math.floor(
+                        (Date.now() - updated.getTime()) / (1000 * 60 * 60 * 24)
+                      );
+
+                      return (
+                        <div
+                          key={deal.id}
+                          className="flex items-center justify-between text-sm p-2 bg-yellow-50 rounded"
                         >
-                          View
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                          <div>
+                            <div className="font-medium">{deal.name}</div>
+                            <div className="text-xs text-gray-500">{deal.client?.name}</div>
+                          </div>
+                          <Badge variant="warning">{daysStale}d</Badge>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       )}
 
-      {activeTab === "Commit" && (
-        <Card className={cn(TRS_CARD, "p-6")}>
-          <div className="text-center text-gray-500">
-            <h3 className="text-lg font-semibold mb-2">Commit Forecast</h3>
-            <p>Coming soon: Commit forecast with scenario planning</p>
+      {activeTab === "Pipeline" && (
+        <div className="space-y-4">
+          <div className={cn(TRS_CARD, "p-4")}>
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="space-y-1">
+                <h2 className="text-lg font-semibold text-black">
+                  Pipeline Kanban Board
+                </h2>
+                <p className="text-sm text-gray-500">
+                  Drag and drop deals to move them through stages
+                </p>
+              </div>
+              <Button variant="primary" size="sm" onClick={handleOpenModal}>
+                + New Prospect
+              </Button>
+            </div>
           </div>
-        </Card>
+
+          <PipelineKanban opportunitiesByStage={opportunitiesByStage} userId={userId} />
+        </div>
       )}
 
       {activeTab === "Forecast" && (
         <Card className={cn(TRS_CARD, "p-6")}>
           <div className="text-center text-gray-500">
             <h3 className="text-lg font-semibold mb-2">Forecast Analysis</h3>
-            <p>Coming soon: Monte Carlo simulations and velocity intelligence</p>
+            <p>Coming soon: AI-powered forecasting and scenario planning</p>
           </div>
         </Card>
       )}
 
-      {activeTab === "Health" && (
-        <Card className={cn(TRS_CARD, "p-6")}>
-          <div className="text-center text-gray-500">
-            <h3 className="text-lg font-semibold mb-2">Pipeline Health</h3>
-            <p>Coming soon: Health diagnostics and risk analysis</p>
-          </div>
-        </Card>
-      )}
-
-      {/* Deal Detail Modal */}
-      {selectedDeal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <Card className={cn(TRS_CARD, "max-w-2xl w-full max-h-[80vh] overflow-y-auto")}>
-            <CardContent className="p-6 space-y-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h2 className="text-xl font-semibold">{selectedDeal.name}</h2>
-                  <p className="text-sm text-gray-500">{selectedDeal.client?.name}</p>
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => setSelectedDeal(null)}>
-                  ✕
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-500">Amount</p>
-                  <p className="font-medium">${(selectedDeal.amount / 1000).toFixed(0)}K</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Stage</p>
-                  <p className="font-medium">{selectedDeal.stage}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Probability</p>
-                  <p className="font-medium">{selectedDeal.probability}%</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Close Date</p>
-                  <p className="font-medium">
-                    {selectedDeal.close_date
-                      ? new Date(selectedDeal.close_date).toLocaleDateString()
-                      : "TBD"}
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-2">Notes</h3>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {selectedDeal.notes?.map((note) => (
-                    <div key={note.id} className="p-3 bg-gray-50 rounded-lg">
-                      <p className="text-sm">{note.body}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {new Date(note.created_at).toLocaleString()}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-2">Add Note</h3>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Add a note..."
-                    value={newNote}
-                    onChange={(e) => setNewNote(e.target.value)}
-                    disabled={isPending}
-                  />
-                  <Button
-                    onClick={() =>
-                      handleAddNote(selectedDeal.id, selectedDeal.owner_id)
-                    }
-                    disabled={isPending}
-                  >
-                    Add
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      {/* Add Prospect Modal */}
+      {showAddProspect && (
+        <AddProspectModal onClose={() => setShowAddProspect(false)} userId={userId} />
       )}
     </div>
   );

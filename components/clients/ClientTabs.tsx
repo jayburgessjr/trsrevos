@@ -955,7 +955,7 @@ function FinanceTab({ client, history, onRecord, canEdit }: FinanceTabProps) {
 
         <Card className="flex flex-col p-5">
           <h2 className="text-sm font-semibold text-black">Manual Update</h2>
-          <p className="mt-1 text-xs text-gray-500">Admin-only override until HubSpot sync is live</p>
+          <p className="mt-1 text-xs text-gray-500">Admin-only manual entry for client financials</p>
           {canEdit ? (
             <form onSubmit={handleSubmit} className="mt-4 space-y-3 text-sm">
               <label className="flex flex-col gap-1">

@@ -385,31 +385,3 @@ export async function actionRecordClientFinancials(input: {
   return data;
 }
 
-/**
- * Trigger HubSpot sync
- */
-export async function triggerHubSpotSync(): Promise<{ success: boolean; error?: string }> {
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/hubspot/sync`, {
-      method: "POST",
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return { success: false, error: data.message || "Sync failed" };
-    }
-
-    revalidatePath("/clients");
-    revalidatePath("/pipeline");
-    revalidatePath("/dashboard");
-
-    return { success: true };
-  } catch (error) {
-    console.error("Error triggering HubSpot sync:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
-    };
-  }
-}

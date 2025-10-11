@@ -109,7 +109,7 @@ export default function LoginScreen() {
       <div className="flex-1 bg-gradient-to-br from-slate-900 via-blue-900 to-orange-600 flex items-center justify-center p-12">
         <div className="text-white max-w-lg">
           <h1 className="text-6xl font-bold mb-8 leading-tight">
-            "The secret of getting ahead is getting started."
+            &ldquo;The secret of getting ahead is getting started.&rdquo;
           </h1>
         </div>
       </div>

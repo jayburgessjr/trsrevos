@@ -26,10 +26,10 @@ export default function GlobalHeader() {
   }, [router, supabase])
 
   return (
-    <header className="border-b border-gray-200 bg-white">
+    <header className="border-b border-gray-200" style={{ backgroundColor: '#e87b28' }}>
       <div className="flex h-14 w-full items-center justify-between px-3">
         <div className="flex items-center gap-3">
-          <img src="/images/trs_main_logo.png" alt="TRS Logo" className="h-8" />
+          <h1 className="text-xl font-bold text-white">The Revenue Scientists</h1>
 
         </div>
         <div className="flex items-center gap-2 text-sm">

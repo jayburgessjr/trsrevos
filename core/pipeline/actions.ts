@@ -142,12 +142,25 @@ export async function updateOpportunity(
 export async function moveOpportunityStage(
   id: string,
   newStage: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; clientId?: string }> {
   const supabase = await createClient();
+
+  // Update probability based on stage
+  const stageProbabilities: { [key: string]: number } = {
+    Prospect: 10,
+    Qualify: 25,
+    Proposal: 50,
+    Negotiation: 75,
+    ClosedWon: 100,
+    ClosedLost: 0,
+  };
 
   const { error } = await supabase
     .from("opportunities")
-    .update({ stage: newStage })
+    .update({
+      stage: newStage,
+      probability: stageProbabilities[newStage] || 50
+    })
     .eq("id", id);
 
   if (error) {
@@ -155,16 +168,25 @@ export async function moveOpportunityStage(
     return { success: false, error: error.message };
   }
 
+  // If moved to ClosedWon, automatically convert prospect to client
+  let clientId: string | undefined;
+  if (newStage === "ClosedWon") {
+    const result = await convertProspectToClient(id);
+    if (result.success) {
+      clientId = result.clientId;
+    }
+  }
+
   // Emit analytics event
   await emitAnalyticsEvent({
     event_type: "opportunity_stage_changed",
     entity_type: "opportunity",
     entity_id: id,
-    metadata: { new_stage: newStage },
+    metadata: { new_stage: newStage, converted_to_client: !!clientId },
   });
 
   revalidatePath("/pipeline");
-  return { success: true };
+  return { success: true, clientId };
 }
 
 /**
@@ -270,6 +292,178 @@ export async function getPipelineMetrics(): Promise<{
     winRate,
     avgSalesCycle,
   };
+}
+
+/**
+ * Create a new prospect (opportunity + placeholder client)
+ */
+export async function createProspect(input: {
+  companyName: string;
+  dealName: string;
+  amount: number;
+  expectedCloseDate?: string;
+  owner_id: string;
+}): Promise<{ success: boolean; opportunity?: Opportunity; error?: string }> {
+  const supabase = await createClient();
+
+  // Get the authenticated user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "User not authenticated" };
+  }
+
+  // Use the authenticated user's ID instead of the passed owner_id for security
+  const owner_id = user.id;
+
+  console.log("Creating client with owner_id:", owner_id, "authenticated user:", user.id);
+
+  // First, create a placeholder client
+  const { data: client, error: clientError } = await supabase
+    .from("clients")
+    .insert({
+      name: input.companyName,
+      segment: "Prospect",
+      phase: "Discovery",
+      owner_id: owner_id,
+      status: "prospect",
+    })
+    .select()
+    .single();
+
+  if (clientError) {
+    console.error("Error creating client:", clientError);
+    console.error("User context:", { userId: user.id, email: user.email });
+    return { success: false, error: clientError.message };
+  }
+
+  // Then create the opportunity
+  const { data: opportunity, error: oppError } = await supabase
+    .from("opportunities")
+    .insert({
+      client_id: client.id,
+      name: input.dealName,
+      amount: input.amount,
+      stage: "Prospect",
+      probability: 10,
+      close_date: input.expectedCloseDate || null,
+      owner_id: owner_id,
+      next_step: "Initial outreach",
+    })
+    .select()
+    .single();
+
+  if (oppError) {
+    console.error("Error creating opportunity:", oppError);
+    return { success: false, error: oppError.message };
+  }
+
+  await emitAnalyticsEvent({
+    event_type: "prospect_created",
+    entity_type: "opportunity",
+    entity_id: opportunity.id,
+    metadata: { company: input.companyName, amount: input.amount },
+  });
+
+  revalidatePath("/pipeline");
+  revalidatePath("/clients");
+  return { success: true, opportunity };
+}
+
+/**
+ * Convert prospect to client when deal is won
+ */
+export async function convertProspectToClient(
+  opportunityId: string
+): Promise<{ success: boolean; clientId?: string; error?: string }> {
+  const supabase = await createClient();
+
+  // Get the opportunity with client info
+  const { data: opportunity } = await supabase
+    .from("opportunities")
+    .select("*, client:clients(*)")
+    .eq("id", opportunityId)
+    .single();
+
+  if (!opportunity) {
+    return { success: false, error: "Opportunity not found" };
+  }
+
+  // Update client status from prospect to active
+  const { data: client, error: clientError } = await supabase
+    .from("clients")
+    .update({
+      status: "active",
+      segment: "Active Client",
+      phase: "Onboarding",
+    })
+    .eq("id", opportunity.client_id)
+    .select()
+    .single();
+
+  if (clientError) {
+    console.error("Error converting client:", clientError);
+    return { success: false, error: clientError.message };
+  }
+
+  await emitAnalyticsEvent({
+    event_type: "prospect_converted_to_client",
+    entity_type: "client",
+    entity_id: client.id,
+    metadata: { opportunity_id: opportunityId },
+  });
+
+  revalidatePath("/pipeline");
+  revalidatePath("/clients");
+  revalidatePath(`/clients/${client.id}`);
+
+  return { success: true, clientId: client.id };
+}
+
+/**
+ * Delete an opportunity
+ */
+export async function deleteOpportunity(
+  id: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+
+  const { error } = await supabase.from("opportunities").delete().eq("id", id);
+
+  if (error) {
+    console.error("Error deleting opportunity:", error);
+    return { success: false, error: error.message };
+  }
+
+  await emitAnalyticsEvent({
+    event_type: "opportunity_deleted",
+    entity_type: "opportunity",
+    entity_id: id,
+    metadata: {},
+  });
+
+  revalidatePath("/pipeline");
+  return { success: true };
+}
+
+/**
+ * Get pipeline data grouped by stage for Kanban view
+ */
+export async function getPipelineByStage(): Promise<{
+  [stage: string]: OpportunityWithNotes[];
+}> {
+  const opportunities = await getOpportunities();
+
+  const stages = ["Prospect", "Qualify", "Proposal", "Negotiation", "ClosedWon", "ClosedLost"];
+  const grouped: { [stage: string]: OpportunityWithNotes[] } = {};
+
+  stages.forEach((stage) => {
+    grouped[stage] = opportunities.filter((opp) => opp.stage === stage);
+  });
+
+  return grouped;
 }
 
 /**

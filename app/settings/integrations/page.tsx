@@ -12,12 +12,6 @@ export default function IntegrationsPage() {
       lastSync: "Never",
     },
     {
-      provider: "HubSpot",
-      description: "Sync CRM data automatically.",
-      connected: true,
-      lastSync: "10 mins ago",
-    },
-    {
       provider: "QuickBooks",
       description: "Sync invoices and financial data.",
       connected: false,
