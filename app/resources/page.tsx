@@ -3,10 +3,10 @@
 import { useMemo } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
 
+import { PageTemplate } from "@/components/layout/PageTemplate"
 import { Badge } from "@/ui/badge"
 import { Button } from "@/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/ui/card"
-import { PageDescription, PageTitle } from "@/ui/page-header"
 import { TRS_CARD } from "@/lib/style"
 import { resolveTabs } from "@/lib/tabs"
 
@@ -66,23 +66,15 @@ export default function ResourcesPage() {
   }, [searchParams, tabs])
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
-      <Card className={TRS_CARD}>
-        <CardContent className="space-y-4 p-4">
-          <div className="space-y-1">
-            <PageTitle className="text-lg font-semibold text-black">Resources &amp; Calculators</PageTitle>
-            <PageDescription className="text-sm text-gray-500">
-              Finance-ready calculators to pressure test pricing, revenue, profit, and board-ready scenarios in minutes.
-            </PageDescription>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600 md:text-sm">
-            <Badge variant="outline">Prebuilt GTM formulas</Badge>
-            <Badge variant="success">Live benchmarks</Badge>
-            <Badge variant="default">Downloadable templates</Badge>
-          </div>
-        </CardContent>
-      </Card>
-
+    <PageTemplate
+      title="Resources & Calculators"
+      description="Finance-ready calculators to pressure test pricing, revenue, profit, and board-ready scenarios in minutes."
+      badges={[
+        { label: "Prebuilt GTM formulas" },
+        { label: "Live benchmarks", variant: "success" as const },
+        { label: "Downloadable templates", variant: "default" as const },
+      ]}
+    >
       {activeTab === "Pricing" && (
         <div className="space-y-4">
           <Card className={TRS_CARD}>
@@ -326,6 +318,6 @@ export default function ResourcesPage() {
           </Card>
         </div>
       )}
-    </div>
+    </PageTemplate>
   )
 }

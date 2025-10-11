@@ -3,10 +3,10 @@
 import { useMemo } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
 
+import { PageTemplate } from "@/components/layout/PageTemplate"
 import { Badge } from "@/ui/badge"
 import { Button } from "@/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/ui/card"
-import { PageDescription, PageTitle } from "@/ui/page-header"
 import { TRS_CARD, TRS_SECTION_TITLE } from "@/lib/style"
 import { resolveTabs } from "@/lib/tabs"
 
@@ -117,23 +117,15 @@ export default function MailCalendarPage() {
   }, [searchParams, tabs])
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
-      <Card className={TRS_CARD}>
-        <CardContent className="space-y-4 p-4">
-          <div className="space-y-1">
-            <PageTitle className="text-lg font-semibold text-black">Mail &amp; Calendar</PageTitle>
-            <PageDescription className="text-sm text-gray-500">
-              Centralize email, calendar availability, and meeting intelligence so GTM teams never miss a follow-up.
-            </PageDescription>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600 md:text-sm">
-            <Badge variant="success">Realtime sync</Badge>
-            <Badge variant="outline">Gmail &amp; Google Calendar ready</Badge>
-            <Badge variant="default">HostGator routing supported</Badge>
-          </div>
-        </CardContent>
-      </Card>
-
+    <PageTemplate
+      title="Mail & Calendar"
+      description="Centralize email, calendar availability, and meeting intelligence so GTM teams never miss a follow-up."
+      badges={[
+        { label: "Realtime sync", variant: "success" as const },
+        { label: "Gmail & Google Calendar ready" },
+        { label: "HostGator routing supported", variant: "default" as const },
+      ]}
+    >
       {activeTab === "Inbox" && (
         <div className="space-y-4">
           <Card className={TRS_CARD}>
@@ -346,6 +338,6 @@ export default function MailCalendarPage() {
           </Card>
         </div>
       )}
-    </div>
+    </PageTemplate>
   )
 }
