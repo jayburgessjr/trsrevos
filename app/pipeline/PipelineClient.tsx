@@ -6,6 +6,7 @@ import { PageTemplate } from "@/components/layout/PageTemplate";
 import type { PageTemplateBadge } from "@/components/layout/PageTemplate";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { AddProspectModal } from "@/components/pipeline/AddProspectModal";
+import { ImportProspectsModal } from "@/components/pipeline/ImportProspectsModal";
 import { PipelineFilters } from "@/components/pipeline/PipelineFilters";
 import { PipelineKanban } from "@/components/pipeline/PipelineKanban";
 import type { OpportunityWithNotes } from "@/core/pipeline/actions";
@@ -36,6 +37,7 @@ export default function PipelineClient({
 }: Props) {
   const [activeTab, setActiveTab] = useState("Overview");
   const [showAddProspect, setShowAddProspect] = useState(false);
+  const [showImportProspects, setShowImportProspects] = useState(false);
   const [filteredOpportunities, setFilteredOpportunities] =
     useState<OpportunityWithNotes[]>(opportunities);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
@@ -56,6 +58,10 @@ export default function PipelineClient({
 
   const handleOpenModal = () => {
     setShowAddProspect(true);
+  };
+
+  const handleOpenImport = () => {
+    setShowImportProspects(true);
   };
 
   useMemo(() => {
@@ -202,6 +208,9 @@ export default function PipelineClient({
           >
             {syncPending ? "Syncing…" : "Sync analytics"}
           </Button>
+          <Button variant="outline" size="sm" onClick={handleOpenImport}>
+            Import CSV
+          </Button>
           <Button variant="primary" size="sm" onClick={handleOpenModal}>
             + New Prospect
           </Button>
@@ -344,9 +353,14 @@ export default function PipelineClient({
                   Drag and drop deals to move them through stages
                 </p>
               </div>
-              <Button variant="primary" size="sm" onClick={handleOpenModal}>
-                + New Prospect
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={handleOpenImport}>
+                  Import CSV
+                </Button>
+                <Button variant="primary" size="sm" onClick={handleOpenModal}>
+                  + New Prospect
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -374,6 +388,13 @@ export default function PipelineClient({
       {showAddProspect && (
         <AddProspectModal
           onClose={() => setShowAddProspect(false)}
+          userId={userId}
+        />
+      )}
+
+      {showImportProspects && (
+        <ImportProspectsModal
+          onClose={() => setShowImportProspects(false)}
           userId={userId}
         />
       )}
