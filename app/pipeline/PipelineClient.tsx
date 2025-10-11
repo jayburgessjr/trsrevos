@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import { PageTemplate } from "@/components/layout/PageTemplate";
 import type { PageTemplateBadge } from "@/components/layout/PageTemplate";
+import { PageTabs } from "@/components/layout/PageTabs";
 import { AddProspectModal } from "@/components/pipeline/AddProspectModal";
 import { PipelineFilters } from "@/components/pipeline/PipelineFilters";
 import { PipelineKanban } from "@/components/pipeline/PipelineKanban";
@@ -27,7 +28,11 @@ type Props = {
   userId: string;
 };
 
-export default function PipelineClient({ opportunities, metrics, userId }: Props) {
+export default function PipelineClient({
+  opportunities,
+  metrics,
+  userId,
+}: Props) {
   const [activeTab, setActiveTab] = useState("Overview");
   const [showAddProspect, setShowAddProspect] = useState(false);
   const [filteredOpportunities, setFilteredOpportunities] =
@@ -42,11 +47,20 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
   }, [opportunities]);
 
   const opportunitiesByStage = useMemo(() => {
-    const stages = ["Prospect", "Qualify", "Proposal", "Negotiation", "ClosedWon", "ClosedLost"];
+    const stages = [
+      "Prospect",
+      "Qualify",
+      "Proposal",
+      "Negotiation",
+      "ClosedWon",
+      "ClosedLost",
+    ];
     const grouped: { [stage: string]: OpportunityWithNotes[] } = {};
 
     stages.forEach((stage) => {
-      grouped[stage] = filteredOpportunities.filter((opp) => opp.stage === stage);
+      grouped[stage] = filteredOpportunities.filter(
+        (opp) => opp.stage === stage,
+      );
     });
 
     return grouped;
@@ -113,15 +127,18 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
       <Card className={cn(TRS_CARD)}>
         <CardContent className="p-4 space-y-2">
           <div className={TRS_SUBTITLE}>Win Rate</div>
-          <div className="text-2xl font-semibold text-black">{metrics.winRate.toFixed(0)}%</div>
+          <div className="text-2xl font-semibold text-black">
+            {metrics.winRate.toFixed(0)}%
+          </div>
           <div className="flex items-center gap-2 text-xs text-gray-600">
             <span className="font-medium text-gray-700">
-              {(opportunitiesByStage.ClosedWon?.length || 0)} won
+              {opportunitiesByStage.ClosedWon?.length || 0} won
             </span>
             <span>/</span>
             <span>
               {(opportunitiesByStage.ClosedWon?.length || 0) +
-                (opportunitiesByStage.ClosedLost?.length || 0)} closed
+                (opportunitiesByStage.ClosedLost?.length || 0)}{" "}
+              closed
             </span>
           </div>
         </CardContent>
@@ -167,28 +184,19 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
       badges={headerBadges}
       stats={kpiCards}
     >
-      <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
-        {["Overview", "Pipeline", "Forecast"].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={cn(
-              "px-3 py-2 text-sm font-medium transition-colors",
-              activeTab === tab
-                ? "border-b-2 border-black text-black"
-                : "text-gray-600 hover:text-black"
-            )}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
+      <PageTabs
+        tabs={["Overview", "Pipeline", "Forecast"]}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
 
       {activeTab === "Overview" && (
         <div className="space-y-4">
           <div className={cn(TRS_CARD, "p-4")}>
             <div className="space-y-1">
-              <h2 className="text-lg font-semibold text-black">Sales Pipeline Overview</h2>
+              <h2 className="text-lg font-semibold text-black">
+                Sales Pipeline Overview
+              </h2>
               <p className="text-sm text-gray-500">
                 Track prospects through your sales funnel
               </p>
@@ -196,10 +204,19 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
           </div>
 
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-5">
-            {["Prospect", "Qualify", "Proposal", "Negotiation", "ClosedWon"].map((stage) => {
+            {[
+              "Prospect",
+              "Qualify",
+              "Proposal",
+              "Negotiation",
+              "ClosedWon",
+            ].map((stage) => {
               const count = opportunitiesByStage[stage]?.length || 0;
               const value =
-                opportunitiesByStage[stage]?.reduce((sum, opp) => sum + opp.amount, 0) || 0;
+                opportunitiesByStage[stage]?.reduce(
+                  (sum, opp) => sum + opp.amount,
+                  0,
+                ) || 0;
 
               return (
                 <Card key={stage} className={cn(TRS_CARD)}>
@@ -207,8 +224,12 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
                     <div className="mb-2 text-xs font-medium uppercase text-gray-500">
                       {stage === "ClosedWon" ? "Closed Won" : stage}
                     </div>
-                    <div className="mb-1 text-2xl font-semibold text-black">{count}</div>
-                    <div className="text-sm text-gray-600">{(value / 1000).toFixed(0)}K</div>
+                    <div className="mb-1 text-2xl font-semibold text-black">
+                      {count}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {(value / 1000).toFixed(0)}K
+                    </div>
                   </CardContent>
                 </Card>
               );
@@ -230,7 +251,9 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
                       >
                         <div>
                           <div className="font-medium">{deal.name}</div>
-                          <div className="text-xs text-gray-500">{deal.client?.name}</div>
+                          <div className="text-xs text-gray-500">
+                            {deal.client?.name}
+                          </div>
                         </div>
                         <Badge variant="outline">{deal.stage}</Badge>
                       </div>
@@ -250,7 +273,8 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
                     atRiskDeals.slice(0, 5).map((deal) => {
                       const updated = new Date(deal.updated_at);
                       const daysStale = Math.floor(
-                        (Date.now() - updated.getTime()) / (1000 * 60 * 60 * 24)
+                        (Date.now() - updated.getTime()) /
+                          (1000 * 60 * 60 * 24),
                       );
 
                       return (
@@ -260,7 +284,9 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
                         >
                           <div>
                             <div className="font-medium">{deal.name}</div>
-                            <div className="text-xs text-gray-500">{deal.client?.name}</div>
+                            <div className="text-xs text-gray-500">
+                              {deal.client?.name}
+                            </div>
                           </div>
                           <Badge variant="warning">{daysStale}d</Badge>
                         </div>
@@ -279,7 +305,9 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
           <div className={cn(TRS_CARD, "p-4")}>
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="space-y-1">
-                <h2 className="text-lg font-semibold text-black">Pipeline Kanban Board</h2>
+                <h2 className="text-lg font-semibold text-black">
+                  Pipeline Kanban Board
+                </h2>
                 <p className="text-sm text-gray-500">
                   Drag and drop deals to move them through stages
                 </p>
@@ -295,7 +323,10 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
             onFilterChange={setFilteredOpportunities}
           />
 
-          <PipelineKanban opportunitiesByStage={opportunitiesByStage} userId={userId} />
+          <PipelineKanban
+            opportunitiesByStage={opportunitiesByStage}
+            userId={userId}
+          />
         </div>
       )}
 
@@ -309,7 +340,10 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
       )}
 
       {showAddProspect && (
-        <AddProspectModal onClose={() => setShowAddProspect(false)} userId={userId} />
+        <AddProspectModal
+          onClose={() => setShowAddProspect(false)}
+          userId={userId}
+        />
       )}
     </PageTemplate>
   );
