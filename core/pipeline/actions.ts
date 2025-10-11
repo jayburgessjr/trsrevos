@@ -319,29 +319,19 @@ export async function createProspect(input: {
   // Use the authenticated user's ID instead of the passed owner_id for security
   const owner_id = user.id;
 
-  console.log("Creating client with owner_id:", owner_id, "authenticated user:", user.id);
-
-  // Check auth session
-  const { data: { session } } = await supabase.auth.getSession();
-  console.log("Has session:", !!session, "Session user:", session?.user?.id);
-
   // First, create a placeholder client
   const { data: client, error: clientError } = await supabase
     .from("clients")
     .insert({
       name: input.companyName,
-      segment: "Prospect",
       phase: "Discovery",
       owner_id: owner_id,
-      status: "prospect",
     })
     .select()
     .single();
 
   if (clientError) {
     console.error("Error creating client:", clientError);
-    console.error("User context:", { userId: user.id, email: user.email });
-    console.error("Auth session exists:", !!session);
     return { success: false, error: clientError.message };
   }
 
@@ -402,8 +392,7 @@ export async function convertProspectToClient(
     .from("clients")
     .update({
       status: "active",
-      segment: "Active Client",
-      phase: "Onboarding",
+      phase: "Data",
     })
     .eq("id", opportunity.client_id)
     .select()
