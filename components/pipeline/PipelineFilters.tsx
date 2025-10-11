@@ -5,6 +5,11 @@ import { Input } from "@/ui/input";
 import { Button } from "@/ui/button";
 import { cn } from "@/lib/utils";
 import type { OpportunityWithNotes } from "@/core/pipeline/actions";
+import {
+  PIPELINE_STAGE_LABELS,
+  PIPELINE_STAGE_ORDER,
+  type PipelineStage,
+} from "@/core/pipeline/constants";
 
 type PipelineFiltersProps = {
   opportunities: OpportunityWithNotes[];
@@ -16,7 +21,7 @@ type Filters = {
   owner: string;
   minAmount: string;
   maxAmount: string;
-  stage: string;
+  stage: "" | PipelineStage;
   minProbability: string;
 };
 
@@ -212,16 +217,20 @@ export function PipelineFilters({ opportunities, onFilterChange }: PipelineFilte
             </label>
             <select
               value={filters.stage}
-              onChange={(e) => applyFilters({ ...filters, stage: e.target.value })}
+              onChange={(e) =>
+                applyFilters({
+                  ...filters,
+                  stage: e.target.value as Filters["stage"],
+                })
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
             >
               <option value="">All Stages</option>
-              <option value="Prospect">Prospect</option>
-              <option value="Qualify">Qualify</option>
-              <option value="Proposal">Proposal</option>
-              <option value="Negotiation">Negotiation</option>
-              <option value="ClosedWon">Closed Won</option>
-              <option value="ClosedLost">Closed Lost</option>
+              {PIPELINE_STAGE_ORDER.map((stage) => (
+                <option key={stage} value={stage}>
+                  {PIPELINE_STAGE_LABELS[stage]}
+                </option>
+              ))}
             </select>
           </div>
 

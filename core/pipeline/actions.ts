@@ -3,17 +3,27 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+import {
+  PIPELINE_STAGE_ORDER,
+  PIPELINE_STAGE_PROBABILITIES,
+  type PipelineStage,
+} from "./constants";
+
+type ClientSegment = "SMB" | "Mid" | "Enterprise";
+const CLIENT_SEGMENTS: ClientSegment[] = ["SMB", "Mid", "Enterprise"];
+
 export type Opportunity = {
   id: string;
   client_id: string;
   name: string;
   amount: number;
-  stage: string;
+  stage: PipelineStage;
   probability: number;
   close_date: string | null;
   owner_id: string;
   next_step: string | null;
   next_step_date: string | null;
+  company: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -63,7 +73,7 @@ export async function createOpportunity(input: {
   client_id: string;
   name: string;
   amount: number;
-  stage: string;
+  stage: PipelineStage;
   probability: number;
   close_date?: string;
   owner_id: string;
@@ -141,25 +151,16 @@ export async function updateOpportunity(
  */
 export async function moveOpportunityStage(
   id: string,
-  newStage: string
+  newStage: PipelineStage
 ): Promise<{ success: boolean; error?: string; clientId?: string }> {
   const supabase = await createClient();
 
   // Update probability based on stage
-  const stageProbabilities: { [key: string]: number } = {
-    Prospect: 10,
-    Qualify: 25,
-    Proposal: 50,
-    Negotiation: 75,
-    ClosedWon: 100,
-    ClosedLost: 0,
-  };
-
   const { error } = await supabase
     .from("opportunities")
     .update({
       stage: newStage,
-      probability: stageProbabilities[newStage] || 50
+      probability: PIPELINE_STAGE_PROBABILITIES[newStage] ?? 50,
     })
     .eq("id", id);
 
@@ -299,11 +300,19 @@ export async function getPipelineMetrics(): Promise<{
  */
 export async function createProspect(input: {
   companyName: string;
+  segment?: ClientSegment;
+  arr?: number;
+  industry?: string;
+  region?: string;
   dealName: string;
   amount: number;
   expectedCloseDate?: string;
   owner_id: string;
-}): Promise<{ success: boolean; opportunity?: Opportunity; error?: string }> {
+}): Promise<{
+  success: boolean;
+  opportunity?: Opportunity;
+  error?: string;
+}> {
   const supabase = await createClient();
 
   // Get the authenticated user
@@ -311,36 +320,53 @@ export async function createProspect(input: {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (!user && !input.owner_id) {
     return { success: false, error: "User not authenticated" };
   }
 
-  // Use the authenticated user's ID instead of the passed owner_id for security
-  const owner_id = user.id;
+  // Use the authenticated user's ID when available
+  const owner_id = user?.id ?? input.owner_id;
 
-  console.log("Creating client with owner_id:", owner_id, "authenticated user:", user.id);
+  if (!Number.isFinite(input.amount) || input.amount <= 0) {
+    return { success: false, error: "Amount must be greater than zero" };
+  }
 
-  // Check auth session
-  const { data: { session } } = await supabase.auth.getSession();
-  console.log("Has session:", !!session, "Session user:", session?.user?.id);
+  const normalizedCompany = input.companyName.trim();
+  const normalizedDealName = input.dealName.trim();
+  if (!normalizedCompany || !normalizedDealName) {
+    return { success: false, error: "Company and deal name are required" };
+  }
+  const normalizedIndustry = input.industry?.trim() || null;
+  const normalizedRegion = input.region?.trim() || null;
+  const normalizedSegment =
+    input.segment && CLIENT_SEGMENTS.includes(input.segment)
+      ? input.segment
+      : null;
+  const normalizedArr =
+    typeof input.arr === "number" && !Number.isNaN(input.arr)
+      ? Number(input.arr.toFixed(2))
+      : null;
+  const normalizedAmount = Number(input.amount.toFixed(2));
+  const normalizedCloseDate = input.expectedCloseDate || null;
 
   // First, create a placeholder client
   const { data: client, error: clientError } = await supabase
     .from("clients")
     .insert({
-      name: input.companyName,
-      segment: "Prospect",
+      name: normalizedCompany,
       phase: "Discovery",
       owner_id: owner_id,
-      status: "prospect",
+      status: "active",
+      segment: normalizedSegment,
+      arr: normalizedArr,
+      industry: normalizedIndustry,
+      region: normalizedRegion,
     })
     .select()
     .single();
 
   if (clientError) {
     console.error("Error creating client:", clientError);
-    console.error("User context:", { userId: user.id, email: user.email });
-    console.error("Auth session exists:", !!session);
     return { success: false, error: clientError.message };
   }
 
@@ -349,19 +375,21 @@ export async function createProspect(input: {
     .from("opportunities")
     .insert({
       client_id: client.id,
-      name: input.dealName,
-      amount: input.amount,
-      stage: "Prospect",
-      probability: 10,
-      close_date: input.expectedCloseDate || null,
+      name: normalizedDealName,
+      amount: normalizedAmount,
+      stage: "New",
+      probability: PIPELINE_STAGE_PROBABILITIES.New,
+      close_date: normalizedCloseDate,
       owner_id: owner_id,
       next_step: "Initial outreach",
+      company: normalizedCompany,
     })
     .select()
     .single();
 
   if (oppError) {
     console.error("Error creating opportunity:", oppError);
+    await supabase.from("clients").delete().eq("id", client.id);
     return { success: false, error: oppError.message };
   }
 
@@ -369,7 +397,11 @@ export async function createProspect(input: {
     event_type: "prospect_created",
     entity_type: "opportunity",
     entity_id: opportunity.id,
-    metadata: { company: input.companyName, amount: input.amount },
+    metadata: {
+      company: normalizedCompany,
+      amount: normalizedAmount,
+      segment: normalizedSegment,
+    },
   });
 
   revalidatePath("/pipeline");
@@ -401,8 +433,7 @@ export async function convertProspectToClient(
     .from("clients")
     .update({
       status: "active",
-      segment: "Active Client",
-      phase: "Onboarding",
+      phase: "Data",
     })
     .eq("id", opportunity.client_id)
     .select()
@@ -456,15 +487,14 @@ export async function deleteOpportunity(
 /**
  * Get pipeline data grouped by stage for Kanban view
  */
-export async function getPipelineByStage(): Promise<{
-  [stage: string]: OpportunityWithNotes[];
-}> {
+export async function getPipelineByStage(): Promise<
+  Partial<Record<PipelineStage, OpportunityWithNotes[]>>
+> {
   const opportunities = await getOpportunities();
 
-  const stages = ["Prospect", "Qualify", "Proposal", "Negotiation", "ClosedWon", "ClosedLost"];
-  const grouped: { [stage: string]: OpportunityWithNotes[] } = {};
+  const grouped: { [stage in PipelineStage]?: OpportunityWithNotes[] } = {};
 
-  stages.forEach((stage) => {
+  PIPELINE_STAGE_ORDER.forEach((stage) => {
     grouped[stage] = opportunities.filter((opp) => opp.stage === stage);
   });
 
