@@ -2,7 +2,7 @@
 
 import { useMemo } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
-import { PageDescription, PageTitle } from "@/ui/page-header"
+import { PageTemplate } from "@/components/layout/PageTemplate"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/ui/card"
 import { Badge } from "@/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/ui/table"
@@ -42,65 +42,79 @@ export default function FinancePage() {
   const formatCurrency = (amount: number) => `$${amount.toLocaleString()}`
   const formatPercent = (value: number) => `${value.toFixed(1)}%`
 
+  const headerBadges = useMemo(
+    () => [
+      { label: `${metrics.runway} month runway`, variant: "success" as const },
+      { label: `Burn $${(metrics.burnRate / 1000).toFixed(0)}K/mo`, variant: "default" as const },
+      { label: `Gross margin ${metrics.grossMargin.toFixed(1)}%` },
+    ],
+    [metrics.runway, metrics.burnRate, metrics.grossMargin],
+  )
+
+  const metricsGrid = (
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+      <Card className={cn(TRS_CARD)}>
+        <CardContent className="p-4 space-y-2">
+          <div className={TRS_SUBTITLE}>Cash Balance</div>
+          <div className="text-2xl font-semibold text-black">{formatCurrency(metrics.cash)}</div>
+          <div className="flex items-center gap-2 text-xs text-gray-600">
+            <span className="font-medium text-gray-700">{metrics.runway} months</span>
+            <span>runway</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className={cn(TRS_CARD)}>
+        <CardContent className="p-4 space-y-2">
+          <div className={TRS_SUBTITLE}>MRR</div>
+          <div className="text-2xl font-semibold text-black">${(metrics.mrr / 1000).toFixed(0)}K</div>
+          <div className="flex items-center gap-2 text-xs text-gray-600">
+            <span className="font-medium text-gray-700">ARR</span>
+            <span>${(metrics.arr / 1000).toFixed(0)}K</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className={cn(TRS_CARD)}>
+        <CardContent className="p-4 space-y-2">
+          <div className={TRS_SUBTITLE}>Gross Margin</div>
+          <div className="text-2xl font-semibold text-black">{formatPercent(metrics.grossMargin)}</div>
+          <div className="flex items-center gap-2 text-xs text-gray-600">
+            <span className="font-medium text-gray-700">Net</span>
+            <span>{formatPercent(metrics.netMargin)}</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className={cn(TRS_CARD)}>
+        <CardContent className="p-4 space-y-2">
+          <div className={TRS_SUBTITLE}>LTV / CAC</div>
+          <div className="text-2xl font-semibold text-black">{metrics.ltvCacRatio.toFixed(1)}x</div>
+          <div className="flex items-center gap-2 text-xs text-gray-600">
+            <span className="font-medium text-gray-700">Burn</span>
+            <span>${(metrics.burnRate / 1000).toFixed(0)}K/mo</span>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+
   return (
-    <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
-      {/* KPI Cards - Always Visible */}
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
-        <Card className={cn(TRS_CARD)}>
-          <CardContent className="p-4 space-y-2">
-            <div className={TRS_SUBTITLE}>Cash Balance</div>
-            <div className="text-2xl font-semibold text-black">{formatCurrency(metrics.cash)}</div>
-            <div className="flex items-center gap-2 text-xs text-gray-600">
-              <span className="font-medium text-gray-700">{metrics.runway} months</span>
-              <span>runway</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className={cn(TRS_CARD)}>
-          <CardContent className="p-4 space-y-2">
-            <div className={TRS_SUBTITLE}>MRR</div>
-            <div className="text-2xl font-semibold text-black">${(metrics.mrr / 1000).toFixed(0)}K</div>
-            <div className="flex items-center gap-2 text-xs text-gray-600">
-              <span className="font-medium text-gray-700">ARR</span>
-              <span>${(metrics.arr / 1000).toFixed(0)}K</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className={cn(TRS_CARD)}>
-          <CardContent className="p-4 space-y-2">
-            <div className={TRS_SUBTITLE}>Gross Margin</div>
-            <div className="text-2xl font-semibold text-black">{formatPercent(metrics.grossMargin)}</div>
-            <div className="flex items-center gap-2 text-xs text-gray-600">
-              <span className="font-medium text-gray-700">Net</span>
-              <span>{formatPercent(metrics.netMargin)}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className={cn(TRS_CARD)}>
-          <CardContent className="p-4 space-y-2">
-            <div className={TRS_SUBTITLE}>LTV / CAC</div>
-            <div className="text-2xl font-semibold text-black">{metrics.ltvCacRatio.toFixed(1)}x</div>
-            <div className="flex items-center gap-2 text-xs text-gray-600">
-              <span className="font-medium text-gray-700">Burn</span>
-              <span>${(metrics.burnRate / 1000).toFixed(0)}K/mo</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tab Content */}
+    <PageTemplate
+      title="Finance Command Center"
+      description="Integrate ARR, cash flow, and profitability to steer revenue operations."
+      badges={headerBadges}
+      stats={metricsGrid}
+    >
       {activeTab === "Overview" && (
         <div className="space-y-4">
           <div className={cn(TRS_CARD, "p-4 space-y-3")}>
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="space-y-1">
-                <PageTitle className="text-lg font-semibold text-black">Financial Overview</PageTitle>
-                <PageDescription className="text-sm text-gray-500">
+                <h2 className="text-lg font-semibold text-black">Financial Overview</h2>
+                <p className="text-sm text-gray-500">
                   Comprehensive view of equity, revenue, expenses, and cash flow
-                </PageDescription>
+                </p>
               </div>
             </div>
           </div>
@@ -705,6 +719,6 @@ export default function FinancePage() {
           </Card>
         </div>
       )}
-    </div>
+    </PageTemplate>
   )
 }

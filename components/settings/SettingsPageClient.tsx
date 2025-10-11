@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
+import { PageTemplate } from "@/components/layout/PageTemplate"
 import { AgentManager } from "@/components/settings/AgentManager"
 import { FeatureFlags } from "@/components/settings/FeatureFlags"
 import { IntegrationsForm } from "@/components/settings/IntegrationsForm"
@@ -31,8 +32,27 @@ export function SettingsPageClient({
 
   const tabs = ["Agents", "Appearance", "Integrations", "Feature Flags", "Behavior"]
 
+  const headerBadges = useMemo(
+    () => [
+      { label: `${agents.length} agents configured`, variant: "default" as const },
+      {
+        label: featureFlagServiceAvailable ? "Feature flags connected" : "Feature flags offline",
+        variant: featureFlagServiceAvailable ? "success" : "outline",
+      },
+      {
+        label: integrations.calendarSyncEnabled ? "Calendar sync enabled" : "Calendar sync disabled",
+        variant: integrations.calendarSyncEnabled ? "success" : "outline",
+      },
+    ],
+    [agents.length, featureFlagServiceAvailable, integrations.calendarSyncEnabled],
+  )
+
   return (
-    <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
+    <PageTemplate
+      title="Workspace Settings"
+      description="Configure agents, integrations, and governance controls for RevenueOS."
+      badges={headerBadges}
+    >
       {/* Tab Navigation */}
       <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
         {tabs.map((tab) => (
@@ -88,6 +108,6 @@ export function SettingsPageClient({
           />
         </div>
       )}
-    </div>
+    </PageTemplate>
   )
 }

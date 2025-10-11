@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Card, CardContent } from "@/ui/card";
-import { Badge } from "@/ui/badge";
-import { Button } from "@/ui/button";
-import { cn } from "@/lib/utils";
-import { TRS_CARD, TRS_SUBTITLE } from "@/lib/style";
-import { PipelineKanban } from "@/components/pipeline/PipelineKanban";
+import { useMemo, useState } from "react";
+
+import { PageTemplate } from "@/components/layout/PageTemplate";
 import { AddProspectModal } from "@/components/pipeline/AddProspectModal";
 import { PipelineFilters } from "@/components/pipeline/PipelineFilters";
+import { PipelineKanban } from "@/components/pipeline/PipelineKanban";
 import type { OpportunityWithNotes } from "@/core/pipeline/actions";
+import { Badge } from "@/ui/badge";
+import { Button } from "@/ui/button";
+import { Card, CardContent } from "@/ui/card";
+import { cn } from "@/lib/utils";
+import { TRS_CARD, TRS_SUBTITLE } from "@/lib/style";
 
 type Props = {
   opportunities: OpportunityWithNotes[];
@@ -27,19 +29,17 @@ type Props = {
 export default function PipelineClient({ opportunities, metrics, userId }: Props) {
   const [activeTab, setActiveTab] = useState("Overview");
   const [showAddProspect, setShowAddProspect] = useState(false);
-  const [filteredOpportunities, setFilteredOpportunities] = useState<OpportunityWithNotes[]>(opportunities);
+  const [filteredOpportunities, setFilteredOpportunities] =
+    useState<OpportunityWithNotes[]>(opportunities);
 
   const handleOpenModal = () => {
-    console.log("Opening Add Prospect modal");
     setShowAddProspect(true);
   };
 
-  // Update filtered opportunities when opportunities prop changes
   useMemo(() => {
     setFilteredOpportunities(opportunities);
   }, [opportunities]);
 
-  // Group opportunities by stage for Kanban
   const opportunitiesByStage = useMemo(() => {
     const stages = ["Prospect", "Qualify", "Proposal", "Negotiation", "ClosedWon", "ClosedLost"];
     const grouped: { [stage: string]: OpportunityWithNotes[] } = {};
@@ -51,11 +51,9 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
     return grouped;
   }, [filteredOpportunities]);
 
-  // Calculate additional metrics
-  const quarterlyTarget = 1200000; // $1.2M target
+  const quarterlyTarget = 1_200_000;
   const coverage = (metrics.totalWeighted / quarterlyTarget) * 100;
 
-  // Get at-risk deals (stalled >30 days)
   const atRiskDeals = useMemo(() => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -70,7 +68,6 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
     });
   }, [opportunities]);
 
-  // Calculate velocity (deals moved in last 7 days)
   const recentlyMovedDeals = useMemo(() => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -81,70 +78,94 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
     });
   }, [opportunities]);
 
+  const headerBadges = useMemo(
+    () => [
+      { label: "Quarterly target $1.2M" },
+      {
+        label: `${atRiskDeals.length} deals at risk`,
+        variant: atRiskDeals.length > 0 ? "warning" : "success",
+      },
+      {
+        label: `${recentlyMovedDeals.length} moved this week`,
+        variant: "default" as const,
+      },
+    ],
+    [atRiskDeals.length, recentlyMovedDeals.length],
+  );
+
+  const kpiCards = (
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+      <Card className={cn(TRS_CARD)}>
+        <CardContent className="p-4 space-y-2">
+          <div className={TRS_SUBTITLE}>Weighted Pipeline</div>
+          <div className="text-2xl font-semibold text-black">
+            ${(metrics.totalWeighted / 1000).toFixed(0)}K
+          </div>
+          <div className="flex items-center gap-2 text-xs text-gray-600">
+            <Badge variant={coverage >= 100 ? "success" : "outline"}>
+              {coverage.toFixed(0)}% of goal
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className={cn(TRS_CARD)}>
+        <CardContent className="p-4 space-y-2">
+          <div className={TRS_SUBTITLE}>Win Rate</div>
+          <div className="text-2xl font-semibold text-black">{metrics.winRate.toFixed(0)}%</div>
+          <div className="flex items-center gap-2 text-xs text-gray-600">
+            <span className="font-medium text-gray-700">
+              {(opportunitiesByStage.ClosedWon?.length || 0)} won
+            </span>
+            <span>/</span>
+            <span>
+              {(opportunitiesByStage.ClosedWon?.length || 0) +
+                (opportunitiesByStage.ClosedLost?.length || 0)} closed
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className={cn(TRS_CARD)}>
+        <CardContent className="p-4 space-y-2">
+          <div className={TRS_SUBTITLE}>Avg Deal Size</div>
+          <div className="text-2xl font-semibold text-black">
+            ${(metrics.avgDealSize / 1000).toFixed(0)}K
+          </div>
+          <div className="flex items-center gap-2 text-xs text-gray-600">
+            <span>{metrics.dealCount} active deals</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className={cn(TRS_CARD)}>
+        <CardContent className="p-4 space-y-2">
+          <div className={TRS_SUBTITLE}>Avg Sales Cycle</div>
+          <div className="text-2xl font-semibold text-black">
+            {metrics.avgSalesCycle.toFixed(0)} days
+          </div>
+          <div className="flex items-center gap-2 text-xs text-gray-600">
+            <Badge variant={atRiskDeals.length > 0 ? "warning" : "success"}>
+              {atRiskDeals.length} at risk
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
   return (
-    <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
-      {/* KPI Cards - Always Visible */}
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
-        <Card className={cn(TRS_CARD)}>
-          <CardContent className="p-4 space-y-2">
-            <div className={TRS_SUBTITLE}>Weighted Pipeline</div>
-            <div className="text-2xl font-semibold text-black">
-              ${(metrics.totalWeighted / 1000).toFixed(0)}K
-            </div>
-            <div className="flex items-center gap-2 text-xs text-gray-600">
-              <Badge variant={coverage >= 100 ? "success" : "outline"}>
-                {coverage.toFixed(0)}% of goal
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className={cn(TRS_CARD)}>
-          <CardContent className="p-4 space-y-2">
-            <div className={TRS_SUBTITLE}>Win Rate</div>
-            <div className="text-2xl font-semibold text-black">{metrics.winRate.toFixed(0)}%</div>
-            <div className="flex items-center gap-2 text-xs text-gray-600">
-              <span className="font-medium text-gray-700">
-                {(opportunitiesByStage.ClosedWon?.length || 0)} won
-              </span>
-              <span>/</span>
-              <span>
-                {(opportunitiesByStage.ClosedWon?.length || 0) +
-                  (opportunitiesByStage.ClosedLost?.length || 0)}{" "}
-                closed
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className={cn(TRS_CARD)}>
-          <CardContent className="p-4 space-y-2">
-            <div className={TRS_SUBTITLE}>Avg Deal Size</div>
-            <div className="text-2xl font-semibold text-black">
-              ${(metrics.avgDealSize / 1000).toFixed(0)}K
-            </div>
-            <div className="flex items-center gap-2 text-xs text-gray-600">
-              <span>{metrics.dealCount} active deals</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className={cn(TRS_CARD)}>
-          <CardContent className="p-4 space-y-2">
-            <div className={TRS_SUBTITLE}>Avg Sales Cycle</div>
-            <div className="text-2xl font-semibold text-black">
-              {metrics.avgSalesCycle.toFixed(0)} days
-            </div>
-            <div className="flex items-center gap-2 text-xs text-gray-600">
-              <Badge variant={atRiskDeals.length > 0 ? "warning" : "success"}>
-                {atRiskDeals.length} at risk
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tab Navigation */}
+    <PageTemplate
+      title="Revenue Pipeline"
+      description="Monitor coverage, velocity, and forecast confidence in one workspace."
+      actions={
+        <Button variant="primary" size="sm" onClick={handleOpenModal}>
+          + New Prospect
+        </Button>
+      }
+      badges={headerBadges}
+      stats={kpiCards}
+    >
       <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
         {["Overview", "Pipeline", "Forecast"].map((tab) => (
           <button
@@ -162,57 +183,41 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
         ))}
       </div>
 
-      {/* Tab Content */}
       {activeTab === "Overview" && (
         <div className="space-y-4">
-          {/* Header with Add Prospect Button */}
           <div className={cn(TRS_CARD, "p-4")}>
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div className="space-y-1">
-                <h2 className="text-lg font-semibold text-black">
-                  Sales Pipeline Overview
-                </h2>
-                <p className="text-sm text-gray-500">
-                  Track prospects through your sales funnel
-                </p>
-              </div>
-              <Button variant="primary" size="sm" onClick={handleOpenModal}>
-                + New Prospect
-              </Button>
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold text-black">Sales Pipeline Overview</h2>
+              <p className="text-sm text-gray-500">
+                Track prospects through your sales funnel
+              </p>
             </div>
           </div>
 
-          {/* Pipeline Funnel */}
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-5">
             {["Prospect", "Qualify", "Proposal", "Negotiation", "ClosedWon"].map((stage) => {
               const count = opportunitiesByStage[stage]?.length || 0;
-              const value = opportunitiesByStage[stage]?.reduce(
-                (sum, opp) => sum + opp.amount,
-                0
-              ) || 0;
+              const value =
+                opportunitiesByStage[stage]?.reduce((sum, opp) => sum + opp.amount, 0) || 0;
 
               return (
                 <Card key={stage} className={cn(TRS_CARD)}>
                   <CardContent className="p-4">
-                    <div className="text-xs font-medium text-gray-500 uppercase mb-2">
+                    <div className="mb-2 text-xs font-medium uppercase text-gray-500">
                       {stage === "ClosedWon" ? "Closed Won" : stage}
                     </div>
-                    <div className="text-2xl font-semibold text-black mb-1">{count}</div>
-                    <div className="text-sm text-gray-600">
-                      ${(value / 1000).toFixed(0)}K
-                    </div>
+                    <div className="mb-1 text-2xl font-semibold text-black">{count}</div>
+                    <div className="text-sm text-gray-600">{(value / 1000).toFixed(0)}K</div>
                   </CardContent>
                 </Card>
               );
             })}
           </div>
 
-          {/* Velocity and At-Risk Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Recent Activity */}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <Card className={cn(TRS_CARD)}>
               <CardContent className="p-4">
-                <h3 className="font-semibold mb-3">Recent Activity (7 days)</h3>
+                <h3 className="mb-3 font-semibold">Recent Activity (7 days)</h3>
                 <div className="space-y-2">
                   {recentlyMovedDeals.length === 0 ? (
                     <p className="text-sm text-gray-500">No recent activity</p>
@@ -220,7 +225,7 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
                     recentlyMovedDeals.slice(0, 5).map((deal) => (
                       <div
                         key={deal.id}
-                        className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded"
+                        className="flex items-center justify-between rounded bg-gray-50 p-2 text-sm"
                       >
                         <div>
                           <div className="font-medium">{deal.name}</div>
@@ -234,10 +239,9 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
               </CardContent>
             </Card>
 
-            {/* At-Risk Deals */}
             <Card className={cn(TRS_CARD)}>
               <CardContent className="p-4">
-                <h3 className="font-semibold mb-3">At-Risk Deals (30+ days)</h3>
+                <h3 className="mb-3 font-semibold">At-Risk Deals (30+ days)</h3>
                 <div className="space-y-2">
                   {atRiskDeals.length === 0 ? (
                     <p className="text-sm text-gray-500">No deals at risk</p>
@@ -251,7 +255,7 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
                       return (
                         <div
                           key={deal.id}
-                          className="flex items-center justify-between text-sm p-2 bg-yellow-50 rounded"
+                          className="flex items-center justify-between rounded bg-yellow-50 p-2 text-sm"
                         >
                           <div>
                             <div className="font-medium">{deal.name}</div>
@@ -274,9 +278,7 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
           <div className={cn(TRS_CARD, "p-4")}>
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="space-y-1">
-                <h2 className="text-lg font-semibold text-black">
-                  Pipeline Kanban Board
-                </h2>
+                <h2 className="text-lg font-semibold text-black">Pipeline Kanban Board</h2>
                 <p className="text-sm text-gray-500">
                   Drag and drop deals to move them through stages
                 </p>
@@ -287,7 +289,6 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
             </div>
           </div>
 
-          {/* Filters */}
           <PipelineFilters
             opportunities={opportunities}
             onFilterChange={setFilteredOpportunities}
@@ -300,16 +301,15 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
       {activeTab === "Forecast" && (
         <Card className={cn(TRS_CARD, "p-6")}>
           <div className="text-center text-gray-500">
-            <h3 className="text-lg font-semibold mb-2">Forecast Analysis</h3>
+            <h3 className="mb-2 text-lg font-semibold">Forecast Analysis</h3>
             <p>Coming soon: AI-powered forecasting and scenario planning</p>
           </div>
         </Card>
       )}
 
-      {/* Add Prospect Modal */}
       {showAddProspect && (
         <AddProspectModal onClose={() => setShowAddProspect(false)} userId={userId} />
       )}
-    </div>
+    </PageTemplate>
   );
 }
