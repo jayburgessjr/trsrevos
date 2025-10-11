@@ -2,29 +2,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0?dts";
 
 const JSON_HEADERS = { "Content-Type": "application/json" } as const;
 
-type CalendarSyncRequest = {
-  userId?: string;
-  calendarId?: string;
-  timeMin?: string;
-  timeMax?: string;
-  maxResults?: number;
-};
-
-type IntegrationRecord = {
-  id: string;
-  user_id: string;
-  access_token: string | null;
-  refresh_token: string | null;
-  scope: string | null;
-  token_type: string | null;
-  expiry_date: string | null;
-};
-
-type UserRecord = {
-  id: string;
-  organization_id: string | null;
-};
-
 function getRequiredEnv(name: string) {
   const value = Deno.env.get(name);
   if (!value) {
@@ -76,6 +53,94 @@ async function refreshGoogleAccessToken(refreshToken: string) {
   };
 }
 
+async function fetchRecentMessages(accessToken: string, maxMessages: number) {
+  const listResponse = await fetch(
+    `https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=${maxMessages}&q=label:inbox`,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+  );
+
+  if (!listResponse.ok) {
+    const errorBody = await listResponse.text();
+    throw new Error(`Failed to list Gmail messages: ${listResponse.status} ${errorBody}`);
+  }
+
+  const listJson = await listResponse.json() as { messages?: Array<{ id: string }> };
+  const messages = listJson.messages ?? [];
+
+  const results: Array<{
+    id: string;
+    snippet: string | null;
+    historyId?: string;
+    internalDate?: string;
+    subject?: string;
+    from?: string;
+    receivedAt?: string;
+  }> = [];
+
+  for (const message of messages) {
+    const detailResponse = await fetch(
+      `https://www.googleapis.com/gmail/v1/users/me/messages/${message.id}?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=Date`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      },
+    );
+
+    if (!detailResponse.ok) {
+      console.warn(
+        `gmail-sync: failed to fetch message ${message.id}: ${detailResponse.status} ${await detailResponse.text()}`,
+      );
+      continue;
+    }
+
+    const detailJson = await detailResponse.json() as {
+      id: string;
+      snippet?: string;
+      historyId?: string;
+      internalDate?: string;
+      payload?: { headers?: Array<{ name: string; value: string }> };
+    };
+
+    const headers = new Map(
+      (detailJson.payload?.headers ?? []).map((header) => [header.name.toLowerCase(), header.value]),
+    );
+
+    results.push({
+      id: detailJson.id,
+      snippet: detailJson.snippet ?? null,
+      historyId: detailJson.historyId,
+      internalDate: detailJson.internalDate,
+      subject: headers.get("subject") ?? undefined,
+      from: headers.get("from") ?? undefined,
+      receivedAt: headers.get("date") ?? undefined,
+    });
+  }
+
+  return results;
+}
+
+type GmailSyncRequest = {
+  userId?: string;
+  maxMessages?: number;
+};
+
+type IntegrationRecord = {
+  id: string;
+  user_id: string;
+  provider: string;
+  access_token: string | null;
+  refresh_token: string | null;
+  scope: string | null;
+  token_type: string | null;
+  expiry_date: string | null;
+};
+
+type UserRecord = {
+  id: string;
+  organization_id: string | null;
+};
+
 function needsRefresh(record: IntegrationRecord) {
   if (!record.refresh_token) return false;
   if (!record.access_token || !record.expiry_date) return true;
@@ -84,45 +149,6 @@ function needsRefresh(record: IntegrationRecord) {
   const now = Date.now();
   const bufferMs = 5 * 60 * 1000;
   return expiresAt - bufferMs <= now;
-}
-
-async function fetchEvents(accessToken: string, request: CalendarSyncRequest) {
-  const params = new URLSearchParams({
-    singleEvents: "true",
-    orderBy: "startTime",
-    maxResults: Math.max(1, Math.min(request.maxResults ?? 50, 250)).toString(),
-  });
-
-  if (request.timeMin) params.set("timeMin", request.timeMin);
-  if (request.timeMax) params.set("timeMax", request.timeMax);
-
-  const calendarId = encodeURIComponent(request.calendarId ?? "primary");
-
-  const response = await fetch(
-    `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?${params.toString()}`,
-    { headers: { Authorization: `Bearer ${accessToken}` } },
-  );
-
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`Failed to fetch calendar events: ${response.status} ${errorBody}`);
-  }
-
-  const json = await response.json() as {
-    items?: Array<{
-      id: string;
-      status?: string;
-      summary?: string;
-      description?: string;
-      htmlLink?: string;
-      start?: { dateTime?: string; date?: string; timeZone?: string };
-      end?: { dateTime?: string; date?: string; timeZone?: string };
-      organizer?: { email?: string; displayName?: string };
-      updated?: string;
-    }>;
-  };
-
-  return json.items ?? [];
 }
 
 Deno.serve(async (req) => {
@@ -145,7 +171,7 @@ Deno.serve(async (req) => {
     });
   }
 
-  let payload: CalendarSyncRequest = {};
+  let payload: GmailSyncRequest = {};
   try {
     payload = await req.json();
   } catch (_error) {
@@ -162,9 +188,11 @@ Deno.serve(async (req) => {
     });
   }
 
+  const maxMessages = Math.max(1, Math.min(payload.maxMessages ?? 5, 50));
+
   const query = supabase
     .from("user_integrations")
-    .select("id, user_id, access_token, refresh_token, scope, token_type, expiry_date")
+    .select("id, user_id, provider, access_token, refresh_token, scope, token_type, expiry_date")
     .eq("provider", "gmail");
 
   if (payload.userId) {
@@ -174,7 +202,7 @@ Deno.serve(async (req) => {
   const { data: integrations, error: integrationsError } = await query;
 
   if (integrationsError) {
-    console.error("calendar-sync: failed to load integrations", integrationsError);
+    console.error("gmail-sync: failed to load integrations", integrationsError);
     return new Response(JSON.stringify({ error: "Failed to load integrations" }), {
       status: 500,
       headers: { ...JSON_HEADERS, "Access-Control-Allow-Origin": "*" },
@@ -182,7 +210,7 @@ Deno.serve(async (req) => {
   }
 
   if (!integrations || integrations.length === 0) {
-    return new Response(JSON.stringify({ ok: true, processed: 0, events: 0 }), {
+    return new Response(JSON.stringify({ ok: true, processed: 0, inserted: 0 }), {
       status: 200,
       headers: { ...JSON_HEADERS, "Access-Control-Allow-Origin": "*" },
     });
@@ -195,7 +223,7 @@ Deno.serve(async (req) => {
     .in("id", userIds);
 
   if (usersError) {
-    console.error("calendar-sync: failed to load users", usersError);
+    console.error("gmail-sync: failed to load users", usersError);
     return new Response(JSON.stringify({ error: "Failed to load users" }), {
       status: 500,
       headers: { ...JSON_HEADERS, "Access-Control-Allow-Origin": "*" },
@@ -208,13 +236,13 @@ Deno.serve(async (req) => {
   }
 
   let processed = 0;
-  let totalEvents = 0;
+  let totalMessages = 0;
 
   for (const integration of integrations as IntegrationRecord[]) {
     processed += 1;
 
     if (!integration.refresh_token) {
-      console.warn(`calendar-sync: integration ${integration.id} missing refresh token`);
+      console.warn(`gmail-sync: integration ${integration.id} missing refresh token`);
       continue;
     }
 
@@ -245,15 +273,15 @@ Deno.serve(async (req) => {
           .eq("id", integration.id);
 
         if (updateError) {
-          console.error("calendar-sync: failed to persist refreshed token", updateError);
+          console.error("gmail-sync: failed to persist refreshed token", updateError);
         }
       } catch (error) {
-        console.error(`calendar-sync: refresh failed for ${integration.id}`, error);
+        console.error(`gmail-sync: refresh failed for ${integration.id}`, error);
         const { error: markError } = await supabase
           .from("integrations")
           .upsert({
             organization_id: userMap.get(integration.user_id)?.organization_id ?? null,
-            provider: "google_calendar",
+            provider: "gmail",
             connection_scope: "user",
             status: "error",
             settings: { last_error: (error as Error).message },
@@ -261,27 +289,27 @@ Deno.serve(async (req) => {
           }, { onConflict: "organization_id,provider" });
 
         if (markError) {
-          console.error("calendar-sync: failed to mark integration error", markError);
+          console.error("gmail-sync: failed to mark integration error", markError);
         }
         continue;
       }
     }
 
     if (!accessToken) {
-      console.warn(`calendar-sync: integration ${integration.id} missing access token`);
+      console.warn(`gmail-sync: integration ${integration.id} missing access token`);
       continue;
     }
 
-    let events: Awaited<ReturnType<typeof fetchEvents>> = [];
+    let messages: Awaited<ReturnType<typeof fetchRecentMessages>> = [];
     try {
-      events = await fetchEvents(accessToken, payload);
+      messages = await fetchRecentMessages(accessToken, maxMessages);
     } catch (error) {
-      console.error(`calendar-sync: event fetch failed for ${integration.id}`, error);
+      console.error(`gmail-sync: message fetch failed for ${integration.id}`, error);
       const { error: markError } = await supabase
         .from("integrations")
         .upsert({
           organization_id: userMap.get(integration.user_id)?.organization_id ?? null,
-          provider: "google_calendar",
+          provider: "gmail",
           connection_scope: "user",
           status: "error",
           settings: { last_error: (error as Error).message },
@@ -289,64 +317,61 @@ Deno.serve(async (req) => {
         }, { onConflict: "organization_id,provider" });
 
       if (markError) {
-        console.error("calendar-sync: failed to mark integration error", markError);
+        console.error("gmail-sync: failed to mark integration error", markError);
       }
       continue;
     }
 
-    totalEvents += events.length;
+    totalMessages += messages.length;
 
-    if (events.length > 0) {
-      const records = events.map((event) => ({
+    if (messages.length > 0) {
+      const events = messages.map((message) => ({
         user_id: integration.user_id,
         organization_id: userMap.get(integration.user_id)?.organization_id ?? null,
-        event_type: "calendar_sync",
-        entity_type: "calendar_event",
-        entity_id: event.id,
+        event_type: "gmail_sync",
+        entity_type: "gmail_message",
+        entity_id: message.id,
         metadata: {
-          status: event.status,
-          summary: event.summary,
-          description: event.description,
-          link: event.htmlLink,
-          start: event.start,
-          end: event.end,
-          organizer: event.organizer,
-          updated: event.updated,
+          snippet: message.snippet,
+          subject: message.subject,
+          from: message.from,
+          historyId: message.historyId,
+          internalDate: message.internalDate,
+          receivedAt: message.receivedAt,
         },
       }));
 
-      const { error: insertError } = await supabase.from("analytics_events").upsert(records, {
+      const { error: insertError } = await supabase.from("analytics_events").upsert(events, {
         onConflict: "entity_id, entity_type",
       });
 
       if (insertError) {
-        console.error("calendar-sync: failed to record analytics events", insertError);
+        console.error("gmail-sync: failed to record analytics events", insertError);
       }
     }
 
     const { error: upsertError } = await supabase.from("integrations").upsert({
       organization_id: userMap.get(integration.user_id)?.organization_id ?? null,
-      provider: "google_calendar",
+      provider: "gmail",
       connection_scope: "user",
       status: "connected",
       last_synced_at: new Date().toISOString(),
       settings: {
         last_sync_user_id: integration.user_id,
-        last_sync_count: events.length,
+        last_sync_count: messages.length,
         last_sync_scope: scope,
         token_type: tokenType,
         expiry_date: expiryDate,
-        calendar_id: payload.calendarId ?? "primary",
       },
     }, { onConflict: "organization_id,provider" });
 
     if (upsertError) {
-      console.error("calendar-sync: failed to upsert integration", upsertError);
+      console.error("gmail-sync: failed to upsert integration", upsertError);
     }
   }
 
   return new Response(
-    JSON.stringify({ ok: true, processed, events: totalEvents }),
+    JSON.stringify({ ok: true, processed, inserted: totalMessages }),
     {
       status: 200,
       headers: { ...JSON_HEADERS, "Access-Control-Allow-Origin": "*" },

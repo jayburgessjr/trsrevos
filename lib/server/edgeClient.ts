@@ -73,6 +73,33 @@ export const edge = {
       confidence: number;
     }>('revenue-forecast', params);
   },
+  async gmailSync(params: { userId?: string; maxMessages?: number }) {
+    return await callEdge<{
+      ok: boolean;
+      processed: number;
+      inserted: number;
+    }>('gmail-sync', params);
+  },
+  async calendarSync(params: { userId?: string; calendarId?: string; timeMin?: string; timeMax?: string; maxResults?: number }) {
+    return await callEdge<{
+      ok: boolean;
+      processed: number;
+      events: number;
+    }>('calendar-sync', params);
+  },
+  async quickbooksSync(params: { organizationId?: string; maxInvoices?: number }) {
+    return await callEdge<{
+      ok: boolean;
+      processed: number;
+      invoices: number;
+    }>('quickbooks-sync', params);
+  },
+  async aiForecast(params: { organizationId?: string; history: number[]; horizon?: number; notes?: string }) {
+    return await callEdge<{
+      ok: boolean;
+      result: { forecast: number[]; confidence: number; analysis: string };
+    }>('ai-forecast', params);
+  },
   async auditLog(params: { event: string; actor: string; data?: any }) {
     return await callEdge<{ ok: boolean }>('audit-log', params);
   },

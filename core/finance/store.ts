@@ -234,7 +234,7 @@ const expenses: Expense[] = [
     recurringFrequency: 'Monthly',
     approved: true,
     approvedBy: 'John Burgess',
-    notes: 'Includes Slack, Notion, GitHub, AWS, etc.',
+    notes: 'Includes Supabase, Gmail Workspace, analytics tooling, and security platforms.',
   },
   {
     id: 'exp-3',
