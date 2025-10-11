@@ -3,11 +3,15 @@
 import { logAnalyticsEvent } from '@/core/analytics/actions'
 import { requireAuth } from '@/lib/server/auth'
 
-export async function syncFinanceData() {
+type SyncFinanceDataResult =
+  | { ok: true; invoices_processed?: number }
+  | { ok: false; error: string };
+
+export async function syncFinanceData(): Promise<SyncFinanceDataResult> {
   const { supabase, user, organizationId } = await requireAuth({ redirectTo: '/login?next=/finance' })
 
   if (!organizationId) {
-    return { ok: false, error: 'missing-organization' } as const
+    return { ok: false, error: 'missing-organization' }
   }
 
   const { data, error } = await supabase.functions.invoke('finance-sync', {
@@ -16,7 +20,7 @@ export async function syncFinanceData() {
 
   if (error) {
     console.error('finance:sync-failed', error)
-    return { ok: false, error: error.message } as const
+    return { ok: false, error: error.message }
   }
 
   await logAnalyticsEvent({
@@ -24,5 +28,9 @@ export async function syncFinanceData() {
     payload: data as Record<string, unknown>,
   })
 
-  return { ok: true, ...(data as Record<string, unknown>) } as const
+  const invoicesProcessed = (data as Record<string, unknown> | null | undefined)?.invoices_processed
+  return {
+    ok: true,
+    invoices_processed: typeof invoicesProcessed === 'number' ? invoicesProcessed : undefined,
+  }
 }
