@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 
 import { PageTemplate } from "@/components/layout/PageTemplate";
 import type { PageTemplateBadge } from "@/components/layout/PageTemplate";
@@ -64,7 +64,7 @@ export default function PipelineClient({
     setShowImportProspects(true);
   };
 
-  useMemo(() => {
+  useEffect(() => {
     setFilteredOpportunities(opportunities);
   }, [opportunities]);
 
