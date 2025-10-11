@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 
@@ -13,13 +13,14 @@ import { SmallSpark } from "@/components/exec/SmallSpark";
 import { Card } from "@/components/kit/Card";
 import { AreaChart, BarChart } from "@/components/kit/Charts";
 import type { ExecDashboard } from "@/core/exec/types";
+import { refreshDashboardSnapshot } from "@/core/exec/actions";
 import { TRS_CARD } from "@/lib/style";
 import { resolveTabs } from "@/lib/tabs";
 import { cn } from "@/lib/utils";
 
 type DashboardClientProps = {
   data: ExecDashboard;
-  exportAction: () => Promise<{ ok: boolean; url: string }>;
+  exportAction: () => Promise<void>;
 };
 
 export default function DashboardClient({
@@ -33,15 +34,31 @@ export default function DashboardClient({
     const current = searchParams.get("tab");
     return current && tabs.includes(current) ? current : tabs[0];
   }, [searchParams, tabs]);
+  const [refreshMessage, setRefreshMessage] = useState<string | null>(null);
+  const [refreshPending, startRefresh] = useTransition();
+
+  const handleRefresh = () => {
+    startRefresh(async () => {
+      const result = await refreshDashboardSnapshot(data.scope);
+      setRefreshMessage(
+        result.success
+          ? "Dashboard refresh requested. Snapshot will update shortly."
+          : "Dashboard refresh failed",
+      );
+    });
+  };
 
   const buildTabHref = useCallback(
     (tab: string) => {
       const params = new URLSearchParams(searchParams.toString());
       params.set("tab", tab);
+      params.delete("export");
       return `${pathname}?${params.toString()}`;
     },
     [pathname, searchParams],
   );
+
+  const exportErrored = searchParams.get("export") === "failed";
 
   const d = data;
 
@@ -128,17 +145,39 @@ export default function DashboardClient({
       title="Executive Dashboard"
       description="Board-ready visibility across revenue, finance, and product health."
       actions={
-        <form action={exportAction}>
-          <button className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs hover:bg-gray-100">
-            Export board deck
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={refreshPending}
+            className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs hover:bg-gray-100 disabled:opacity-60"
+          >
+            {refreshPending ? "Refreshing…" : "Refresh snapshot"}
           </button>
-        </form>
+          <form action={exportAction}>
+            <button className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs hover:bg-gray-100" type="submit">
+              Export board deck
+            </button>
+          </form>
+        </div>
       }
       toolbar={<ScopeBar initial={d.scope} />}
       toolbarClassName="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
       stats={activeTab === "Overview" ? kpiGrid : null}
     >
       <PageTabs tabs={tabs} activeTab={activeTab} hrefForTab={buildTabHref} />
+
+      {refreshMessage ? (
+        <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
+          {refreshMessage}
+        </div>
+      ) : null}
+
+      {exportErrored ? (
+        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+          Export failed. Please try again in a moment.
+        </div>
+      ) : null}
 
       {activeTab === "Overview" && (
         <div className="space-y-4">

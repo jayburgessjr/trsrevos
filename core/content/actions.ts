@@ -16,6 +16,8 @@ import {
 } from './store'
 import { nextBestContent } from './recommender'
 import { ContentBrief, ContentStage, ContentStatus, TouchAction } from './types'
+import { requireAuth } from '@/lib/server/auth'
+import { logAnalyticsEvent } from '@/core/analytics/actions'
 
 const CONTENT_PATH = '/content'
 
@@ -112,4 +114,28 @@ export async function getContentSnapshot() {
 
 export async function getSuggestions() {
   return nextBestContent()
+}
+
+export async function insertContentIntoEmail(contentId: string) {
+  try {
+    const { user, organizationId } = await requireAuth({ redirectTo: '/login?next=/content' })
+
+    const result = await logAnalyticsEvent({
+      eventKey: 'content.email.inserted',
+      payload: {
+        contentId,
+        organizationId,
+        userId: user.id,
+      },
+    })
+
+    if (!result.ok) {
+      throw new Error(result.error ?? 'analytics-event-failed')
+    }
+
+    return { ok: true, message: 'Queued content for Gmail compose workspace.' } as const
+  } catch (error) {
+    console.error('content:email-insert-failed', error)
+    return { ok: false, error: (error as Error).message ?? 'email-insert-failed' } as const
+  }
 }

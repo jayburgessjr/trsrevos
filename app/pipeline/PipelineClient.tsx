@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 
 import { PageTemplate } from "@/components/layout/PageTemplate";
 import type { PageTemplateBadge } from "@/components/layout/PageTemplate";
@@ -9,6 +9,7 @@ import { AddProspectModal } from "@/components/pipeline/AddProspectModal";
 import { PipelineFilters } from "@/components/pipeline/PipelineFilters";
 import { PipelineKanban } from "@/components/pipeline/PipelineKanban";
 import type { OpportunityWithNotes } from "@/core/pipeline/actions";
+import { syncPipelineAnalytics } from "@/core/pipeline/actions";
 import { Badge } from "@/ui/badge";
 import { Button } from "@/ui/button";
 import { Card, CardContent } from "@/ui/card";
@@ -37,6 +38,21 @@ export default function PipelineClient({
   const [showAddProspect, setShowAddProspect] = useState(false);
   const [filteredOpportunities, setFilteredOpportunities] =
     useState<OpportunityWithNotes[]>(opportunities);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [syncPending, startSync] = useTransition();
+
+  const handleSync = () => {
+    startSync(async () => {
+      const result = await syncPipelineAnalytics();
+      setSyncMessage(
+        result.ok
+          ? `Pipeline sync captured stage counts: ${Object.entries(result.stages)
+              .map(([stage, count]) => `${stage} ${count}`)
+              .join(", ")}`
+          : "Pipeline sync failed",
+      );
+    });
+  };
 
   const handleOpenModal = () => {
     setShowAddProspect(true);
@@ -177,9 +193,19 @@ export default function PipelineClient({
       title="Revenue Pipeline"
       description="Monitor coverage, velocity, and forecast confidence in one workspace."
       actions={
-        <Button variant="primary" size="sm" onClick={handleOpenModal}>
-          + New Prospect
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={syncPending}
+            onClick={handleSync}
+          >
+            {syncPending ? "Syncing…" : "Sync analytics"}
+          </Button>
+          <Button variant="primary" size="sm" onClick={handleOpenModal}>
+            + New Prospect
+          </Button>
+        </div>
       }
       badges={headerBadges}
       stats={kpiCards}
@@ -189,6 +215,12 @@ export default function PipelineClient({
         activeTab={activeTab}
         onTabChange={setActiveTab}
       />
+
+      {syncMessage ? (
+        <div className="rounded-md border border-sky-200 bg-sky-50 p-3 text-xs text-sky-800">
+          {syncMessage}
+        </div>
+      ) : null}
 
       {activeTab === "Overview" && (
         <div className="space-y-4">

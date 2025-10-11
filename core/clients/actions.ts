@@ -1,7 +1,10 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+
+import { logAnalyticsEvent } from "@/core/analytics/actions";
+import { requireAuth } from "@/lib/server/auth";
+import { createClient } from "@/lib/supabase/server";
 import { RevOSPhase, Client, ClientDeliverable, ClientFinancialSnapshot } from "./types";
 
 const hasSupabaseCredentials = () =>
@@ -78,11 +81,9 @@ export async function actionSetPhase(id: string, phase: RevOSPhase) {
   }
 
   // Log analytics event
-  await supabase.from("analytics_events").insert({
-    event_type: "client_phase_changed",
-    entity_type: "client",
-    entity_id: id,
-    metadata: { new_phase: phase },
+  await logAnalyticsEvent({
+    eventKey: "client.phase.changed",
+    payload: { clientId: id, newPhase: phase },
   });
 
   revalidatePath("/clients");
@@ -116,11 +117,9 @@ export async function actionSaveDiscovery(id: string, qa: any[]) {
     return null;
   }
 
-  await supabase.from("analytics_events").insert({
-    event_type: "discovery_saved",
-    entity_type: "client",
-    entity_id: id,
-    metadata: { count: qa.length },
+  await logAnalyticsEvent({
+    eventKey: "client.discovery.saved",
+    payload: { clientId: id, count: qa.length },
   });
 
   revalidatePath(`/clients/${id}`);
@@ -152,11 +151,9 @@ export async function actionSaveData(id: string, data: any[]) {
     return null;
   }
 
-  await supabase.from("analytics_events").insert({
-    event_type: "data_saved",
-    entity_type: "client",
-    entity_id: id,
-    metadata: { available: data.length },
+  await logAnalyticsEvent({
+    eventKey: "client.data.saved",
+    payload: { clientId: id, available: data.length },
   });
 
   revalidatePath(`/clients/${id}`);
@@ -188,15 +185,38 @@ export async function actionSaveKanban(id: string, cards: any[]) {
     return null;
   }
 
-  await supabase.from("analytics_events").insert({
-    event_type: "kanban_saved",
-    entity_type: "client",
-    entity_id: id,
-    metadata: { count: cards.length },
+  await logAnalyticsEvent({
+    eventKey: "client.kanban.saved",
+    payload: { clientId: id, count: cards.length },
   });
 
   revalidatePath(`/clients/${id}`);
   return await actionGetClient(id);
+}
+
+export async function syncClientHealth() {
+  const { supabase, user, organizationId } = await requireAuth({ redirectTo: "/login?next=/clients" });
+
+  if (!organizationId) {
+    return { ok: false, error: "missing-organization" } as const;
+  }
+
+  const { data, error } = await supabase.functions.invoke("client-health-sync", {
+    body: { organization_id: organizationId, triggered_by: user.id },
+  });
+
+  if (error) {
+    console.error("clients:health-sync-failed", error);
+    return { ok: false, error: error.message } as const;
+  }
+
+  await logAnalyticsEvent({
+    eventKey: "client.health.sync.triggered",
+    payload: { processed: (data as any)?.processed ?? 0 },
+  });
+
+  revalidatePath("/clients");
+  return { ok: true, ...(data as Record<string, unknown>) } as const;
 }
 
 /**

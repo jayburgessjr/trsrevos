@@ -355,6 +355,18 @@ verify_jwt = true
 [functions.exec-dashboard-refresh]
 verify_jwt = true
 
+[functions.analytics-events]
+verify_jwt = true
+
+[functions.client-health-sync]
+verify_jwt = true
+
+[functions.finance-sync]
+verify_jwt = true
+
+[functions.agent-run]
+verify_jwt = true
+
 [functions.content-recommend]
 verify_jwt = true
 

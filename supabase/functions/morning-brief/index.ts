@@ -103,7 +103,35 @@ Deno.serve(async (req) => {
   // 3. Persist focus_sessions skeleton entries for the returned plan.
 
   const placeholderBrief = {
-    schedule: [],
+    priorities: [
+      {
+        id: 'pri-1',
+        title: 'Schedule QBR with Helio',
+        why: 'High churn signal from health telemetry',
+        roi_dollars: 18000,
+        effort: 'Low',
+        owner: 'You',
+        status: 'Ready',
+      },
+      {
+        id: 'pri-2',
+        title: 'Finalize ReggieAI pricing tiers',
+        why: 'Margin expansion opportunity',
+        roi_dollars: 8000,
+        effort: 'Med',
+        owner: 'You',
+        status: 'Ready',
+      },
+      {
+        id: 'pri-3',
+        title: 'Collections outreach batch',
+        why: 'Reduce DSO by 5 days',
+        roi_dollars: 5000,
+        effort: 'Low',
+        owner: 'You',
+        status: 'Ready',
+      },
+    ],
     diagnostics: {
       referenced_tables: [
         'daily_plans',
