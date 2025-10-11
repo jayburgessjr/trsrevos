@@ -5,12 +5,14 @@ import { useRouter } from 'next/navigation'
 import { useCallback, type MouseEvent } from 'react'
 
 import { phaseBadgeClasses } from '@/core/clients/constants'
-import type { ProjectRowData } from './page'
+import type { Project } from '@/core/projects/types'
 import { Badge } from '@/ui/badge'
 import { TableCell, TableRow } from '@/ui/table'
 
-export function ProjectRow({ project }: { project: ProjectRowData }) {
+export function ProjectRow({ project }: { project: Project }) {
   const router = useRouter()
+
+  const dueDate = project.dueDate ? new Date(project.dueDate) : null
 
   const handleRowClick = useCallback(() => {
     router.push(`/clients/${project.clientId}`)
@@ -35,8 +37,8 @@ export function ProjectRow({ project }: { project: ProjectRowData }) {
       </TableCell>
       <TableCell className="text-sm text-[color:var(--color-text-muted)]">{project.owner}</TableCell>
       <TableCell>
-        <Badge variant="outline" className={phaseBadgeClasses[project.status]}>
-          {project.status}
+        <Badge variant="outline" className={phaseBadgeClasses[project.phase]}>
+          {project.phase}
         </Badge>
       </TableCell>
       <TableCell>
@@ -48,11 +50,13 @@ export function ProjectRow({ project }: { project: ProjectRowData }) {
         </div>
       </TableCell>
       <TableCell className="text-sm text-[color:var(--color-text-muted)]">
-        {new Date(project.dueDate).toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-        })}
+        {dueDate
+          ? dueDate.toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            })
+          : '—'}
       </TableCell>
       <TableCell>
         <div
