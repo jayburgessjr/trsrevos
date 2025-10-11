@@ -88,11 +88,11 @@ export const MAIN_NAV: NavItem[] = [
 ]
 
 export const BOTTOM_NAV_ITEMS: NavItem[] = [
-  { label: 'Home', href: '/', icon: 'Home' },
   { label: 'Dashboard', href: '/dashboard', icon: 'LayoutDashboard' },
   { label: 'Pipeline', href: '/pipeline', icon: 'TrendingUp' },
   { label: 'Clients', href: '/clients', icon: 'Users' },
-  { label: 'Settings', href: '/settings', icon: 'Settings' },
+  { label: 'Projects', href: '/projects', icon: 'Kanban' },
+  { label: 'Partners', href: '/partners', icon: 'Building2' },
 ]
 
 export const APP_TITLE = 'TRS Internal SaaS'

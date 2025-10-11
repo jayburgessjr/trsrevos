@@ -9,6 +9,8 @@ import { cn } from '@/lib/utils'
 export type HeaderProps = {
   onMenuToggle?: () => void
   onSearch?: (term: string) => void
+  onSearchOpen?: () => void
+  searchValue?: string
 }
 
 /**
@@ -16,7 +18,7 @@ export type HeaderProps = {
  * On small screens the hamburger button is shown so users can reveal the drawer.
  * Search collapses to an icon on narrow widths and expands to a full input on `sm`.
  */
-export default function Header({ onMenuToggle, onSearch }: HeaderProps) {
+export default function Header({ onMenuToggle, onSearch, onSearchOpen, searchValue }: HeaderProps) {
   const handleInput = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
       if (onSearch) {
@@ -48,6 +50,8 @@ export default function Header({ onMenuToggle, onSearch }: HeaderProps) {
               placeholder="Search clients, projects, or docs"
               className="h-6 w-full bg-transparent text-sm text-black placeholder:text-gray-400 focus:outline-none"
               onChange={handleInput}
+              onFocus={onSearchOpen}
+              value={searchValue ?? ''}
             />
           </div>
         </div>
@@ -57,6 +61,7 @@ export default function Header({ onMenuToggle, onSearch }: HeaderProps) {
             type="button"
             className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-700 transition hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-black sm:hidden"
             aria-label="Search"
+            onClick={onSearchOpen}
           >
             <Search className="h-5 w-5" aria-hidden="true" />
           </button>
