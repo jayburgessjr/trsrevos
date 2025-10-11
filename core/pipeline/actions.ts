@@ -311,12 +311,7 @@ export async function createProspect(input: {
   contactPhone?: string;
   nextStep?: string;
 }): Promise<{ success: boolean; opportunity?: Opportunity; error?: string }> {
-  const supabase = await createClient();
-
-  // Get the authenticated user
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requireAuth({ redirectTo: "/login?next=/pipeline" });
 
   if (!user) {
     return { success: false, error: "User not authenticated" };
