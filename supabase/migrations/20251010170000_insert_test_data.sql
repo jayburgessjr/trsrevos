@@ -1,5 +1,5 @@
 -- Insert Test Organization and User
--- This allows HubSpot sync to work by providing an owner_id
+-- Seed data to ensure Supabase-backed integrations have an owner_id
 
 -- Insert TRS organization
 INSERT INTO organizations (id, name, type, settings, created_at, updated_at)

@@ -2,6 +2,431 @@
 -- Source: docs/supabase-architecture-plan.json
 
 -- ================================================================
+-- users
+-- ================================================================
+CREATE TABLE IF NOT EXISTS public.users (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('SuperAdmin', 'Admin', 'Director', 'Member', 'Client')),
+  organization_id UUID REFERENCES public.organizations(id) ON DELETE SET NULL,
+  avatar_url TEXT,
+  timezone TEXT,
+  last_sign_in_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_organization_id
+  ON public.users(organization_id);
+CREATE INDEX IF NOT EXISTS idx_users_email
+  ON public.users(email);
+
+DROP TRIGGER IF EXISTS set_users_updated_at ON public.users;
+CREATE TRIGGER set_users_updated_at
+  BEFORE UPDATE ON public.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.touch_updated_at();
+
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY IF NOT EXISTS "users_select"
+  ON public.users
+  FOR SELECT
+  USING (
+    id = auth.uid()
+    OR public.is_admin()
+    OR public.is_super_admin()
+  );
+
+CREATE POLICY IF NOT EXISTS "users_manage_self"
+  ON public.users
+  FOR UPDATE
+  USING (id = auth.uid())
+  WITH CHECK (id = auth.uid());
+
+CREATE POLICY IF NOT EXISTS "users_service_role"
+  ON public.users
+  FOR ALL TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+-- ================================================================
+-- clients
+-- ================================================================
+CREATE TABLE IF NOT EXISTS public.clients (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  segment TEXT CHECK (segment IN ('SMB', 'Mid', 'Enterprise')),
+  arr NUMERIC(12,2),
+  industry TEXT,
+  region TEXT,
+  phase TEXT CHECK (phase IN ('Discovery', 'Data', 'Algorithm', 'Architecture', 'Compounding')),
+  owner_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  health INTEGER CHECK (health BETWEEN 0 AND 100),
+  churn_risk INTEGER CHECK (churn_risk BETWEEN 0 AND 100),
+  qbr_date DATE,
+  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'churned')),
+  is_expansion BOOLEAN DEFAULT false,
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_clients_owner_id
+  ON public.clients(owner_id);
+CREATE INDEX IF NOT EXISTS idx_clients_phase
+  ON public.clients(phase);
+CREATE INDEX IF NOT EXISTS idx_clients_status
+  ON public.clients(status);
+
+DROP TRIGGER IF EXISTS set_clients_updated_at ON public.clients;
+CREATE TRIGGER set_clients_updated_at
+  BEFORE UPDATE ON public.clients
+  FOR EACH ROW
+  EXECUTE FUNCTION public.touch_updated_at();
+
+ALTER TABLE public.clients ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY IF NOT EXISTS "clients_select"
+  ON public.clients
+  FOR SELECT
+  USING (
+    public.is_super_admin()
+    OR owner_id = auth.uid()
+    OR owner_id IN (
+      SELECT id FROM public.users
+      WHERE organization_id = public.user_organization_id()
+    )
+  );
+
+CREATE POLICY IF NOT EXISTS "clients_insert"
+  ON public.clients
+  FOR INSERT
+  WITH CHECK (
+    owner_id = auth.uid()
+    OR public.is_admin()
+    OR public.is_super_admin()
+  );
+
+CREATE POLICY IF NOT EXISTS "clients_update"
+  ON public.clients
+  FOR UPDATE
+  USING (
+    owner_id = auth.uid()
+    OR public.is_admin()
+    OR public.is_super_admin()
+  )
+  WITH CHECK (
+    owner_id = auth.uid()
+    OR public.is_admin()
+    OR public.is_super_admin()
+  );
+
+CREATE POLICY IF NOT EXISTS "clients_delete"
+  ON public.clients
+  FOR DELETE
+  USING (public.is_admin() OR public.is_super_admin());
+
+-- ================================================================
+-- deliverables
+-- ================================================================
+CREATE TABLE IF NOT EXISTS public.deliverables (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  type TEXT,
+  link TEXT,
+  status TEXT,
+  owner_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
+  due_date DATE,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_deliverables_client_id
+  ON public.deliverables(client_id, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_deliverables_status
+  ON public.deliverables(status);
+
+DROP TRIGGER IF EXISTS set_deliverables_updated_at ON public.deliverables;
+CREATE TRIGGER set_deliverables_updated_at
+  BEFORE UPDATE ON public.deliverables
+  FOR EACH ROW
+  EXECUTE FUNCTION public.touch_updated_at();
+
+ALTER TABLE public.deliverables ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY IF NOT EXISTS "deliverables_select"
+  ON public.deliverables
+  FOR SELECT
+  USING (
+    client_id IN (
+      SELECT id
+      FROM public.clients
+    )
+  );
+
+CREATE POLICY IF NOT EXISTS "deliverables_all"
+  ON public.deliverables
+  FOR ALL
+  USING (
+    client_id IN (
+      SELECT id
+      FROM public.clients
+      WHERE owner_id = auth.uid()
+        OR public.is_admin()
+        OR public.is_super_admin()
+    )
+  )
+  WITH CHECK (
+    client_id IN (
+      SELECT id
+      FROM public.clients
+      WHERE owner_id = auth.uid()
+        OR public.is_admin()
+        OR public.is_super_admin()
+    )
+  );
+
+-- ================================================================
+-- opportunity_activities
+-- ================================================================
+CREATE TABLE IF NOT EXISTS public.opportunity_activities (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  opportunity_id UUID NOT NULL REFERENCES public.opportunities(id) ON DELETE CASCADE,
+  type TEXT NOT NULL CHECK (type IN ('task', 'call', 'meeting', 'email', 'note')),
+  title TEXT NOT NULL,
+  description TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'cancelled')),
+  due_date TIMESTAMPTZ,
+  completed_at TIMESTAMPTZ,
+  assigned_to UUID REFERENCES public.users(id) ON DELETE SET NULL,
+  created_by UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_opportunity_activities_opportunity
+  ON public.opportunity_activities(opportunity_id, due_date);
+CREATE INDEX IF NOT EXISTS idx_opportunity_activities_assignee
+  ON public.opportunity_activities(assigned_to);
+
+DROP TRIGGER IF EXISTS set_opportunity_activities_updated_at ON public.opportunity_activities;
+CREATE TRIGGER set_opportunity_activities_updated_at
+  BEFORE UPDATE ON public.opportunity_activities
+  FOR EACH ROW
+  EXECUTE FUNCTION public.touch_updated_at();
+
+ALTER TABLE public.opportunity_activities ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY IF NOT EXISTS "opportunity_activities_select"
+  ON public.opportunity_activities
+  FOR SELECT
+  USING (
+    opportunity_id IN (
+      SELECT id
+      FROM public.opportunities
+    )
+  );
+
+CREATE POLICY IF NOT EXISTS "opportunity_activities_all"
+  ON public.opportunity_activities
+  FOR ALL
+  USING (
+    opportunity_id IN (
+      SELECT id
+      FROM public.opportunities
+      WHERE owner_id = auth.uid()
+        OR public.is_admin()
+        OR public.is_super_admin()
+    )
+  )
+  WITH CHECK (
+    opportunity_id IN (
+      SELECT id
+      FROM public.opportunities
+      WHERE owner_id = auth.uid()
+        OR public.is_admin()
+        OR public.is_super_admin()
+    )
+  );
+
+-- ================================================================
+-- client_financials
+-- ================================================================
+CREATE TABLE IF NOT EXISTS public.client_financials (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  equity_stake NUMERIC(6,2),
+  monthly_revenue NUMERIC(12,2),
+  projected_annual_revenue NUMERIC(12,2),
+  last_updated TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_client_financials_client_id
+  ON public.client_financials(client_id, last_updated DESC);
+
+DROP TRIGGER IF EXISTS set_client_financials_updated_at ON public.client_financials;
+CREATE TRIGGER set_client_financials_updated_at
+  BEFORE UPDATE ON public.client_financials
+  FOR EACH ROW
+  EXECUTE FUNCTION public.touch_updated_at();
+
+ALTER TABLE public.client_financials ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY IF NOT EXISTS "client_financials_select"
+  ON public.client_financials
+  FOR SELECT
+  USING (
+    client_id IN (
+      SELECT id
+      FROM public.clients
+    )
+  );
+
+CREATE POLICY IF NOT EXISTS "client_financials_all"
+  ON public.client_financials
+  FOR ALL
+  USING (
+    client_id IN (
+      SELECT id
+      FROM public.clients
+      WHERE owner_id = auth.uid()
+        OR public.is_admin()
+        OR public.is_super_admin()
+    )
+  )
+  WITH CHECK (
+    client_id IN (
+      SELECT id
+      FROM public.clients
+      WHERE owner_id = auth.uid()
+        OR public.is_admin()
+        OR public.is_super_admin()
+    )
+  );
+
+-- ================================================================
+-- invoices
+-- ================================================================
+CREATE TABLE IF NOT EXISTS public.invoices (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  invoice_number TEXT UNIQUE NOT NULL,
+  client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  status TEXT NOT NULL CHECK (status IN ('Draft', 'Sent', 'Paid', 'Overdue', 'Cancelled')),
+  issue_date DATE NOT NULL,
+  due_date DATE NOT NULL,
+  paid_date DATE,
+  amount NUMERIC(12,2) NOT NULL,
+  tax NUMERIC(12,2) DEFAULT 0,
+  total NUMERIC(12,2) NOT NULL,
+  payment_term TEXT CHECK (payment_term IN ('Due on Receipt', 'Net 15', 'Net 30', 'Net 60', 'Net 90')),
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_invoices_client_id
+  ON public.invoices(client_id);
+CREATE INDEX IF NOT EXISTS idx_invoices_status
+  ON public.invoices(status);
+CREATE INDEX IF NOT EXISTS idx_invoices_due_date
+  ON public.invoices(due_date);
+
+DROP TRIGGER IF EXISTS set_invoices_updated_at ON public.invoices;
+CREATE TRIGGER set_invoices_updated_at
+  BEFORE UPDATE ON public.invoices
+  FOR EACH ROW
+  EXECUTE FUNCTION public.touch_updated_at();
+
+ALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY IF NOT EXISTS "invoices_select"
+  ON public.invoices
+  FOR SELECT
+  USING (
+    client_id IN (
+      SELECT id
+      FROM public.clients
+    )
+  );
+
+CREATE POLICY IF NOT EXISTS "invoices_manage"
+  ON public.invoices
+  FOR ALL
+  USING (
+    client_id IN (
+      SELECT id
+      FROM public.clients
+      WHERE owner_id = auth.uid()
+        OR public.is_admin()
+        OR public.is_super_admin()
+    )
+  )
+  WITH CHECK (
+    client_id IN (
+      SELECT id
+      FROM public.clients
+      WHERE owner_id = auth.uid()
+        OR public.is_admin()
+        OR public.is_super_admin()
+    )
+  );
+
+-- ================================================================
+-- integrations
+-- ================================================================
+CREATE TABLE IF NOT EXISTS public.integrations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
+  provider TEXT NOT NULL CHECK (provider IN ('gmail', 'google_calendar', 'quickbooks')),
+  connection_scope TEXT DEFAULT 'organization' CHECK (connection_scope IN ('organization', 'user')),
+  status TEXT NOT NULL DEFAULT 'disconnected' CHECK (status IN ('disconnected', 'pending', 'connected', 'error')),
+  settings JSONB NOT NULL DEFAULT '{}'::jsonb,
+  sync_cursor TEXT,
+  last_synced_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_integrations_org_provider
+  ON public.integrations(organization_id, provider);
+
+DROP TRIGGER IF EXISTS set_integrations_updated_at ON public.integrations;
+CREATE TRIGGER set_integrations_updated_at
+  BEFORE UPDATE ON public.integrations
+  FOR EACH ROW
+  EXECUTE FUNCTION public.touch_updated_at();
+
+ALTER TABLE public.integrations ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY IF NOT EXISTS "integrations_select"
+  ON public.integrations
+  FOR SELECT
+  USING (
+    organization_id IS NULL
+    OR organization_id = public.user_organization_id()
+    OR public.is_super_admin()
+  );
+
+CREATE POLICY IF NOT EXISTS "integrations_manage"
+  ON public.integrations
+  FOR ALL
+  USING (
+    auth.role() = 'service_role'
+    OR public.is_admin()
+    OR public.is_super_admin()
+  )
+  WITH CHECK (
+    organization_id = public.user_organization_id()
+    OR auth.role() = 'service_role'
+    OR public.is_super_admin()
+  );
+
+-- ================================================================
 -- opportunity_notes
 -- ================================================================
 CREATE TABLE IF NOT EXISTS public.opportunity_notes (

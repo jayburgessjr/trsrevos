@@ -83,7 +83,7 @@ const roadmapItems = [
   },
   {
     id: "r2",
-    title: "Slack highlights",
+    title: "Supabase pipeline highlights",
     description: "Push high-signal email summaries into deal rooms and CS channels.",
     eta: "In discovery",
   },

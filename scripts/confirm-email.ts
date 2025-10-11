@@ -1,16 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = 'https://itolyllbvbdorqapuhyj.supabase.co';
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseUrl = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const USER_EMAIL = 'admin@trs.com';
 
-async function confirmEmail() {
-  if (!SERVICE_KEY) {
-    console.error('SUPABASE_SERVICE_ROLE_KEY is not set in environment variables.');
-    process.exit(1);
-  }
+if (!supabaseUrl || !serviceKey) {
+  throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set before running this script.');
+}
 
-  const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_KEY, {
+const resolvedSupabaseUrl = supabaseUrl as string;
+const resolvedServiceKey = serviceKey as string;
+
+async function confirmEmail() {
+  const supabaseAdmin = createClient(resolvedSupabaseUrl, resolvedServiceKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false

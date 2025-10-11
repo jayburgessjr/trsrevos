@@ -1,13 +1,17 @@
 /**
- * Create a test user for syncing HubSpot data
+ * Utility script to provision a TRS RevOS test user with Supabase auth + profile.
  */
 
 import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = "https://itolyllbvbdorqapuhyj.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml0b2x5bGxidmJkb3JxYXB1aHlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMzkxOTEsImV4cCI6MjA3NTYxNTE5MX0.QO0bFQFs9npH-GIwGEIjEMxtiiTRB8nTAl9OBjaIg-M";
+const supabaseUrl = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error("Set SUPABASE_URL and SUPABASE_ANON_KEY environment variables before running this script.");
+}
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 async function createTestUser() {
   console.log("🔧 Creating test user...\n");
@@ -58,7 +62,7 @@ async function createTestUser() {
   if (orgError) {
     console.error("❌ Organization error:", orgError);
   } else {
-    console.log("✅ Organization created:", org.name);
+    console.log("✅ Organization created:", org?.name);
   }
 
   // Create user profile
@@ -69,7 +73,7 @@ async function createTestUser() {
       email: authData.user.email!,
       name: "Admin User",
       role: "SuperAdmin",
-      organization_id: org?.id,
+      organization_id: org?.id ?? null,
     });
 
   if (userError) {

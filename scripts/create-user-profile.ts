@@ -1,23 +1,24 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = 'https://itolyllbvbdorqapuhyj.supabase.co';
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseUrl = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const USER_EMAIL = 'admin@trs.com';
 
-async function createUserProfile() {
-  if (!SERVICE_KEY) {
-    console.error('SUPABASE_SERVICE_ROLE_KEY is not set in environment variables.');
-    process.exit(1);
-  }
+if (!supabaseUrl || !serviceKey) {
+  throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set before running this script.');
+}
 
-  const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_KEY, {
+const resolvedSupabaseUrl = supabaseUrl as string;
+const resolvedServiceKey = serviceKey as string;
+
+async function createUserProfile() {
+  const supabaseAdmin = createClient(resolvedSupabaseUrl, resolvedServiceKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false
     }
   });
 
-  // 1. Get the auth user
   const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
   if (listError) {
     console.error('Error listing users:', listError);
@@ -30,7 +31,6 @@ async function createUserProfile() {
   }
   console.log(`✅ Found auth user: ${authUser.email}`);
 
-  // 2. Create the user profile
   const { error: profileError } = await supabaseAdmin
     .from('users')
     .insert({
