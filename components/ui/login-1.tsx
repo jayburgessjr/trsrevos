@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import type { ChangeEvent, FormEvent } from "react"
 
@@ -117,7 +118,14 @@ export default function LoginScreen() {
       <div className="flex-1 bg-gray-50 flex items-center justify-center p-12">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <img src="/images/trs_main_logo.png" alt="TRS Logo" className="w-[175px] h-[175px] mx-auto mb-4" />
+            <Image
+              src="/images/trs_main_logo.png"
+              alt="TRS Logo"
+              width={175}
+              height={175}
+              className="h-[175px] w-[175px] mx-auto mb-4"
+              priority
+            />
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
               {isLogin ? "Welcome Back" : "Join Us Today"}
             </h2>
