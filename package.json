@@ -5,7 +5,7 @@
   "description": "TRS Internal SaaS scaffold reset with dummy data and UI shell.",
   "scripts": {
     "dev": "next dev -p 3000",
-    "build": "next build",
+    "build": "NODE_OPTIONS=--max-old-space-size=4096 next build",
     "start": "next start -p 3000",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

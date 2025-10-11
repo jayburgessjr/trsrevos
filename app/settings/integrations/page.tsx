@@ -1,3 +1,4 @@
+"use client";
 import IntegrationCard from "@/components/integrations/IntegrationCard";
 import { connectIntegration, disconnectIntegration, listLabels, listEvents } from "@/lib/integrations";
 import { useState } from "react";
