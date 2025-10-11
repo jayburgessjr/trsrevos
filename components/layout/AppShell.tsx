@@ -1,51 +1,95 @@
 "use client"
 
-import { Suspense } from "react"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { TopTabs } from "@/components/kit/TopTabs"
-import GlobalHeader from "@/components/nav/GlobalHeader"
-import AdminSidebar from "@/components/nav/AdminSidebar"
-import { resolveTabs } from "@/lib/tabs"
+import type { ReactNode } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import * as Icons from 'lucide-react'
 
-const HEADER_HEIGHT = 56
-const TABS_HEIGHT = 44
+import Header from '@/components/nav/Header'
+import HamburgerDrawer from '@/components/nav/HamburgerDrawer'
+import MobileBottomNav from '@/components/nav/MobileBottomNav'
+import { MAIN_NAV, type NavItem } from '@/lib/navigation'
+import { cn, isActivePath } from '@/lib/utils'
 
-export default function AppShell({ children, showTabs = true }: { children: React.ReactNode; showTabs?: boolean }) {
+const FULL_SHELL_EXCLUSIONS = new Set(['/login'])
+
+type AppShellProps = {
+  children: ReactNode
+}
+
+/**
+ * AppShell owns the global layout chrome for the mobile-first experience.
+ * It renders a sticky header, optional hamburger drawer, a desktop sidebar,
+ * and a fixed bottom navigation bar on handheld devices. The shell keeps
+ * spacing fluid (no fixed widths) so content can adapt to any breakpoint.
+ */
+export default function AppShell({ children }: AppShellProps) {
   const pathname = usePathname()
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
-  const tabs = resolveTabs(pathname)
-  const current = searchParams.get("tab") || tabs[0]
-  const activeTab = tabs.includes(current) ? current : tabs[0]
-  const tabsVisible = showTabs
+  useEffect(() => {
+    // Close the drawer after a successful navigation to keep UX tight on mobile.
+    setDrawerOpen(false)
+  }, [pathname])
 
-  const handleTabChange = (next: string) => {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set("tab", next)
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+  const shouldBypassShell = useMemo(() => {
+    if (!pathname) return false
+    if (pathname.startsWith('/share')) return true
+    return Array.from(FULL_SHELL_EXCLUSIONS).some(
+      (excluded) => pathname === excluded || pathname.startsWith(`${excluded}/`)
+    )
+  }, [pathname])
+
+  if (shouldBypassShell) {
+    return <>{children}</>
   }
 
   return (
-    <div className="w-full min-h-screen bg-white text-black">
-      <GlobalHeader />
-      <div className="flex" style={{ height: `calc(100vh - ${HEADER_HEIGHT}px)` }}>
-        <AdminSidebar />
-        <main className="flex-1 overflow-hidden">
-          {tabsVisible && (
-            <div
-              className="flex items-center justify-between border-b border-gray-200 bg-white px-3"
-              style={{ height: TABS_HEIGHT }}
-            >
-              <Suspense fallback={<div className="h-[44px]" />}>
-                <TopTabs value={activeTab} onChange={handleTabChange} />
-              </Suspense>
-              <div className="text-xs text-gray-600">Pick a date</div>
-            </div>
-          )}
-          <div className="h-full overflow-auto bg-white">{children}</div>
+    <div className="flex min-h-screen flex-col bg-white text-black">
+      <Header onMenuToggle={() => setDrawerOpen(true)} />
+      <HamburgerDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <div className="flex flex-1">
+        <aside className="sticky top-0 hidden h-[calc(100vh-3.5rem)] w-64 shrink-0 border-r border-gray-200 bg-white lg:block">
+          <nav className="flex h-full flex-col gap-4 overflow-y-auto px-5 py-6 text-sm">
+            <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Main</div>
+            <ul className="space-y-1">
+              {MAIN_NAV.map((item) => (
+                <SidebarLink key={item.href} item={item} currentPath={pathname ?? ''} />
+              ))}
+            </ul>
+          </nav>
+        </aside>
+        <main className="flex-1 overflow-x-hidden pb-24 lg:pb-8">
+          {children}
         </main>
       </div>
+      <MobileBottomNav currentPath={pathname ?? ''} className="lg:hidden" />
     </div>
+  )
+}
+
+type SidebarLinkProps = {
+  item: NavItem
+  currentPath: string
+}
+
+function SidebarLink({ item, currentPath }: SidebarLinkProps) {
+  const active = isActivePath(currentPath, item.href)
+  const Icon = (Icons[item.icon as keyof typeof Icons] ?? Icons.Circle) as Icons.LucideIcon
+
+  return (
+    <li>
+      <Link
+        href={item.href}
+        className={cn(
+          'flex items-center gap-3 rounded-full px-4 py-2 text-sm transition-colors',
+          active ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100'
+        )}
+      >
+        <Icon className="h-4 w-4" aria-hidden="true" />
+        <span className="font-medium">{item.label}</span>
+      </Link>
+    </li>
   )
 }
