@@ -5,6 +5,7 @@ import { Suspense } from 'react'
 import AppShell from '@/components/layout/AppShell'
 import Rosie from '@/components/assistant/Rosie'
 import { ThemeProvider } from '@/lib/theme-provider'
+import RealtimeProvider from '@/app/providers/RealtimeProvider'
 
 export const metadata: Metadata = {
   title: 'TRS RevenueOS',
@@ -16,14 +17,18 @@ type RootLayoutProps = {
 }
 
 export default function RootLayout({ children }: RootLayoutProps) {
+  const userId = '00000000-0000-0000-0000-000000000001'
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-white text-black">
         <ThemeProvider defaultTheme="light" storageKey="trs-theme">
-          <Suspense fallback={<div className="min-h-screen bg-white" />}>
-            <AppShell>{children}</AppShell>
-          </Suspense>
-          <Rosie />
+          <RealtimeProvider userId={userId}>
+            <Suspense fallback={<div className="min-h-screen bg-white" />}>
+              <AppShell>{children}</AppShell>
+            </Suspense>
+            <Rosie />
+          </RealtimeProvider>
         </ThemeProvider>
       </body>
     </html>
