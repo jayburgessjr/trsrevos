@@ -19,6 +19,9 @@ import SummaryFeed from "@/components/morning/SummaryFeed";
 import CoPilotDrawer from "@/components/morning/CoPilotDrawer";
 import NewsTicker from "@/components/morning/NewsTicker";
 import NewsFeed from "@/components/morning/NewsFeed";
+import { Badge } from "@/ui/badge";
+import { Button } from "@/ui/button";
+import { PageHeader, PageTitle, PageDescription } from "@/ui/page-header";
 import {
   computePlan,
   lockPlan,
@@ -192,55 +195,69 @@ export default function MorningPage() {
   const briefTabs: BriefTab[] = ["Inbox", "Calendar"];
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
-      <PageTabs tabs={tabs} activeTab={activeTab} hrefForTab={buildTabHref} />
-
-      <section className={cn(TRS_CARD, "p-3")}>
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-lg font-semibold text-black">Good morning</div>
-            <div className="text-[12px] text-gray-500">
-              {greeting} • Momentum: {s.momentum} • {s.note}
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-6">
+      <section className="space-y-4">
+        <PageHeader className="gap-4 rounded-xl border border-[color:var(--color-outline)]">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-2">
+              <PageTitle>Morning Brief</PageTitle>
+              <PageDescription>
+                Good morning — {greeting}. Daily revenue operating briefing curated by the
+                Morning Agent. {s.note}.
+              </PageDescription>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={pending}
+                onClick={() =>
+                  start(async () => {
+                    await computePlan();
+                    await refresh();
+                  })
+                }
+              >
+                Compute Plan
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={pending || s.planLocked}
+                onClick={() =>
+                  start(async () => {
+                    await lockPlan();
+                    await refresh();
+                  })
+                }
+              >
+                {s.planLocked ? "Locked" : "Lock Plan"}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={pending}
+                onClick={() =>
+                  start(async () => {
+                    await downloadIcal();
+                  })
+                }
+              >
+                Download iCal
+              </Button>
+              <CoPilotDrawer />
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() =>
-                start(async () => {
-                  await computePlan();
-                  await refresh();
-                })
-              }
-              disabled={pending}
-              className="rounded-md border px-2 py-1 text-xs"
-            >
-              Compute Plan
-            </button>
-            <button
-              onClick={() =>
-                start(async () => {
-                  await lockPlan();
-                  await refresh();
-                })
-              }
-              disabled={pending}
-              className="rounded-md border px-2 py-1 text-xs"
-            >
-              {s.planLocked ? "Locked" : "Lock Plan"}
-            </button>
-            <button
-              onClick={() =>
-                start(async () => {
-                  await downloadIcal();
-                })
-              }
-              className="rounded-md border px-2 py-1 text-xs"
-            >
-              Download iCal
-            </button>
-            <CoPilotDrawer />
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <Badge variant="success">Momentum: {s.momentum}</Badge>
+            <Badge variant={s.planLocked ? "success" : "warning"}>
+              {s.planLocked ? "Plan locked" : "Plan draft"}
+            </Badge>
+            <Badge variant="outline">Focus sessions today: {s.kpis.focusSessionsToday}</Badge>
           </div>
-        </div>
+        </PageHeader>
+
+        <PageTabs tabs={tabs} activeTab={activeTab} hrefForTab={buildTabHref} />
       </section>
 
       {activeTab === "Today" && (
