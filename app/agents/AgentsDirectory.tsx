@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -8,6 +8,7 @@ import { PageTabs } from "@/components/layout/PageTabs";
 import { Card } from "@/components/kit/Card";
 import { cn } from "@/lib/utils";
 import { TRS_CARD } from "@/lib/style";
+import { actionRunAgent, actionToggleAgent } from "@/core/agents/actions";
 import type { AgentMeta } from "@/core/agents/types";
 import { resolveTabs } from "@/lib/tabs";
 
@@ -88,6 +89,9 @@ export default function AgentsDirectory({ agents }: { agents: AgentRecord[] }) {
     () =>
       new Map(agents.map((agent) => [agent.meta.key, agent.status.enabled])),
   );
+  const [runMessage, setRunMessage] = useState<string | null>(null);
+  const [runPending, startRun] = useTransition();
+  const [togglePending, startToggle] = useTransition();
 
   useEffect(() => {
     setStatusOverrides(
@@ -125,12 +129,31 @@ export default function AgentsDirectory({ agents }: { agents: AgentRecord[] }) {
     });
   }, [agents, query, statusFilter, statusOverrides, activeTab]);
 
-  const handleToggle = (key: AgentMeta["key"]) => {
+  const handleToggle = (key: AgentMeta["key"], currentEnabled: boolean) => {
+    const nextEnabled = !currentEnabled;
     setStatusOverrides((prev) => {
       const next = new Map(prev);
-      const current = prev.get(key) ?? true;
-      next.set(key, !current);
+      next.set(key, nextEnabled);
       return next;
+    });
+
+    startToggle(async () => {
+      try {
+        await actionToggleAgent(key, nextEnabled);
+      } catch (error) {
+        console.error("agents:toggle-failed", error);
+      }
+    });
+  };
+
+  const handleRun = (key: AgentMeta["key"]) => {
+    startRun(async () => {
+      const result = await actionRunAgent(key);
+      setRunMessage(
+        result.supabaseRunId
+          ? `Agent ${key} run stored as ${result.supabaseRunId}`
+          : `Agent ${key} run completed`,
+      );
     });
   };
 
@@ -166,6 +189,12 @@ export default function AgentsDirectory({ agents }: { agents: AgentRecord[] }) {
       </header>
 
       <PageTabs tabs={tabs} activeTab={activeTab} hrefForTab={buildTabHref} />
+
+      {runMessage ? (
+        <div className="rounded-md border border-indigo-200 bg-indigo-50 p-3 text-xs text-indigo-800">
+          {runMessage}
+        </div>
+      ) : null}
 
       {activeTab === "GPT Agents" ? (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
@@ -276,6 +305,14 @@ export default function AgentsDirectory({ agents }: { agents: AgentRecord[] }) {
                 </div>
 
                 <div className="mt-4 flex flex-col gap-2 text-xs font-medium text-gray-700 md:flex-row md:items-center md:justify-between">
+                  <button
+                    type="button"
+                    onClick={() => handleRun(agent.meta.key)}
+                    disabled={runPending}
+                    className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 transition hover:border-black hover:text-black disabled:opacity-60"
+                  >
+                    {runPending ? "Running…" : "Run Agent"}
+                  </button>
                   <Link
                     href={`/agents/${agent.meta.key}`}
                     className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-black transition hover:border-black hover:bg-gray-50"
@@ -284,8 +321,9 @@ export default function AgentsDirectory({ agents }: { agents: AgentRecord[] }) {
                   </Link>
                   <button
                     type="button"
-                    onClick={() => handleToggle(agent.meta.key)}
-                    className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 transition hover:border-black hover:text-black"
+                    onClick={() => handleToggle(agent.meta.key, enabled)}
+                    disabled={togglePending}
+                    className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 transition hover:border-black hover:text-black disabled:opacity-60"
                   >
                     {enabled ? "Deactivate" : "Activate"}
                   </button>

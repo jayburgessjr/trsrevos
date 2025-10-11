@@ -26,6 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import { TRS_CARD, TRS_SECTION_TITLE, TRS_SUBTITLE } from "@/lib/style";
 import { resolveTabs } from "@/lib/tabs";
+import { syncClientHealth } from "@/core/clients/actions";
 import { getClients, getClientStats } from "@/core/clients/store";
 
 const healthLabel = (value: number) => {
@@ -56,6 +57,8 @@ export default function ClientsPage() {
   );
 
   const router = useRouter();
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [syncPending, startSync] = useTransition();
   const clients = useMemo(() => getClients(), []);
   const stats = useMemo(() => getClientStats(), []);
 
@@ -234,6 +237,23 @@ export default function ClientsPage() {
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Button
+                    variant="primary"
+                    size="sm"
+                    disabled={syncPending}
+                    onClick={() =>
+                      startSync(async () => {
+                        const result = await syncClientHealth();
+                        setSyncMessage(
+                          result.ok
+                            ? `Health sync captured ${result.processed ?? 0} snapshots`
+                            : "Health sync failed"
+                        );
+                      })
+                    }
+                  >
+                    {syncPending ? "Syncing…" : "Run health sync"}
+                  </Button>
+                  <Button
                     variant="outline"
                     size="sm"
                     onClick={() => router.push("/partners")}
@@ -253,6 +273,9 @@ export default function ClientsPage() {
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
                 <div className="rounded-lg border border-gray-200 bg-white p-3">
                   <div className={TRS_SECTION_TITLE}>Health spotlight</div>
+                  {syncMessage ? (
+                    <div className="mt-2 text-xs text-gray-500">{syncMessage}</div>
+                  ) : null}
                   <ul className="mt-3 space-y-2 text-sm text-gray-700">
                     {clients
                       .slice()

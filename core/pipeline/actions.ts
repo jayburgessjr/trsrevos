@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { requireAuth } from "@/lib/server/auth";
 import { revalidatePath } from "next/cache";
 
 export type Opportunity = {
@@ -495,4 +496,40 @@ async function emitAnalyticsEvent(event: {
     user_id: user.id,
     metadata: event.metadata || {},
   });
+}
+
+export async function syncPipelineAnalytics() {
+  const { supabase, user, organizationId } = await requireAuth({ redirectTo: "/login?next=/pipeline" });
+
+  if (!organizationId) {
+    return { ok: false, error: "missing-organization" } as const;
+  }
+
+  const { data: totals } = await supabase
+    .from("opportunities")
+    .select("stage")
+    .eq("owner_id", user.id);
+
+  const stageCounts = (totals ?? []).reduce<Record<string, number>>((acc, opp) => {
+    const key = opp.stage ?? "Unknown";
+    acc[key] = (acc[key] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const { error } = await supabase.functions.invoke("analytics-events", {
+    body: {
+      organization_id: organizationId,
+      user_id: user.id,
+      event_key: "pipeline.sync.triggered",
+      payload: stageCounts,
+    },
+  });
+
+  if (error) {
+    console.error("pipeline:analytics-sync-failed", error);
+    return { ok: false, error: error.message } as const;
+  }
+
+  revalidatePath("/pipeline");
+  return { ok: true, stages: stageCounts } as const;
 }

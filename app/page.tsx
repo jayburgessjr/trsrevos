@@ -27,6 +27,8 @@ import {
   downloadIcal,
   generateRecap,
   getMorningState,
+  markPriorityComplete,
+  deferPriority,
 } from "@/core/morning/actions";
 
 type S = Awaited<ReturnType<typeof getMorningState>>;
@@ -316,12 +318,18 @@ export default function MorningPage() {
                         roi={p.roi$}
                         effort={p.effort}
                         status={p.status}
-                        onCheck={() => {
-                          /* stub */
-                        }}
-                        onDefer={() => {
-                          /* stub */
-                        }}
+                        onCheck={() =>
+                          start(async () => {
+                            await markPriorityComplete(p.id);
+                            await refresh();
+                          })
+                        }
+                        onDefer={() =>
+                          start(async () => {
+                            await deferPriority(p.id);
+                            await refresh();
+                          })
+                        }
                       />
                     ))
                   )}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useState, useTransition } from 'react'
+import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 import { Badge } from '@/ui/badge'
 import { Button } from '@/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card'
@@ -48,6 +48,7 @@ import {
   getContentSnapshot,
   getMetrics as actionGetMetrics,
   getSuggestions as actionGetSuggestions,
+  insertContentIntoEmail as actionInsertContentIntoEmail,
   markExperimentOutcome,
   recordTouch as actionRecordTouch,
   saveBrief as actionSaveBrief,
@@ -115,11 +116,16 @@ export function ContentStudio(props: ContentStudioProps) {
   })
   const [transcriptTarget, setTranscriptTarget] = useState<MediaProject | null>(null)
   const [transcriptDraft, setTranscriptDraft] = useState('')
+  const [composeMessage, setComposeMessage] = useState<string | null>(null)
 
   const selectedItem = useMemo(
     () => (selectedItemId ? items.find(item => item.id === selectedItemId) ?? null : null),
     [items, selectedItemId],
   )
+
+  useEffect(() => {
+    setComposeMessage(null)
+  }, [selectedItemId])
 
   const relatedVariants = useMemo(
     () => (selectedItem ? variants.filter(variant => variant.contentId === selectedItem.id) : []),
@@ -313,6 +319,18 @@ export function ContentStudio(props: ContentStudioProps) {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(snippet)
     }
+  }
+
+  const handleInsertIntoEmail = (item: ContentItem) => {
+    setComposeMessage('Queueing email…')
+    startTransition(async () => {
+      const result = await actionInsertContentIntoEmail(item.id)
+      if (result.ok) {
+        setComposeMessage(result.message)
+      } else {
+        setComposeMessage(result.error ?? 'Unable to queue email draft.')
+      }
+    })
   }
 
   const handleCreateDraftFromSuggestion = (suggestion: ContentSuggestion) => {
@@ -868,10 +886,14 @@ export function ContentStudio(props: ContentStudioProps) {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => console.info('Insert into email stub')}
+                      disabled={isPending}
+                      onClick={() => handleInsertIntoEmail(selectedItem)}
                     >
                       Insert into email
                     </Button>
+                    {composeMessage ? (
+                      <p className="text-[11px] text-[color:var(--color-text-muted)]">{composeMessage}</p>
+                    ) : null}
                   </div>
                 </TabsContent>
                 <TabsContent value="brief">

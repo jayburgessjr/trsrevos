@@ -1,7 +1,10 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { requireAuth } from "@/lib/server/auth";
+import { logAnalyticsEvent } from "@/core/analytics/actions";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import type { ExecDashboard, TimeScope, Segment } from "./types";
 import { getDashboard as getStaticDashboard, setScope } from "./store";
 
@@ -242,12 +245,30 @@ export async function setExecScope(scope: { time: TimeScope; segment: Segment })
 /**
  * Refresh dashboard snapshot
  */
-export async function refreshDashboardSnapshot(): Promise<{
-  success: boolean;
-  error?: string;
-}> {
+export async function refreshDashboardSnapshot(scope: {
+  time: TimeScope;
+  segment: Segment;
+} = { time: "QTD", segment: {} }): Promise<{ success: boolean; error?: string }> {
   try {
-    await getExecDashboard();
+    const { supabase, organizationId } = await requireAuth({ redirectTo: "/login?next=/dashboard" });
+
+    const { error, data } = await supabase.functions.invoke("exec-dashboard-refresh", {
+      body: {
+        organization_id: organizationId,
+        time_scope: scope.time,
+        segment_filter: scope.segment,
+      },
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    await logAnalyticsEvent({
+      eventKey: "dashboard.refresh.triggered",
+      payload: { timeScope: scope.time, segment: scope.segment, snapshot: data },
+    });
+
     revalidatePath("/dashboard");
     return { success: true };
   } catch (error) {
@@ -267,5 +288,38 @@ export async function openDealDeskFor(ids: string[]) {
   return { ok: true, count: ids.length };
 }
 export async function exportBoardDeck() {
-  return { ok: true, url: "/exports/exec-brief.pdf" };
+  const { supabase, user, organizationId } = await requireAuth({ redirectTo: "/login?next=/dashboard" });
+
+  if (!organizationId) {
+    console.error("dashboard:export-missing-organization");
+    redirect("/dashboard?export=failed");
+  }
+
+  try {
+    const { data, error } = await supabase.functions.invoke("exec-board-export", {
+      body: {
+        organization_id: organizationId,
+        user_id: user.id,
+      },
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    const url = (data as { url?: string })?.url;
+    if (!url) {
+      throw new Error("missing-export-url");
+    }
+
+    await logAnalyticsEvent({
+      eventKey: "dashboard.export.generated",
+      payload: { downloadUrl: url },
+    });
+
+    redirect(url);
+  } catch (error) {
+    console.error("dashboard:export-failed", error);
+    redirect("/dashboard?export=failed");
+  }
 }

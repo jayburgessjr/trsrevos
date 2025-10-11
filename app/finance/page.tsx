@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { PageTemplate } from "@/components/layout/PageTemplate";
 import { PageTabs } from "@/components/layout/PageTabs";
@@ -34,6 +34,8 @@ import {
   getCashFlowForecast,
   getFinancialMetrics,
 } from "@/core/finance/store";
+import { logAnalyticsEvent } from "@/core/analytics/actions";
+import { syncFinanceData } from "@/core/finance/actions";
 
 export default function FinancePage() {
   const pathname = usePathname();
@@ -61,6 +63,27 @@ export default function FinancePage() {
   const cashFlow = useMemo(() => getCashFlow(), []);
   const cashFlowForecast = useMemo(() => getCashFlowForecast(), []);
   const metrics = useMemo(() => getFinancialMetrics(), []);
+
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [syncPending, startSync] = useTransition();
+  const [, startLog] = useTransition();
+
+  const handleLog = useCallback((eventKey: string, payload?: Record<string, unknown>) => {
+    startLog(async () => {
+      await logAnalyticsEvent({ eventKey, payload });
+    });
+  }, []);
+
+  const handleFinanceSync = useCallback(() => {
+    startSync(async () => {
+      const result = await syncFinanceData();
+      setSyncMessage(
+        result.ok
+          ? `Finance sync processed ${result.invoices_processed ?? 0} invoices`
+          : "Finance sync failed",
+      );
+    });
+  }, []);
 
   const formatCurrency = (amount: number) => `$${amount.toLocaleString()}`;
   const formatPercent = (value: number) => `${value.toFixed(1)}%`;
@@ -156,8 +179,24 @@ export default function FinancePage() {
                   Comprehensive view of equity, revenue, expenses, and cash flow
                 </p>
               </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  disabled={syncPending}
+                  onClick={handleFinanceSync}
+                >
+                  {syncPending ? "Syncing…" : "Sync finance data"}
+                </Button>
+              </div>
             </div>
           </div>
+
+          {syncMessage ? (
+            <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-700">
+              {syncMessage}
+            </div>
+          ) : null}
 
           {/* Recent Activity */}
           <Card className={cn(TRS_CARD)}>
@@ -232,7 +271,11 @@ export default function FinancePage() {
                     Equity ownership and vesting schedules
                   </CardDescription>
                 </div>
-                <Button variant="primary" size="sm">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => handleLog("finance.equity.add-grant")}
+                >
                   Add Equity Grant
                 </Button>
               </div>
@@ -346,10 +389,18 @@ export default function FinancePage() {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleLog("finance.billing.export")}
+              >
                 Export
               </Button>
-              <Button variant="primary" size="sm">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => handleLog("finance.billing.new-invoice")}
+              >
                 New Invoice
               </Button>
             </div>
@@ -452,6 +503,7 @@ export default function FinancePage() {
                     <TableHead>Due Date</TableHead>
                     <TableHead className="text-right">Amount</TableHead>
                     <TableHead className="text-right">Total</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -488,6 +540,18 @@ export default function FinancePage() {
                       <TableCell className="text-right font-medium">
                         {formatCurrency(invoice.total)}
                       </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          type="button"
+                          onClick={() =>
+                            handleLog("finance.billing.view-invoice", { invoiceId: invoice.id })
+                          }
+                        >
+                          View
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -506,7 +570,11 @@ export default function FinancePage() {
                 Subscription management and MRR/ARR tracking
               </p>
             </div>
-            <Button variant="primary" size="sm">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => handleLog("finance.subscriptions.new")}
+            >
               New Subscription
             </Button>
           </div>
@@ -606,6 +674,7 @@ export default function FinancePage() {
                     <TableHead className="text-right">ARR</TableHead>
                     <TableHead>Next Billing</TableHead>
                     <TableHead>Renewal</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -647,6 +716,18 @@ export default function FinancePage() {
                       <TableCell className="text-sm text-gray-600">
                         {new Date(sub.renewalDate).toLocaleDateString()}
                       </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          type="button"
+                          onClick={() =>
+                            handleLog("finance.subscriptions.manage", { subscriptionId: sub.id })
+                          }
+                        >
+                          Manage
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -666,10 +747,18 @@ export default function FinancePage() {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleLog("finance.expenses.export")}
+              >
                 Export P&L
               </Button>
-              <Button variant="primary" size="sm">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => handleLog("finance.expenses.add")}
+              >
                 Add Expense
               </Button>
             </div>
@@ -867,7 +956,11 @@ export default function FinancePage() {
                 Monitor cash position and forecast future runway
               </p>
             </div>
-            <Button variant="primary" size="sm">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => handleLog("finance.cashflow.update-forecast")}
+            >
               Update Forecast
             </Button>
           </div>
