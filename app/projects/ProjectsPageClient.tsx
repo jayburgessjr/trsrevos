@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -9,62 +9,18 @@ import { Card } from "@/components/kit/Card";
 import { resolveTabs } from "@/lib/tabs";
 import { cn } from "@/lib/utils";
 import { TRS_CARD, TRS_SUBTITLE } from "@/lib/style";
-import type { Project } from "@/core/projects/types";
+import type { Project, ProjectMilestone, ProjectStats, ProjectUpdate } from "@/core/projects/types";
+import { actionSubmitProjectAgentPrompt } from "@/core/projects/actions";
 
-const activeStreams = [
-  {
-    title: "This Week",
-    items: [
-      {
-        task: "Finalize compounding forecast",
-        owner: "Morgan",
-        due: "Oct 18",
-        status: "On track",
-      },
-      {
-        task: "Align ACME rollout playbook",
-        owner: "Jay",
-        due: "Oct 19",
-        status: "Review",
-      },
-      {
-        task: "Partner launch readiness",
-        owner: "Riya",
-        due: "Oct 21",
-        status: "Blocked",
-      },
-    ],
-  },
-  {
-    title: "Risks",
-    items: [
-      {
-        task: "Billing integration QA",
-        owner: "Noah",
-        due: "Oct 20",
-        status: "Need escalation",
-      },
-      {
-        task: "Security questionnaire",
-        owner: "Amelia",
-        due: "Oct 24",
-        status: "Waiting on client",
-      },
-    ],
-  },
-];
+type ActivityData = {
+  updates: ProjectUpdate[];
+  milestones: ProjectMilestone[];
+};
 
-const forecastMetrics = [
-  { label: "Q4 ARR Forecast", value: "$3.8M", context: "+6.2% vs plan" },
-  { label: "Projected Completion", value: "78%", context: "Across 12 tracks" },
-  { label: "Budget Utilization", value: "64%", context: "$420k of $650k" },
-];
-
-const forecastTimeline = [
-  { month: "Oct", arr: "$940k", milestone: "RevenueOS rollout" },
-  { month: "Nov", arr: "$1.25M", milestone: "Compounding launch" },
-  { month: "Dec", arr: "$1.6M", milestone: "Partner expansion" },
-];
+type ForecastData = {
+  metrics: { label: string; value: string; context?: string }[];
+  timeline: { period: string; count: number; highlight: string }[];
+};
 
 const agentPrompts = [
   "Where are we trending behind schedule?",
@@ -72,17 +28,54 @@ const agentPrompts = [
   "What is the next milestone for RevenueOS expansion?",
 ];
 
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+});
+
+const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
+
+function formatDate(value?: string | null) {
+  if (!value) return "—";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "—";
+  return dateFormatter.format(parsed);
+}
+
+function formatDateTime(value: string) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return dateTimeFormatter.format(parsed);
+}
+
+function healthBadge(health: Project["health"]) {
+  switch (health) {
+    case "green":
+      return "bg-emerald-100 text-emerald-700";
+    case "yellow":
+      return "bg-amber-100 text-amber-700";
+    case "red":
+      return "bg-rose-100 text-rose-700";
+    default:
+      return "bg-gray-100 text-gray-700";
+  }
+}
+
 export default function ProjectsPageClient({
   projects,
   stats,
+  activity,
+  forecast,
 }: {
   projects: Project[];
-  stats: {
-    active: number;
-    onTrack: number;
-    atRisk: number;
-    avgProgress: number;
-  };
+  stats: ProjectStats;
+  activity: ActivityData;
+  forecast: ForecastData;
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -99,6 +92,26 @@ export default function ProjectsPageClient({
       return `${pathname}?${params.toString()}`;
     },
     [pathname, searchParams],
+  );
+
+  const [prompt, setPrompt] = useState("");
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const submitPrompt = useCallback(
+    (value: string) => {
+      if (!value.trim()) return;
+      startTransition(async () => {
+        const result = await actionSubmitProjectAgentPrompt({ prompt: value });
+        if (result.ok) {
+          setStatusMessage("Request sent to project agent. We'll notify you when the response is ready.");
+          setPrompt("");
+        } else {
+          setStatusMessage(result.error ?? "Unable to submit agent prompt. Please try again.");
+        }
+      });
+    },
+    [],
   );
 
   return (
@@ -128,7 +141,7 @@ export default function ProjectsPageClient({
                     Snapshot of core initiatives and momentum.
                   </p>
                 </div>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
                   <div className={cn(TRS_CARD, "p-3")}>
                     <div className={TRS_SUBTITLE}>Active Projects</div>
                     <div className="mt-1 text-xl font-semibold text-black">
@@ -154,6 +167,15 @@ export default function ProjectsPageClient({
                     </div>
                     <div className="text-[11px] text-gray-600">
                       Requires action
+                    </div>
+                  </div>
+                  <div className={cn(TRS_CARD, "p-3")}>
+                    <div className={TRS_SUBTITLE}>Budget Utilization</div>
+                    <div className="mt-1 text-xl font-semibold text-black">
+                      {stats.totalBudget > 0 ? `${stats.budgetUtilization}%` : "—"}
+                    </div>
+                    <div className="text-[11px] text-gray-600">
+                      {stats.totalBudget > 0 ? "Portfolio spend" : "No portfolio budget"}
                     </div>
                   </div>
                 </div>
@@ -191,26 +213,25 @@ export default function ProjectsPageClient({
                         <td className="px-3 py-2 text-gray-700">
                           {project.owner}
                         </td>
-                        <td
-                          className={`px-3 py-2 text-sm ${
-                            project.health === "green"
-                              ? "text-gray-600"
+                        <td className="px-3 py-2">
+                          <span
+                            className={cn(
+                              "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                              healthBadge(project.health),
+                            )}
+                          >
+                            {project.health === "green"
+                              ? "On Track"
                               : project.health === "yellow"
-                                ? "text-gray-600"
-                                : "text-gray-600"
-                          }`}
-                        >
-                          {project.health === "green"
-                            ? "On Track"
-                            : project.health === "yellow"
-                              ? "At Risk"
-                              : "Critical"}
+                                ? "Watching"
+                                : "Critical"}
+                          </span>
                         </td>
                         <td className="px-3 py-2 text-gray-700">
                           {project.progress}%
                         </td>
                         <td className="px-3 py-2 text-gray-700">
-                          {project.dueDate || "—"}
+                          {formatDate(project.dueDate)}
                         </td>
                       </tr>
                     ))}
@@ -223,42 +244,82 @@ export default function ProjectsPageClient({
 
         {activeTab === "Active" && (
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-            {activeStreams.map((stream) => (
-              <Card key={stream.title} className={cn(TRS_CARD, "p-4")}>
-                <div className="text-sm font-semibold text-black">
-                  {stream.title}
-                </div>
-                <div className="mt-3 space-y-3">
-                  {stream.items.map((item) => (
-                    <div
-                      key={`${stream.title}-${item.task}`}
-                      className="rounded-lg border border-gray-200 p-3"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="text-sm font-medium text-black">
-                            {item.task}
-                          </div>
-                          <div className="text-[12px] text-gray-600">
-                            Owner: {item.owner} • Due {item.due}
-                          </div>
+            <Card className={cn(TRS_CARD, "p-4")}> 
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold text-black">Recent updates</div>
+                <span className="text-[11px] uppercase tracking-wide text-gray-500">
+                  {activity.updates.length} logged
+                </span>
+              </div>
+              <div className="mt-3 space-y-3">
+                {activity.updates.length === 0 && (
+                  <div className="rounded-lg border border-dashed border-gray-200 bg-white p-4 text-sm text-gray-600">
+                    Project updates will appear here as delivery owners post check-ins.
+                  </div>
+                )}
+                {activity.updates.slice(0, 6).map((update) => (
+                  <div key={update.id} className="rounded-lg border border-gray-200 bg-white p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-semibold text-black">{update.projectName}</div>
+                        {update.summary && (
+                          <div className="mt-1 text-[12px] text-gray-600">{update.summary}</div>
+                        )}
+                        <div className="mt-2 text-[11px] uppercase tracking-wide text-gray-500">
+                          {update.authorName} • {formatDateTime(update.createdAt)}
                         </div>
-                        <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                          {item.status}
-                        </span>
                       </div>
+                      {update.status && (
+                        <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                          {update.status}
+                        </span>
+                      )}
                     </div>
-                  ))}
-                </div>
-              </Card>
-            ))}
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <Card className={cn(TRS_CARD, "p-4")}>
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold text-black">Upcoming milestones</div>
+                <span className="text-[11px] uppercase tracking-wide text-gray-500">
+                  {activity.milestones.length} tracked
+                </span>
+              </div>
+              <div className="mt-3 space-y-3">
+                {activity.milestones.length === 0 && (
+                  <div className="rounded-lg border border-dashed border-gray-200 bg-white p-4 text-sm text-gray-600">
+                    Once milestones are defined, due dates and owners will populate here.
+                  </div>
+                )}
+                {activity.milestones.slice(0, 6).map((milestone) => (
+                  <div key={milestone.id} className="rounded-lg border border-gray-200 bg-white p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-semibold text-black">{milestone.title}</div>
+                        <div className="text-[12px] text-gray-600">
+                          {milestone.projectName}
+                        </div>
+                        <div className="mt-2 text-[11px] uppercase tracking-wide text-gray-500">
+                          {milestone.ownerName ?? "Unassigned"} • Due {formatDate(milestone.dueDate)}
+                        </div>
+                      </div>
+                      <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                        {milestone.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
           </div>
         )}
 
         {activeTab === "Forecast" && (
           <div className="space-y-4">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-              {forecastMetrics.map((metric) => (
+              {forecast.metrics.map((metric) => (
                 <Card key={metric.label} className={cn(TRS_CARD, "p-4")}>
                   <div className={TRS_SUBTITLE}>{metric.label}</div>
                   <div className="mt-2 text-2xl font-semibold text-black">
@@ -271,24 +332,18 @@ export default function ProjectsPageClient({
               ))}
             </div>
             <Card className={cn(TRS_CARD, "p-4")}>
-              <div className="text-sm font-semibold text-black">
-                Quarterly outlook
-              </div>
-              <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
-                {forecastTimeline.map((point) => (
-                  <div
-                    key={point.month}
-                    className="rounded-lg border border-gray-200 p-3"
-                  >
-                    <div className="text-[11px] uppercase tracking-wide text-gray-500">
-                      {point.month}
-                    </div>
-                    <div className="mt-1 text-lg font-semibold text-black">
-                      {point.arr}
-                    </div>
-                    <div className="text-[12px] text-gray-600">
-                      {point.milestone}
-                    </div>
+              <div className="text-sm font-semibold text-black">Milestone outlook</div>
+              <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-4">
+                {forecast.timeline.length === 0 && (
+                  <div className="rounded-lg border border-dashed border-gray-200 bg-white p-4 text-sm text-gray-600">
+                    No upcoming milestones have been scheduled.
+                  </div>
+                )}
+                {forecast.timeline.map((point) => (
+                  <div key={point.period} className="rounded-lg border border-gray-200 bg-white p-3">
+                    <div className="text-[11px] uppercase tracking-wide text-gray-500">{point.period}</div>
+                    <div className="mt-1 text-lg font-semibold text-black">{point.count} milestone{point.count === 1 ? "" : "s"}</div>
+                    <div className="text-[12px] text-gray-600">Next: {point.highlight}</div>
                   </div>
                 ))}
               </div>
@@ -306,9 +361,43 @@ export default function ProjectsPageClient({
               surface risk across delivery tracks.
             </p>
             <div className="mt-4 space-y-3">
-              <div className="rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-600">
-                Prompt workspace placeholder
-              </div>
+              <form
+                className="space-y-2"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  submitPrompt(prompt);
+                }}
+              >
+                <textarea
+                  value={prompt}
+                  onChange={(event) => setPrompt(event.target.value)}
+                  placeholder="Ask about delivery risks, timing, or budget scenarios..."
+                  className="h-28 w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700 shadow-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+                  disabled={isPending}
+                />
+                <div className="flex items-center justify-between">
+                  <div className="text-[12px] text-gray-500">
+                    Agent logs are stored in analytics events for auditing.
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isPending || !prompt.trim()}
+                    className={cn(
+                      "inline-flex items-center rounded-full border border-black px-4 py-1 text-[12px] font-semibold transition",
+                      isPending
+                        ? "cursor-wait bg-black text-white opacity-80"
+                        : "bg-black text-white hover:bg-white hover:text-black",
+                    )}
+                  >
+                    {isPending ? "Submitting..." : "Send to agent"}
+                  </button>
+                </div>
+              </form>
+              {statusMessage && (
+                <div className="rounded-lg border border-gray-200 bg-white p-3 text-[12px] text-gray-600">
+                  {statusMessage}
+                </div>
+              )}
               <div>
                 <div className="text-[12px] uppercase tracking-wide text-gray-500">
                   Quick prompts
@@ -319,6 +408,10 @@ export default function ProjectsPageClient({
                       key={prompt}
                       className="rounded-full border border-gray-300 px-3 py-1 text-[12px] text-gray-700 transition hover:border-black hover:text-black"
                       type="button"
+                      onClick={() => {
+                        setPrompt(prompt);
+                        setStatusMessage(null);
+                      }}
                     >
                       {prompt}
                     </button>
