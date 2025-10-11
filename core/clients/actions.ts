@@ -194,11 +194,15 @@ export async function actionSaveKanban(id: string, cards: any[]) {
   return await actionGetClient(id);
 }
 
-export async function syncClientHealth() {
+type SyncClientHealthResult =
+  | { ok: true; processed?: number }
+  | { ok: false; error: string };
+
+export async function syncClientHealth(): Promise<SyncClientHealthResult> {
   const { supabase, user, organizationId } = await requireAuth({ redirectTo: "/login?next=/clients" });
 
   if (!organizationId) {
-    return { ok: false, error: "missing-organization" } as const;
+    return { ok: false, error: "missing-organization" };
   }
 
   const { data, error } = await supabase.functions.invoke("client-health-sync", {
@@ -207,7 +211,7 @@ export async function syncClientHealth() {
 
   if (error) {
     console.error("clients:health-sync-failed", error);
-    return { ok: false, error: error.message } as const;
+    return { ok: false, error: error.message };
   }
 
   await logAnalyticsEvent({
@@ -216,7 +220,11 @@ export async function syncClientHealth() {
   });
 
   revalidatePath("/clients");
-  return { ok: true, ...(data as Record<string, unknown>) } as const;
+  const processed = (data as Record<string, unknown> | null | undefined)?.processed;
+  return {
+    ok: true,
+    processed: typeof processed === "number" ? processed : undefined,
+  };
 }
 
 /**
