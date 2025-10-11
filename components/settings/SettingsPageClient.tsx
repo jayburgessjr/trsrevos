@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { PageTemplate } from "@/components/layout/PageTemplate"
+import type { PageTemplateBadge } from "@/components/layout/PageTemplate"
 import { AgentManager } from "@/components/settings/AgentManager"
 import { FeatureFlags } from "@/components/settings/FeatureFlags"
 import { IntegrationsForm } from "@/components/settings/IntegrationsForm"
@@ -32,9 +33,9 @@ export function SettingsPageClient({
 
   const tabs = ["Agents", "Appearance", "Integrations", "Feature Flags", "Behavior"]
 
-  const headerBadges = useMemo(
+  const headerBadges = useMemo<PageTemplateBadge[]>(
     () => [
-      { label: `${agents.length} agents configured`, variant: "default" as const },
+      { label: `${agents.length} agents configured`, variant: "default" },
       {
         label: featureFlagServiceAvailable ? "Feature flags connected" : "Feature flags offline",
         variant: featureFlagServiceAvailable ? "success" : "outline",
