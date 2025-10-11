@@ -44,3 +44,7 @@ account and manage mail inside TRSREVOS. To enable the feature locally, configur
 
 Ensure the Gmail API is enabled for the Google Cloud project and the OAuth consent screen is configured to request the
 `https://www.googleapis.com/auth/gmail.modify` and `https://www.googleapis.com/auth/userinfo.email` scopes.
+
+## Supabase project alignment
+
+If you accidentally seed data into the wrong Supabase project, follow the [Supabase Project Realignment Guide](docs/supabase-project-sync.md) to link the CLI to the TRESVOS instance and reapply the schema plus seeds defined in this repository.
