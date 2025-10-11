@@ -28,6 +28,11 @@ import type { RevOSPhase } from "@/core/clients/types";
 const hasSupabaseCredentials = () =>
   Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
+type SingleOrMany<T> = T | T[] | null;
+
+const unwrapSingle = <T>(value: SingleOrMany<T>): T | null =>
+  Array.isArray(value) ? value[0] ?? null : value;
+
 type ProjectRecord = {
   id: string;
   name: string;
@@ -47,24 +52,26 @@ type ProjectRecord = {
   notes: string | null;
   created_at: string | null;
   updated_at: string | null;
-  client: { id: string; name: string | null; phase: RevOSPhase | null } | null;
-  owner: { id: string; name: string | null } | null;
+  client: SingleOrMany<{ id: string; name: string | null; phase: RevOSPhase | null }>;
+  owner: SingleOrMany<{ id: string; name: string | null }>;
 };
 
 const normalizeProject = (record: ProjectRecord): Project => {
   const defaultPhase: RevOSPhase = "Discovery";
   const fallbackDate = new Date().toISOString();
+  const client = unwrapSingle(record.client);
+  const owner = unwrapSingle(record.owner);
 
   return {
     id: record.id,
     name: record.name,
     clientId: record.client_id,
-    clientName: record.client?.name ?? "Unknown Client",
+    clientName: client?.name ?? "Unknown Client",
     description: record.description ?? undefined,
-    owner: record.owner?.name ?? "Unassigned",
-    ownerId: record.owner?.id ?? undefined,
+    owner: owner?.name ?? "Unassigned",
+    ownerId: owner?.id ?? undefined,
     status: (record.status ?? "Active") as ProjectStatus,
-    phase: (record.phase ?? record.client?.phase ?? defaultPhase) as RevOSPhase,
+    phase: (record.phase ?? client?.phase ?? defaultPhase) as RevOSPhase,
     health: (record.health ?? "yellow") as ProjectHealth,
     progress: record.progress ?? 0,
     startDate: record.start_date ?? fallbackDate.split("T")[0],
@@ -77,6 +84,32 @@ const normalizeProject = (record: ProjectRecord): Project => {
     createdAt: record.created_at ?? fallbackDate,
     updatedAt: record.updated_at ?? fallbackDate,
   };
+};
+
+type ProjectUpdateRecord = {
+  id: string;
+  project_id: string;
+  status: string | null;
+  summary: string | null;
+  risk_level: string | null;
+  created_at: string;
+  project: SingleOrMany<{ id: string; name: string | null }>;
+  author: SingleOrMany<{ id: string; name: string | null }>;
+};
+
+type ProjectMilestoneRecord = {
+  id: string;
+  project_id: string;
+  owner_id: string | null;
+  title: string;
+  status: string;
+  confidence: number | null;
+  due_date: string | null;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  project: SingleOrMany<{ id: string; name: string | null }>;
+  owner: SingleOrMany<{ id: string; name: string | null }>;
 };
 
 export async function actionListProjects(): Promise<Project[]> {
@@ -433,17 +466,22 @@ export async function actionListProjectUpdates(): Promise<ProjectUpdate[]> {
     return listProjectUpdatesFallback();
   }
 
-  return data.map((update) => ({
-    id: update.id,
-    projectId: update.project_id,
-    projectName: update.project?.name ?? "Unknown Project",
-    authorId: update.author?.id ?? "",
-    authorName: update.author?.name ?? "Unknown",
-    status: update.status,
-    summary: update.summary,
-    riskLevel: update.risk_level,
-    createdAt: update.created_at,
-  }));
+  return (data as ProjectUpdateRecord[]).map((update) => {
+    const project = unwrapSingle(update.project);
+    const author = unwrapSingle(update.author);
+
+    return {
+      id: update.id,
+      projectId: update.project_id,
+      projectName: project?.name ?? "Unknown Project",
+      authorId: author?.id ?? "",
+      authorName: author?.name ?? "Unknown",
+      status: update.status,
+      summary: update.summary,
+      riskLevel: update.risk_level,
+      createdAt: update.created_at,
+    };
+  });
 }
 
 export async function actionListProjectMilestones(): Promise<ProjectMilestone[]> {
@@ -470,7 +508,7 @@ export async function actionListProjectMilestones(): Promise<ProjectMilestone[]>
         owner:users!project_milestones_owner_id_fkey(id, name)
       `,
     )
-    .order("due_date", { ascending: true, nullsLast: true })
+    .order("due_date", { ascending: true, nullsFirst: false })
     .limit(25);
 
   if (error || !data) {
@@ -478,20 +516,25 @@ export async function actionListProjectMilestones(): Promise<ProjectMilestone[]>
     return listProjectMilestonesFallback();
   }
 
-  return data.map((milestone) => ({
-    id: milestone.id,
-    projectId: milestone.project_id,
-    projectName: milestone.project?.name ?? "Unknown Project",
-    ownerId: milestone.owner?.id,
-    ownerName: milestone.owner?.name ?? undefined,
-    title: milestone.title,
-    status: milestone.status as ProjectMilestone["status"],
-    confidence: milestone.confidence,
-    dueDate: milestone.due_date,
-    description: milestone.description,
-    createdAt: milestone.created_at,
-    updatedAt: milestone.updated_at,
-  }));
+  return (data as ProjectMilestoneRecord[]).map((milestone) => {
+    const project = unwrapSingle(milestone.project);
+    const owner = unwrapSingle(milestone.owner);
+
+    return {
+      id: milestone.id,
+      projectId: milestone.project_id,
+      projectName: project?.name ?? "Unknown Project",
+      ownerId: owner?.id,
+      ownerName: owner?.name ?? undefined,
+      title: milestone.title,
+      status: milestone.status as ProjectMilestone["status"],
+      confidence: milestone.confidence,
+      dueDate: milestone.due_date,
+      description: milestone.description,
+      createdAt: milestone.created_at,
+      updatedAt: milestone.updated_at,
+    };
+  });
 }
 
 export async function actionSubmitProjectAgentPrompt({
