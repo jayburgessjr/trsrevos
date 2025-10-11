@@ -1,16 +1,22 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
+import { PageTabs } from "@/components/layout/PageTabs";
 import { Card } from "@/components/kit/Card";
 import { cn } from "@/lib/utils";
 import { TRS_CARD } from "@/lib/style";
 import type { AgentMeta } from "@/core/agents/types";
 import { resolveTabs } from "@/lib/tabs";
 
-type AgentStatus = { enabled: boolean; lastRun?: string; lastSummary?: string; impact$?: number };
+type AgentStatus = {
+  enabled: boolean;
+  lastRun?: string;
+  lastSummary?: string;
+  impact$?: number;
+};
 
 type AgentRecord = { meta: AgentMeta; status: AgentStatus };
 
@@ -30,19 +36,22 @@ const STATUS_TONES: Record<string, { badge: string }> = {
 const GPT_AGENTS: GPTAgent[] = [
   {
     name: "Revenue Science Advisor",
-    description: "Expert guidance on revenue operations, pricing strategy, and growth frameworks. Helps analyze deals, optimize pricing, and build predictable revenue systems.",
+    description:
+      "Expert guidance on revenue operations, pricing strategy, and growth frameworks. Helps analyze deals, optimize pricing, and build predictable revenue systems.",
     url: "https://chatgpt.com/g/g-686b5c0bdcec8191b43a5065baff3de7-revenue-science-advisor?model=gpt-4o",
     category: "Revenue Strategy",
   },
   {
     name: "Scholarly Mentor",
-    description: "Academic research assistant and educational mentor. Provides scholarly insights, research guidance, and learning support across various disciplines.",
+    description:
+      "Academic research assistant and educational mentor. Provides scholarly insights, research guidance, and learning support across various disciplines.",
     url: "https://chatgpt.com/g/g-686c749ae3488191b09203dc7bc02ab6-scholarly-mentor?model=gpt-4o",
     category: "Education & Research",
   },
   {
     name: "Revenue Agent Architect",
-    description: "Specialized in designing and architecting revenue agent systems. Helps build automated workflows, agent pipelines, and revenue intelligence frameworks.",
+    description:
+      "Specialized in designing and architecting revenue agent systems. Helps build automated workflows, agent pipelines, and revenue intelligence frameworks.",
     url: "https://chatgpt.com/g/g-68e5382ab9f48191bf653cff8d80d0b1-revenue-agent-architect",
     category: "Agent Design",
   },
@@ -64,27 +73,42 @@ export default function AgentsDirectory({ agents }: { agents: AgentRecord[] }) {
     return current && tabs.includes(current) ? current : tabs[0];
   }, [searchParams, tabs]);
 
+  const buildTabHref = useCallback(
+    (tab: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("tab", tab);
+      return `${pathname}?${params.toString()}`;
+    },
+    [pathname, searchParams],
+  );
+
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [statusOverrides, setStatusOverrides] = useState(() =>
-    new Map(agents.map((agent) => [agent.meta.key, agent.status.enabled])),
+  const [statusOverrides, setStatusOverrides] = useState(
+    () =>
+      new Map(agents.map((agent) => [agent.meta.key, agent.status.enabled])),
   );
 
   useEffect(() => {
-    setStatusOverrides(new Map(agents.map((agent) => [agent.meta.key, agent.status.enabled])));
+    setStatusOverrides(
+      new Map(agents.map((agent) => [agent.meta.key, agent.status.enabled])),
+    );
   }, [agents]);
 
   const filteredAgents = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
     return agents.filter((agent) => {
-      const enabled = statusOverrides.get(agent.meta.key) ?? agent.status.enabled;
+      const enabled =
+        statusOverrides.get(agent.meta.key) ?? agent.status.enabled;
       const status = computeStatus(enabled, agent.status.lastRun);
 
       // Filter by tab
       const matchesTab =
         activeTab === "All" ||
-        (activeTab === "GPT Agents" ? false : agent.meta.category === activeTab);
+        (activeTab === "GPT Agents"
+          ? false
+          : agent.meta.category === activeTab);
 
       const matchesQuery =
         !normalizedQuery ||
@@ -141,14 +165,26 @@ export default function AgentsDirectory({ agents }: { agents: AgentRecord[] }) {
         )}
       </header>
 
+      <PageTabs tabs={tabs} activeTab={activeTab} hrefForTab={buildTabHref} />
+
       {activeTab === "GPT Agents" ? (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
           {GPT_AGENTS.map((gptAgent) => (
-            <Card key={gptAgent.name} className={cn(TRS_CARD, "flex h-full flex-col p-4 transition hover:shadow-sm")}>
+            <Card
+              key={gptAgent.name}
+              className={cn(
+                TRS_CARD,
+                "flex h-full flex-col p-4 transition hover:shadow-sm",
+              )}
+            >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-sm font-semibold text-black">{gptAgent.name}</h2>
-                  <p className="mt-1 text-xs leading-relaxed text-gray-600">{gptAgent.description}</p>
+                  <h2 className="text-sm font-semibold text-black">
+                    {gptAgent.name}
+                  </h2>
+                  <p className="mt-1 text-xs leading-relaxed text-gray-600">
+                    {gptAgent.description}
+                  </p>
                 </div>
                 <span className="inline-flex items-center rounded-full border border-gray-300 bg-white px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide text-gray-700">
                   GPT
@@ -174,22 +210,38 @@ export default function AgentsDirectory({ agents }: { agents: AgentRecord[] }) {
           ))}
         </div>
       ) : filteredAgents.length === 0 ? (
-        <Card className={cn(TRS_CARD, "border-dashed bg-white p-6 text-center text-sm text-gray-600")}>
+        <Card
+          className={cn(
+            TRS_CARD,
+            "border-dashed bg-white p-6 text-center text-sm text-gray-600",
+          )}
+        >
           No agents match the current filters.
         </Card>
       ) : (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
           {filteredAgents.map((agent) => {
-            const enabled = statusOverrides.get(agent.meta.key) ?? agent.status.enabled;
+            const enabled =
+              statusOverrides.get(agent.meta.key) ?? agent.status.enabled;
             const status = computeStatus(enabled, agent.status.lastRun);
             const tone = STATUS_TONES[status];
 
             return (
-              <Card key={agent.meta.key} className={cn(TRS_CARD, "flex h-full flex-col p-4 transition hover:shadow-sm")}>
+              <Card
+                key={agent.meta.key}
+                className={cn(
+                  TRS_CARD,
+                  "flex h-full flex-col p-4 transition hover:shadow-sm",
+                )}
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h2 className="text-sm font-semibold text-black">{agent.meta.name}</h2>
-                    <p className="mt-1 text-xs leading-relaxed text-gray-600">{agent.meta.description}</p>
+                    <h2 className="text-sm font-semibold text-black">
+                      {agent.meta.name}
+                    </h2>
+                    <p className="mt-1 text-xs leading-relaxed text-gray-600">
+                      {agent.meta.description}
+                    </p>
                   </div>
                   <span className="inline-flex items-center rounded-full border border-gray-300 bg-white px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide text-gray-700">
                     {agent.meta.category}
@@ -198,7 +250,9 @@ export default function AgentsDirectory({ agents }: { agents: AgentRecord[] }) {
 
                 <div className="mt-4 flex items-center justify-between text-xs">
                   <span className="font-medium text-gray-700">Status</span>
-                  <span className={`inline-flex items-center rounded-full px-2 py-1 ${tone.badge}`}>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-1 ${tone.badge}`}
+                  >
                     {status}
                   </span>
                 </div>
@@ -208,7 +262,7 @@ export default function AgentsDirectory({ agents }: { agents: AgentRecord[] }) {
                     <div className="mt-0.5 text-gray-700">
                       {agent.status.lastRun
                         ? new Date(agent.status.lastRun).toLocaleString()
-                        : 'No runs yet'}
+                        : "No runs yet"}
                     </div>
                   </div>
                   <div>
@@ -216,7 +270,7 @@ export default function AgentsDirectory({ agents }: { agents: AgentRecord[] }) {
                     <div className="mt-0.5 font-medium text-gray-800">
                       {agent.status.impact$
                         ? `$${Number(agent.status.impact$).toLocaleString()}`
-                        : '—'}
+                        : "—"}
                     </div>
                   </div>
                 </div>
@@ -233,7 +287,7 @@ export default function AgentsDirectory({ agents }: { agents: AgentRecord[] }) {
                     onClick={() => handleToggle(agent.meta.key)}
                     className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 transition hover:border-black hover:text-black"
                   >
-                    {enabled ? 'Deactivate' : 'Activate'}
+                    {enabled ? "Deactivate" : "Activate"}
                   </button>
                 </div>
               </Card>

@@ -1,25 +1,28 @@
-"use client"
+"use client";
 
-import { useMemo, useState } from "react"
-import { PageTemplate } from "@/components/layout/PageTemplate"
-import type { PageTemplateBadge } from "@/components/layout/PageTemplate"
-import { AgentManager } from "@/components/settings/AgentManager"
-import { FeatureFlags } from "@/components/settings/FeatureFlags"
-import { IntegrationsForm } from "@/components/settings/IntegrationsForm"
-import { ThemeCard } from "@/components/settings/ThemeCard"
-import { ToneManager } from "@/components/settings/ToneManager"
-import { cn } from "@/lib/utils"
-import type { AgentBehaviorMap, AgentDefinition } from "@/lib/agents/types"
-import type { FeatureFlagRecord, IntegrationSettings } from "@/lib/settings/types"
+import { useMemo, useState } from "react";
+import { PageTemplate } from "@/components/layout/PageTemplate";
+import type { PageTemplateBadge } from "@/components/layout/PageTemplate";
+import { PageTabs } from "@/components/layout/PageTabs";
+import { AgentManager } from "@/components/settings/AgentManager";
+import { FeatureFlags } from "@/components/settings/FeatureFlags";
+import { IntegrationsForm } from "@/components/settings/IntegrationsForm";
+import { ThemeCard } from "@/components/settings/ThemeCard";
+import { ToneManager } from "@/components/settings/ToneManager";
+import type { AgentBehaviorMap, AgentDefinition } from "@/lib/agents/types";
+import type {
+  FeatureFlagRecord,
+  IntegrationSettings,
+} from "@/lib/settings/types";
 
 type SettingsPageClientProps = {
-  agents: AgentDefinition[]
-  behavior: AgentBehaviorMap
-  integrations: IntegrationSettings
-  featureFlags: FeatureFlagRecord[]
-  featureFlagServiceAvailable: boolean
-  featureFlagError?: string | null
-}
+  agents: AgentDefinition[];
+  behavior: AgentBehaviorMap;
+  integrations: IntegrationSettings;
+  featureFlags: FeatureFlagRecord[];
+  featureFlagServiceAvailable: boolean;
+  featureFlagError?: string | null;
+};
 
 export function SettingsPageClient({
   agents,
@@ -29,24 +32,38 @@ export function SettingsPageClient({
   featureFlagServiceAvailable,
   featureFlagError,
 }: SettingsPageClientProps) {
-  const [activeTab, setActiveTab] = useState("Agents")
+  const [activeTab, setActiveTab] = useState("Agents");
 
-  const tabs = ["Agents", "Appearance", "Integrations", "Feature Flags", "Behavior"]
+  const tabs = [
+    "Agents",
+    "Appearance",
+    "Integrations",
+    "Feature Flags",
+    "Behavior",
+  ];
 
   const headerBadges = useMemo<PageTemplateBadge[]>(
     () => [
       { label: `${agents.length} agents configured`, variant: "default" },
       {
-        label: featureFlagServiceAvailable ? "Feature flags connected" : "Feature flags offline",
+        label: featureFlagServiceAvailable
+          ? "Feature flags connected"
+          : "Feature flags offline",
         variant: featureFlagServiceAvailable ? "success" : "outline",
       },
       {
-        label: integrations.calendarSyncEnabled ? "Calendar sync enabled" : "Calendar sync disabled",
+        label: integrations.calendarSyncEnabled
+          ? "Calendar sync enabled"
+          : "Calendar sync disabled",
         variant: integrations.calendarSyncEnabled ? "success" : "outline",
       },
     ],
-    [agents.length, featureFlagServiceAvailable, integrations.calendarSyncEnabled],
-  )
+    [
+      agents.length,
+      featureFlagServiceAvailable,
+      integrations.calendarSyncEnabled,
+    ],
+  );
 
   return (
     <PageTemplate
@@ -54,23 +71,7 @@ export function SettingsPageClient({
       description="Configure agents, integrations, and governance controls for RevenueOS."
       badges={headerBadges}
     >
-      {/* Tab Navigation */}
-      <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={cn(
-              "px-3 py-2 text-sm font-medium transition-colors",
-              activeTab === tab
-                ? "border-b-2 border-black text-black"
-                : "text-gray-600 hover:text-black"
-            )}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
+      <PageTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* Tab Content */}
       {activeTab === "Agents" && (
@@ -110,5 +111,5 @@ export function SettingsPageClient({
         </div>
       )}
     </PageTemplate>
-  )
+  );
 }

@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 import ClientTabs from "@/components/clients/ClientTabs";
+import { PageTabs } from "@/components/layout/PageTabs";
 import { resolveTabs } from "@/lib/tabs";
 import { getContentPiecesByClient } from "@/core/content/store";
 import type {
@@ -49,7 +50,19 @@ export default function ClientDetailView({
     return current && tabs.includes(current) ? current : tabs[0];
   }, [searchParams, tabs]);
 
-  const clientContent = useMemo(() => getContentPiecesByClient(client.id), [client.id]);
+  const buildTabHref = useCallback(
+    (tab: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("tab", tab);
+      return `${pathname}?${params.toString()}`;
+    },
+    [pathname, searchParams],
+  );
+
+  const clientContent = useMemo(
+    () => getContentPiecesByClient(client.id),
+    [client.id],
+  );
 
   return (
     <div className="flex h-full flex-col bg-white">
@@ -57,10 +70,15 @@ export default function ClientDetailView({
         <header className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="space-y-2">
-              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Client Profile</div>
-              <h1 className="text-2xl font-semibold text-black">{client.name}</h1>
+              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Client Profile
+              </div>
+              <h1 className="text-2xl font-semibold text-black">
+                {client.name}
+              </h1>
               <p className="text-sm text-gray-600">
-                {client.segment} • {client.industry ?? "—"} • Owner {client.owner}
+                {client.segment} • {client.industry ?? "—"} • Owner{" "}
+                {client.owner}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -80,6 +98,8 @@ export default function ClientDetailView({
               "Command center view of deliverables, financial performance, and revenue programs for this account."}
           </p>
         </header>
+
+        <PageTabs tabs={tabs} activeTab={activeTab} hrefForTab={buildTabHref} />
 
         <div className="flex min-h-0 flex-1">
           <ClientTabs
