@@ -46,7 +46,7 @@ export default function LoginScreen() {
         }
 
         setAuthMessage("Signed in successfully.")
-        router.replace("/dashboard")
+        router.replace("/")
       } else {
         const { error } = await supabase.auth.signUp({
           email: formData.email,
@@ -79,7 +79,7 @@ export default function LoginScreen() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+          redirectTo: `${window.location.origin}/auth/callback?next=/`,
         },
       })
 
