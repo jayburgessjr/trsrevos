@@ -1,7 +1,17 @@
-import type { Project, CreateProjectInput, ProjectHealth, ProjectStatus } from "./types";
+import type {
+  Project,
+  CreateProjectInput,
+  ProjectHealth,
+  ProjectStatus,
+  ProjectUpdate,
+  ProjectMilestone,
+  ProjectStats,
+} from "./types";
 import { getClient } from "../clients/store";
 
 const PROJECTS = new Map<string, Project>();
+const PROJECT_UPDATES: ProjectUpdate[] = [];
+const PROJECT_MILESTONES: ProjectMilestone[] = [];
 
 // Seed demo projects
 (function seed() {
@@ -89,6 +99,87 @@ const PROJECTS = new Map<string, Project>();
   ];
 
   projects.forEach((p) => PROJECTS.set(p.id, p));
+
+  PROJECT_UPDATES.push(
+    {
+      id: "update-1",
+      projectId: "proj-1",
+      projectName: "RevenueOS Expansion",
+      authorId: "user-1",
+      authorName: "Jay Burgess",
+      status: "On Track",
+      summary: "Completed architecture workshops and aligned rollout timeline with ACME leadership.",
+      riskLevel: "low",
+      createdAt: "2025-10-09T09:00:00Z",
+    },
+    {
+      id: "update-2",
+      projectId: "proj-2",
+      projectName: "Algorithm Implementation",
+      authorId: "user-2",
+      authorName: "Morgan Lee",
+      status: "At Risk",
+      summary: "Data integration dependency delayed; mitigation plan in review with data science.",
+      riskLevel: "medium",
+      createdAt: "2025-10-10T14:30:00Z",
+    },
+    {
+      id: "update-3",
+      projectId: "proj-4",
+      projectName: "Churn Remediation",
+      authorId: "user-3",
+      authorName: "Riley Chen",
+      status: "Critical",
+      summary: "Security assessment uncovered additional scope; escalation with exec sponsor scheduled.",
+      riskLevel: "high",
+      createdAt: "2025-10-11T17:15:00Z",
+    },
+  );
+
+  PROJECT_MILESTONES.push(
+    {
+      id: "milestone-1",
+      projectId: "proj-1",
+      projectName: "RevenueOS Expansion",
+      ownerId: "user-1",
+      ownerName: "Jay Burgess",
+      title: "Rollout Playbook Finalized",
+      status: "In Progress",
+      confidence: 80,
+      dueDate: "2025-10-20",
+      description: "Finalize playbook with cross-functional teams",
+      createdAt: "2025-10-01T12:00:00Z",
+      updatedAt: "2025-10-08T12:00:00Z",
+    },
+    {
+      id: "milestone-2",
+      projectId: "proj-2",
+      projectName: "Algorithm Implementation",
+      ownerId: "user-2",
+      ownerName: "Morgan Lee",
+      title: "Data Integration Complete",
+      status: "Planned",
+      confidence: 55,
+      dueDate: "2025-10-24",
+      description: "Complete ingestion of historical pricing data",
+      createdAt: "2025-09-28T12:00:00Z",
+      updatedAt: "2025-10-05T12:00:00Z",
+    },
+    {
+      id: "milestone-3",
+      projectId: "proj-3",
+      projectName: "Discovery & Data Intake",
+      ownerId: "user-4",
+      ownerName: "Taylor Kim",
+      title: "Discovery Report Signed",
+      status: "Complete",
+      confidence: 100,
+      dueDate: "2025-10-18",
+      description: "Secure sign-off on discovery findings",
+      createdAt: "2025-09-20T12:00:00Z",
+      updatedAt: "2025-10-10T12:00:00Z",
+    },
+  );
 })();
 
 export function listProjects(): Project[] {
@@ -147,14 +238,45 @@ export function deleteProject(id: string): boolean {
   return PROJECTS.delete(id);
 }
 
-export function getProjectStats() {
+export function getProjectStats(): ProjectStats {
   const projects = listProjects();
   const active = projects.filter((p) => p.status === "Active").length;
   const onTrack = projects.filter((p) => p.health === "green").length;
   const atRisk = projects.filter((p) => p.health === "red").length;
-  const avgProgress = projects.length > 0
-    ? Math.round(projects.reduce((sum, p) => sum + p.progress, 0) / projects.length)
-    : 0;
+  const avgProgress =
+    projects.length > 0
+      ? Math.round(projects.reduce((sum, p) => sum + p.progress, 0) / projects.length)
+      : 0;
+  const totalBudget = projects.reduce((sum, project) => sum + (project.budget ?? 0), 0);
+  const totalSpent = projects.reduce((sum, project) => sum + (project.spent ?? 0), 0);
+  const budgetUtilization = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0;
+  const upcomingMilestones = PROJECT_MILESTONES.filter((milestone) =>
+    milestone.dueDate ? new Date(milestone.dueDate) >= new Date() : false,
+  ).length;
 
-  return { active, onTrack, atRisk, avgProgress };
+  return {
+    active,
+    onTrack,
+    atRisk,
+    avgProgress,
+    totalBudget,
+    totalSpent,
+    budgetUtilization,
+    upcomingMilestones,
+  };
+}
+
+export function listProjectUpdates(): ProjectUpdate[] {
+  return [...PROJECT_UPDATES].sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1));
+}
+
+export function listProjectMilestones(): ProjectMilestone[] {
+  return [...PROJECT_MILESTONES].sort((a, b) => {
+    if (a.dueDate && b.dueDate) {
+      return a.dueDate < b.dueDate ? -1 : 1;
+    }
+    if (a.dueDate) return -1;
+    if (b.dueDate) return 1;
+    return a.createdAt < b.createdAt ? -1 : 1;
+  });
 }
