@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
 
 import ClientDetailView from "./ClientDetailView";
-import { getClient } from "@/core/clients/store";
+import { actionGetClient, actionListClientFinancials, actionListDeliverables } from "@/core/clients/actions";
 import { getProjectsByClient } from "@/core/projects/store";
-import { actionListClientFinancials, actionListDeliverables } from "@/core/clients/actions";
 
 export default async function ClientPage({ params }: { params: { id: string } }) {
-  const client = getClient(params.id);
+  // Fetch client from Supabase
+  const client = await actionGetClient(params.id);
 
   if (!client) {
     notFound();
