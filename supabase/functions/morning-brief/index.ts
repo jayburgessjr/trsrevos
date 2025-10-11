@@ -330,16 +330,7 @@ Deno.serve(async (req) => {
   const winRate = wins + losses === 0 ? 0 : wins / (wins + losses);
 
   const momentum = deriveMomentum(pipelineDelta, focusSessions ?? 0, winRate);
-  let priorities = selectTopPriorities({ pipeline: openData, clients: clientsData, projects: projectsData });
-  const fallbackPriorities = [
-    { title: "Review pipeline commitments", type: "Pipeline" },
-    { title: "Check finance run-rate", type: "Finance" },
-    { title: "Plan focus blocks", type: "Projects" },
-  ];
-  for (const fallback of fallbackPriorities) {
-    if (priorities.length >= 3) break;
-    priorities.push({ title: fallback.title, type: fallback.type });
-  }
+  const priorities = selectTopPriorities({ pipeline: openData, clients: clientsData, projects: projectsData });
 
   const response: MorningBriefSummary = {
     date: todayDate,

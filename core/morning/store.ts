@@ -3,10 +3,15 @@ import { MorningState, Priority } from "./types";
 let _state: MorningState = {
   date: new Date().toISOString(),
   momentum: "steady",
-  note: "Price realization improved to 94% this month",
+  note: "",
   planLocked: false,
   priorities: [],
-  kpis: { pipelineDollars: 12000, winRatePct: 72, priceRealizationPct: 94, focusSessionsToday: 0 }
+  kpis: {
+    pipelineDollars: 0,
+    winRatePct: 0,
+    priceRealizationPct: 0,
+    focusSessionsToday: 0,
+  },
 };
 
 export function getMorning(): MorningState { return _state; }
