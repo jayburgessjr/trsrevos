@@ -9,6 +9,7 @@ import * as Icons from 'lucide-react'
 import Header from '@/components/nav/Header'
 import HamburgerDrawer from '@/components/nav/HamburgerDrawer'
 import MobileBottomNav from '@/components/nav/MobileBottomNav'
+import SearchOverlay from '@/components/nav/SearchOverlay'
 import { MAIN_NAV, type NavItem } from '@/lib/navigation'
 import { cn, isActivePath } from '@/lib/utils'
 
@@ -27,11 +28,20 @@ type AppShellProps = {
 export default function AppShell({ children }: AppShellProps) {
   const pathname = usePathname()
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     // Close the drawer after a successful navigation to keep UX tight on mobile.
     setDrawerOpen(false)
+    setSearchOpen(false)
   }, [pathname])
+
+  useEffect(() => {
+    if (!searchOpen) {
+      setSearchQuery('')
+    }
+  }, [searchOpen])
 
   const shouldBypassShell = useMemo(() => {
     if (!pathname) return false
@@ -47,8 +57,22 @@ export default function AppShell({ children }: AppShellProps) {
 
   return (
     <div className="flex min-h-screen flex-col bg-white text-black">
-      <Header onMenuToggle={() => setDrawerOpen(true)} />
+      <Header
+        onMenuToggle={() => setDrawerOpen(true)}
+        onSearch={(term) => {
+          setSearchOpen(true)
+          setSearchQuery(term)
+        }}
+        onSearchOpen={() => setSearchOpen(true)}
+        searchValue={searchQuery}
+      />
       <HamburgerDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <SearchOverlay
+        open={searchOpen}
+        query={searchQuery}
+        onQueryChange={setSearchQuery}
+        onClose={() => setSearchOpen(false)}
+      />
       <div className="flex flex-1">
         <aside className="sticky top-0 hidden h-[calc(100vh-3.5rem)] w-64 shrink-0 border-r border-gray-200 bg-white lg:block">
           <nav className="flex h-full flex-col gap-4 overflow-y-auto px-5 py-6 text-sm">

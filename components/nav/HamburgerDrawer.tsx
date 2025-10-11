@@ -28,6 +28,17 @@ export default function HamburgerDrawer({ open, onClose }: HamburgerDrawerProps)
     }
   }, [open])
 
+  useEffect(() => {
+    if (!open) return
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [open, onClose])
+
   if (!open) {
     return null
   }
@@ -54,7 +65,12 @@ export default function HamburgerDrawer({ open, onClose }: HamburgerDrawerProps)
         <nav className="flex-1 overflow-y-auto px-4 py-6">
           <DrawerSection title="Main">
             {MAIN_NAV.map((item) => (
-              <DrawerLink key={item.href} item={item} currentPath={pathname ?? ''} />
+              <DrawerLink
+                key={item.href}
+                item={item}
+                currentPath={pathname ?? ''}
+                onNavigate={onClose}
+              />
             ))}
           </DrawerSection>
         </nav>
@@ -80,9 +96,10 @@ function DrawerSection({ title, children }: DrawerSectionProps) {
 type DrawerLinkProps = {
   item: NavItem
   currentPath: string
+  onNavigate: () => void
 }
 
-function DrawerLink({ item, currentPath }: DrawerLinkProps) {
+function DrawerLink({ item, currentPath, onNavigate }: DrawerLinkProps) {
   const active = isActivePath(currentPath, item.href)
   const Icon = (Icons[item.icon as keyof typeof Icons] ?? Icons.Circle) as Icons.LucideIcon
 
@@ -94,6 +111,12 @@ function DrawerLink({ item, currentPath }: DrawerLinkProps) {
           'flex items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm font-medium transition-colors',
           active ? 'border-gray-900 bg-gray-900 text-white' : 'text-gray-700 hover:border-gray-300 hover:bg-gray-50'
         )}
+        onClick={(event) => {
+          if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+            return
+          }
+          onNavigate()
+        }}
       >
         <Icon className="h-4 w-4" aria-hidden="true" />
         <span>{item.label}</span>
