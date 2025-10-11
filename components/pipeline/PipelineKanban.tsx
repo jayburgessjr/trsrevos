@@ -4,23 +4,27 @@ import { useState, useTransition } from "react";
 import { Card, CardContent } from "@/ui/card";
 import { Badge } from "@/ui/badge";
 import { cn } from "@/lib/utils";
-import { moveOpportunityStage, deleteOpportunity, type OpportunityWithNotes } from "@/core/pipeline/actions";
+import {
+  moveOpportunityStage,
+  deleteOpportunity,
+  type OpportunityWithNotes,
+} from "@/core/pipeline/actions";
+import {
+  PIPELINE_STAGE_COLORS,
+  PIPELINE_STAGE_LABELS,
+  PIPELINE_STAGE_ORDER,
+  type PipelineStage,
+} from "@/core/pipeline/constants";
 import { DealDetailModal } from "./DealDetailModal";
 
 type PipelineKanbanProps = {
-  opportunitiesByStage: {
-    [stage: string]: OpportunityWithNotes[];
-  };
+  opportunitiesByStage: Partial<Record<PipelineStage, OpportunityWithNotes[]>>;
   userId: string;
 };
 
-const STAGES = [
-  { key: "Prospect", label: "Prospect", color: "bg-gray-100" },
-  { key: "Qualify", label: "Qualify", color: "bg-blue-100" },
-  { key: "Proposal", label: "Proposal", color: "bg-purple-100" },
-  { key: "Negotiation", label: "Negotiation", color: "bg-yellow-100" },
-  { key: "ClosedWon", label: "Closed Won", color: "bg-green-100" },
-];
+const STAGES: PipelineStage[] = PIPELINE_STAGE_ORDER.filter(
+  (stage) => stage !== "ClosedLost"
+);
 
 export function PipelineKanban({ opportunitiesByStage, userId }: PipelineKanbanProps) {
   const [draggedOpportunity, setDraggedOpportunity] = useState<string | null>(null);
@@ -38,7 +42,7 @@ export function PipelineKanban({ opportunitiesByStage, userId }: PipelineKanbanP
     e.dataTransfer.dropEffect = "move";
   };
 
-  const handleDrop = (e: React.DragEvent, newStage: string) => {
+  const handleDrop = (e: React.DragEvent, newStage: PipelineStage) => {
     e.preventDefault();
 
     if (!draggedOpportunity) return;
@@ -87,34 +91,43 @@ export function PipelineKanban({ opportunitiesByStage, userId }: PipelineKanbanP
       <div className="flex gap-4 overflow-x-auto pb-4">
         {STAGES.map((stage) => (
           <div
-            key={stage.key}
+            key={stage}
             className="flex-shrink-0 w-80"
             onDragOver={handleDragOver}
-            onDrop={(e) => handleDrop(e, stage.key)}
+            onDrop={(e) => handleDrop(e, stage)}
           >
             {/* Column Header */}
-            <div className={cn("rounded-t-lg p-3", stage.color)}>
+            <div
+              className={cn(
+                "rounded-t-lg p-3",
+                PIPELINE_STAGE_COLORS[stage] || "bg-gray-100"
+              )}
+            >
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-sm">{stage.label}</h3>
+                <h3 className="font-semibold text-sm">
+                  {PIPELINE_STAGE_LABELS[stage]}
+                </h3>
                 <Badge variant="outline" className="bg-white">
-                  {opportunitiesByStage[stage.key]?.length || 0}
+                  {opportunitiesByStage[stage]?.length || 0}
                 </Badge>
               </div>
               <div className="text-xs text-gray-600 mt-1">
                 $
-                {(
-                  (opportunitiesByStage[stage.key]?.reduce(
-                    (sum, opp) => sum + opp.amount,
-                    0
-                  ) || 0) / 1000
-                ).toFixed(0)}
+                {
+                  (
+                    (opportunitiesByStage[stage]?.reduce(
+                      (sum, opp) => sum + opp.amount,
+                      0
+                    ) || 0) / 1000
+                  ).toFixed(0)
+                }
                 K
               </div>
             </div>
 
             {/* Cards Container */}
             <div className="bg-gray-50 p-2 rounded-b-lg min-h-[200px] space-y-2">
-              {opportunitiesByStage[stage.key]?.map((opp) => (
+              {opportunitiesByStage[stage]?.map((opp) => (
                 <Card
                   key={opp.id}
                   draggable={!isPending}

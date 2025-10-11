@@ -3,12 +3,18 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+import {
+  PIPELINE_STAGE_ORDER,
+  PIPELINE_STAGE_PROBABILITIES,
+  type PipelineStage,
+} from "./constants";
+
 export type Opportunity = {
   id: string;
   client_id: string;
   name: string;
   amount: number;
-  stage: string;
+  stage: PipelineStage;
   probability: number;
   close_date: string | null;
   owner_id: string;
@@ -63,7 +69,7 @@ export async function createOpportunity(input: {
   client_id: string;
   name: string;
   amount: number;
-  stage: string;
+  stage: PipelineStage;
   probability: number;
   close_date?: string;
   owner_id: string;
@@ -141,25 +147,16 @@ export async function updateOpportunity(
  */
 export async function moveOpportunityStage(
   id: string,
-  newStage: string
+  newStage: PipelineStage
 ): Promise<{ success: boolean; error?: string; clientId?: string }> {
   const supabase = await createClient();
 
   // Update probability based on stage
-  const stageProbabilities: { [key: string]: number } = {
-    Prospect: 10,
-    Qualify: 25,
-    Proposal: 50,
-    Negotiation: 75,
-    ClosedWon: 100,
-    ClosedLost: 0,
-  };
-
   const { error } = await supabase
     .from("opportunities")
     .update({
       stage: newStage,
-      probability: stageProbabilities[newStage] || 50
+      probability: PIPELINE_STAGE_PROBABILITIES[newStage] ?? 50,
     })
     .eq("id", id);
 
@@ -318,29 +315,20 @@ export async function createProspect(input: {
   // Use the authenticated user's ID instead of the passed owner_id for security
   const owner_id = user.id;
 
-  console.log("Creating client with owner_id:", owner_id, "authenticated user:", user.id);
-
-  // Check auth session
-  const { data: { session } } = await supabase.auth.getSession();
-  console.log("Has session:", !!session, "Session user:", session?.user?.id);
-
   // First, create a placeholder client
   const { data: client, error: clientError } = await supabase
     .from("clients")
     .insert({
       name: input.companyName,
-      segment: "Prospect",
       phase: "Discovery",
       owner_id: owner_id,
-      status: "prospect",
+      status: "active",
     })
     .select()
     .single();
 
   if (clientError) {
     console.error("Error creating client:", clientError);
-    console.error("User context:", { userId: user.id, email: user.email });
-    console.error("Auth session exists:", !!session);
     return { success: false, error: clientError.message };
   }
 
@@ -351,8 +339,8 @@ export async function createProspect(input: {
       client_id: client.id,
       name: input.dealName,
       amount: input.amount,
-      stage: "Prospect",
-      probability: 10,
+      stage: "New",
+      probability: PIPELINE_STAGE_PROBABILITIES.New,
       close_date: input.expectedCloseDate || null,
       owner_id: owner_id,
       next_step: "Initial outreach",
@@ -401,8 +389,7 @@ export async function convertProspectToClient(
     .from("clients")
     .update({
       status: "active",
-      segment: "Active Client",
-      phase: "Onboarding",
+      phase: "Data",
     })
     .eq("id", opportunity.client_id)
     .select()
@@ -456,15 +443,14 @@ export async function deleteOpportunity(
 /**
  * Get pipeline data grouped by stage for Kanban view
  */
-export async function getPipelineByStage(): Promise<{
-  [stage: string]: OpportunityWithNotes[];
-}> {
+export async function getPipelineByStage(): Promise<
+  Partial<Record<PipelineStage, OpportunityWithNotes[]>>
+> {
   const opportunities = await getOpportunities();
 
-  const stages = ["Prospect", "Qualify", "Proposal", "Negotiation", "ClosedWon", "ClosedLost"];
-  const grouped: { [stage: string]: OpportunityWithNotes[] } = {};
+  const grouped: { [stage in PipelineStage]?: OpportunityWithNotes[] } = {};
 
-  stages.forEach((stage) => {
+  PIPELINE_STAGE_ORDER.forEach((stage) => {
     grouped[stage] = opportunities.filter((opp) => opp.stage === stage);
   });
 

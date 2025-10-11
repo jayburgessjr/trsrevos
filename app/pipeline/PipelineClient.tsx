@@ -8,6 +8,11 @@ import { AddProspectModal } from "@/components/pipeline/AddProspectModal";
 import { PipelineFilters } from "@/components/pipeline/PipelineFilters";
 import { PipelineKanban } from "@/components/pipeline/PipelineKanban";
 import type { OpportunityWithNotes } from "@/core/pipeline/actions";
+import {
+  PIPELINE_STAGE_LABELS,
+  PIPELINE_STAGE_ORDER,
+  type PipelineStage,
+} from "@/core/pipeline/constants";
 import { Badge } from "@/ui/badge";
 import { Button } from "@/ui/button";
 import { Card, CardContent } from "@/ui/card";
@@ -42,14 +47,12 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
   }, [opportunities]);
 
   const opportunitiesByStage = useMemo(() => {
-    const stages = ["Prospect", "Qualify", "Proposal", "Negotiation", "ClosedWon", "ClosedLost"];
-    const grouped: { [stage: string]: OpportunityWithNotes[] } = {};
-
-    stages.forEach((stage) => {
-      grouped[stage] = filteredOpportunities.filter((opp) => opp.stage === stage);
-    });
-
-    return grouped;
+    return PIPELINE_STAGE_ORDER.reduce<
+      Partial<Record<PipelineStage, OpportunityWithNotes[]>>
+    >((acc, stage) => {
+      acc[stage] = filteredOpportunities.filter((opp) => opp.stage === stage);
+      return acc;
+    }, {});
   }, [filteredOpportunities]);
 
   const quarterlyTarget = 1_200_000;
@@ -196,7 +199,7 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
           </div>
 
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-5">
-            {["Prospect", "Qualify", "Proposal", "Negotiation", "ClosedWon"].map((stage) => {
+            {PIPELINE_STAGE_ORDER.filter((stage) => stage !== "ClosedLost").map((stage) => {
               const count = opportunitiesByStage[stage]?.length || 0;
               const value =
                 opportunitiesByStage[stage]?.reduce((sum, opp) => sum + opp.amount, 0) || 0;
@@ -205,7 +208,7 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
                 <Card key={stage} className={cn(TRS_CARD)}>
                   <CardContent className="p-4">
                     <div className="mb-2 text-xs font-medium uppercase text-gray-500">
-                      {stage === "ClosedWon" ? "Closed Won" : stage}
+                      {PIPELINE_STAGE_LABELS[stage]}
                     </div>
                     <div className="mb-1 text-2xl font-semibold text-black">{count}</div>
                     <div className="text-sm text-gray-600">{(value / 1000).toFixed(0)}K</div>

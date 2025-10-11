@@ -11,6 +11,12 @@ import {
   addOpportunityNote,
   type OpportunityWithNotes
 } from "@/core/pipeline/actions";
+import {
+  PIPELINE_STAGE_LABELS,
+  PIPELINE_STAGE_ORDER,
+  PIPELINE_STAGE_PROBABILITIES,
+  type PipelineStage,
+} from "@/core/pipeline/constants";
 import { cn } from "@/lib/utils";
 import { ActivitySection } from "./ActivitySection";
 
@@ -20,14 +26,11 @@ type DealDetailModalProps = {
   userId: string;
 };
 
-const STAGES = [
-  { key: "Prospect", label: "Prospect", probability: 10 },
-  { key: "Qualify", label: "Qualify", probability: 25 },
-  { key: "Proposal", label: "Proposal", probability: 50 },
-  { key: "Negotiation", label: "Negotiation", probability: 75 },
-  { key: "ClosedWon", label: "Closed Won", probability: 100 },
-  { key: "ClosedLost", label: "Closed Lost", probability: 0 },
-];
+const STAGES = PIPELINE_STAGE_ORDER.map((stage) => ({
+  key: stage,
+  label: PIPELINE_STAGE_LABELS[stage],
+  probability: PIPELINE_STAGE_PROBABILITIES[stage],
+}));
 
 export function DealDetailModal({ deal, onClose, userId }: DealDetailModalProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -38,7 +41,7 @@ export function DealDetailModal({ deal, onClose, userId }: DealDetailModalProps)
   const [formData, setFormData] = useState({
     name: deal.name,
     amount: deal.amount.toString(),
-    stage: deal.stage,
+    stage: deal.stage as PipelineStage,
     probability: deal.probability.toString(),
     close_date: deal.close_date || "",
     next_step: deal.next_step || "",
@@ -182,11 +185,15 @@ export function DealDetailModal({ deal, onClose, userId }: DealDetailModalProps)
                   <select
                     value={formData.stage}
                     onChange={(e) => {
-                      const stage = STAGES.find(s => s.key === e.target.value);
+                      const stageKey = e.target.value as PipelineStage;
+                      const probability =
+                        PIPELINE_STAGE_PROBABILITIES[stageKey] ??
+                        Number(formData.probability);
+
                       setFormData({
                         ...formData,
-                        stage: e.target.value,
-                        probability: stage?.probability.toString() || formData.probability
+                        stage: stageKey,
+                        probability: probability.toString(),
                       });
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
@@ -198,11 +205,11 @@ export function DealDetailModal({ deal, onClose, userId }: DealDetailModalProps)
                       </option>
                     ))}
                   </select>
-                ) : (
-                  <Badge variant="outline" className="text-sm">
-                    {deal.stage === "ClosedWon" ? "Closed Won" : deal.stage}
-                  </Badge>
-                )}
+                  ) : (
+                    <Badge variant="outline" className="text-sm">
+                      {PIPELINE_STAGE_LABELS[deal.stage]}
+                    </Badge>
+                  )}
               </div>
 
               <div>
