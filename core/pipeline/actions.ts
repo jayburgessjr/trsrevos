@@ -304,6 +304,12 @@ export async function createProspect(input: {
   amount: number;
   expectedCloseDate?: string;
   owner_id: string;
+  industry?: string;
+  region?: string;
+  primaryContact?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  nextStep?: string;
 }): Promise<{ success: boolean; opportunity?: Opportunity; error?: string }> {
   const supabase = await createClient();
 
@@ -326,6 +332,9 @@ export async function createProspect(input: {
       name: input.companyName,
       phase: "Discovery",
       owner_id: owner_id,
+      industry: input.industry || null,
+      region: input.region || null,
+      status: "active",
     })
     .select()
     .single();
@@ -333,6 +342,25 @@ export async function createProspect(input: {
   if (clientError) {
     console.error("Error creating client:", clientError);
     return { success: false, error: clientError.message };
+  }
+
+  // Create primary contact if provided
+  if (input.primaryContact && (input.contactEmail || input.contactPhone)) {
+    const { error: contactError } = await supabase
+      .from("contacts")
+      .insert({
+        client_id: client.id,
+        name: input.primaryContact,
+        role: "Primary Contact",
+        email: input.contactEmail || null,
+        phone: input.contactPhone || null,
+        power: "Decision",
+      });
+
+    if (contactError) {
+      console.error("Error creating contact:", contactError);
+      // Continue even if contact creation fails
+    }
   }
 
   // Then create the opportunity
@@ -346,7 +374,7 @@ export async function createProspect(input: {
       probability: 10,
       close_date: input.expectedCloseDate || null,
       owner_id: owner_id,
-      next_step: "Initial outreach",
+      next_step: input.nextStep || "Initial outreach",
     })
     .select()
     .single();
