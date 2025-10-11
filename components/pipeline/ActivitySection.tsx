@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, useCallback } from "react";
 import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
 import { Badge } from "@/ui/badge";
@@ -38,15 +38,15 @@ export function ActivitySection({ opportunityId, userId }: ActivitySectionProps)
     due_date: "",
   });
 
-  // Load activities
-  useEffect(() => {
-    loadActivities();
-  }, [opportunityId]);
-
-  const loadActivities = async () => {
+  const loadActivities = useCallback(async () => {
     const data = await getOpportunityActivities(opportunityId);
     setActivities(data);
-  };
+  }, [opportunityId]);
+
+  // Load activities
+  useEffect(() => {
+    void loadActivities();
+  }, [loadActivities]);
 
   const handleAdd = () => {
     if (!formData.title.trim()) return;
