@@ -1,983 +1,759 @@
--- Generated schema additions for new Supabase tables
--- Source: docs/supabase-architecture-plan.json
+-- TRSREVOS Supabase schema rebuild
+-- Generated to standardize core modules, analytics, integrations, and row-level security
+
+BEGIN;
+
+-- Ensure UUID generation is available
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- Helper trigger to maintain updated_at timestamps
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+RETURNS trigger AS $$
+BEGIN
+  NEW.updated_at = timezone('utc', now());
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
 -- ================================================================
--- users
+-- USERS
 -- ================================================================
-CREATE TABLE IF NOT EXISTS public.users (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  email TEXT UNIQUE NOT NULL,
-  name TEXT NOT NULL,
-  role TEXT NOT NULL CHECK (role IN ('SuperAdmin', 'Admin', 'Director', 'Member', 'Client')),
-  organization_id UUID REFERENCES public.organizations(id) ON DELETE SET NULL,
-  avatar_url TEXT,
+DROP TABLE IF EXISTS public.users CASCADE;
+CREATE TABLE public.users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT NOT NULL UNIQUE,
+  full_name TEXT,
+  role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('member', 'manager', 'executive', 'admin')),
   timezone TEXT,
-  last_sign_in_at TIMESTAMPTZ,
+  avatar_url TEXT,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'invited', 'inactive')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
 );
 
-CREATE INDEX IF NOT EXISTS idx_users_organization_id
-  ON public.users(organization_id);
-CREATE INDEX IF NOT EXISTS idx_users_email
-  ON public.users(email);
+CREATE INDEX IF NOT EXISTS idx_users_role ON public.users(role);
+CREATE INDEX IF NOT EXISTS idx_users_status ON public.users(status);
 
-DROP TRIGGER IF EXISTS set_users_updated_at ON public.users;
-CREATE TRIGGER set_users_updated_at
+DROP TRIGGER IF EXISTS trg_users_set_updated_at ON public.users;
+CREATE TRIGGER trg_users_set_updated_at
   BEFORE UPDATE ON public.users
   FOR EACH ROW
-  EXECUTE FUNCTION public.touch_updated_at();
+  EXECUTE FUNCTION public.set_updated_at();
 
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "users_select"
-  ON public.users
-  FOR SELECT
-  USING (
-    id = auth.uid()
-    OR public.is_admin()
-    OR public.is_super_admin()
-  );
+CREATE POLICY "Allow select for authenticated users"
+ON public.users
+FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "users_manage_self"
-  ON public.users
-  FOR UPDATE
-  USING (id = auth.uid())
-  WITH CHECK (id = auth.uid());
+CREATE POLICY "Allow insert for authenticated users"
+ON public.users
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "users_service_role"
-  ON public.users
-  FOR ALL TO service_role
-  USING (true)
-  WITH CHECK (true);
+CREATE POLICY "Allow update/delete for record owners"
+ON public.users
+FOR ALL
+TO authenticated
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
 
 -- ================================================================
--- clients
+-- AGENTS
 -- ================================================================
-CREATE TABLE IF NOT EXISTS public.clients (
+DROP TABLE IF EXISTS public.agents CASCADE;
+CREATE TABLE public.agents (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  profile_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+  title TEXT,
+  phone TEXT,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+  permissions JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_agents_user_id ON public.agents(user_id);
+CREATE INDEX IF NOT EXISTS idx_agents_status ON public.agents(status);
+
+DROP TRIGGER IF EXISTS trg_agents_set_updated_at ON public.agents;
+CREATE TRIGGER trg_agents_set_updated_at
+  BEFORE UPDATE ON public.agents
+  FOR EACH ROW
+  EXECUTE FUNCTION public.set_updated_at();
+
+ALTER TABLE public.agents ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow select for authenticated users"
+ON public.agents
+FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Allow insert for authenticated users"
+ON public.agents
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Allow update/delete for record owners"
+ON public.agents
+FOR ALL
+TO authenticated
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+-- ================================================================
+-- CLIENTS
+-- ================================================================
+DROP TABLE IF EXISTS public.clients CASCADE;
+CREATE TABLE public.clients (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  agent_id UUID REFERENCES public.agents(id) ON DELETE SET NULL,
   name TEXT NOT NULL,
-  segment TEXT CHECK (segment IN ('SMB', 'Mid', 'Enterprise')),
-  arr NUMERIC(12,2),
+  company_domain TEXT,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'prospect', 'inactive')),
+  stage TEXT NOT NULL DEFAULT 'discovery' CHECK (stage IN ('discovery', 'proposal', 'negotiation', 'implementation', 'live')),
   industry TEXT,
-  region TEXT,
-  phase TEXT CHECK (phase IN ('Discovery', 'Data', 'Algorithm', 'Architecture', 'Compounding')),
-  owner_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-  health INTEGER CHECK (health BETWEEN 0 AND 100),
+  size_segment TEXT,
+  health_score INTEGER CHECK (health_score BETWEEN 0 AND 100),
   churn_risk INTEGER CHECK (churn_risk BETWEEN 0 AND 100),
-  qbr_date DATE,
-  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'churned')),
-  is_expansion BOOLEAN DEFAULT false,
+  onboarding_date DATE,
+  renewal_date DATE,
   notes TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
 );
 
-CREATE INDEX IF NOT EXISTS idx_clients_owner_id
-  ON public.clients(owner_id);
-CREATE INDEX IF NOT EXISTS idx_clients_phase
-  ON public.clients(phase);
-CREATE INDEX IF NOT EXISTS idx_clients_status
-  ON public.clients(status);
+CREATE INDEX IF NOT EXISTS idx_clients_user_id ON public.clients(user_id);
+CREATE INDEX IF NOT EXISTS idx_clients_agent_id ON public.clients(agent_id);
+CREATE INDEX IF NOT EXISTS idx_clients_status ON public.clients(status);
+CREATE INDEX IF NOT EXISTS idx_clients_stage ON public.clients(stage);
 
-DROP TRIGGER IF EXISTS set_clients_updated_at ON public.clients;
-CREATE TRIGGER set_clients_updated_at
+DROP TRIGGER IF EXISTS trg_clients_set_updated_at ON public.clients;
+CREATE TRIGGER trg_clients_set_updated_at
   BEFORE UPDATE ON public.clients
   FOR EACH ROW
-  EXECUTE FUNCTION public.touch_updated_at();
+  EXECUTE FUNCTION public.set_updated_at();
 
 ALTER TABLE public.clients ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "clients_select"
-  ON public.clients
-  FOR SELECT
-  USING (
-    public.is_super_admin()
-    OR owner_id = auth.uid()
-    OR owner_id IN (
-      SELECT id FROM public.users
-      WHERE organization_id = public.user_organization_id()
-    )
-  );
+CREATE POLICY "Allow select for authenticated users"
+ON public.clients
+FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "clients_insert"
-  ON public.clients
-  FOR INSERT
-  WITH CHECK (
-    owner_id = auth.uid()
-    OR public.is_admin()
-    OR public.is_super_admin()
-  );
+CREATE POLICY "Allow insert for authenticated users"
+ON public.clients
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "clients_update"
-  ON public.clients
-  FOR UPDATE
-  USING (
-    owner_id = auth.uid()
-    OR public.is_admin()
-    OR public.is_super_admin()
-  )
-  WITH CHECK (
-    owner_id = auth.uid()
-    OR public.is_admin()
-    OR public.is_super_admin()
-  );
-
-CREATE POLICY IF NOT EXISTS "clients_delete"
-  ON public.clients
-  FOR DELETE
-  USING (public.is_admin() OR public.is_super_admin());
+CREATE POLICY "Allow update/delete for record owners"
+ON public.clients
+FOR ALL
+TO authenticated
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
 
 -- ================================================================
--- deliverables
+-- PIPELINE
 -- ================================================================
-CREATE TABLE IF NOT EXISTS public.deliverables (
+DROP TABLE IF EXISTS public.pipeline CASCADE;
+CREATE TABLE public.pipeline (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  stage TEXT NOT NULL DEFAULT 'discovery' CHECK (stage IN ('discovery', 'qualified', 'proposal', 'contract', 'closed_won', 'closed_lost')),
+  deal_value NUMERIC(14,2),
+  probability INTEGER CHECK (probability BETWEEN 0 AND 100),
+  expected_close_date DATE,
+  source TEXT,
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_pipeline_user_id ON public.pipeline(user_id);
+CREATE INDEX IF NOT EXISTS idx_pipeline_client_id ON public.pipeline(client_id);
+CREATE INDEX IF NOT EXISTS idx_pipeline_stage ON public.pipeline(stage);
+
+DROP TRIGGER IF EXISTS trg_pipeline_set_updated_at ON public.pipeline;
+CREATE TRIGGER trg_pipeline_set_updated_at
+  BEFORE UPDATE ON public.pipeline
+  FOR EACH ROW
+  EXECUTE FUNCTION public.set_updated_at();
+
+ALTER TABLE public.pipeline ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow select for authenticated users"
+ON public.pipeline
+FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Allow insert for authenticated users"
+ON public.pipeline
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Allow update/delete for record owners"
+ON public.pipeline
+FOR ALL
+TO authenticated
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+-- ================================================================
+-- PROJECTS
+-- ================================================================
+DROP TABLE IF EXISTS public.projects CASCADE;
+CREATE TABLE public.projects (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  pipeline_id UUID REFERENCES public.pipeline(id) ON DELETE SET NULL,
   name TEXT NOT NULL,
-  type TEXT,
-  link TEXT,
-  status TEXT,
-  owner_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
-  due_date DATE,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
-);
-
-CREATE INDEX IF NOT EXISTS idx_deliverables_client_id
-  ON public.deliverables(client_id, updated_at DESC);
-CREATE INDEX IF NOT EXISTS idx_deliverables_status
-  ON public.deliverables(status);
-
-DROP TRIGGER IF EXISTS set_deliverables_updated_at ON public.deliverables;
-CREATE TRIGGER set_deliverables_updated_at
-  BEFORE UPDATE ON public.deliverables
-  FOR EACH ROW
-  EXECUTE FUNCTION public.touch_updated_at();
-
-ALTER TABLE public.deliverables ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY IF NOT EXISTS "deliverables_select"
-  ON public.deliverables
-  FOR SELECT
-  USING (
-    client_id IN (
-      SELECT id
-      FROM public.clients
-    )
-  );
-
-CREATE POLICY IF NOT EXISTS "deliverables_all"
-  ON public.deliverables
-  FOR ALL
-  USING (
-    client_id IN (
-      SELECT id
-      FROM public.clients
-      WHERE owner_id = auth.uid()
-        OR public.is_admin()
-        OR public.is_super_admin()
-    )
-  )
-  WITH CHECK (
-    client_id IN (
-      SELECT id
-      FROM public.clients
-      WHERE owner_id = auth.uid()
-        OR public.is_admin()
-        OR public.is_super_admin()
-    )
-  );
-
--- ================================================================
--- opportunity_activities
--- ================================================================
-CREATE TABLE IF NOT EXISTS public.opportunity_activities (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  opportunity_id UUID NOT NULL REFERENCES public.opportunities(id) ON DELETE CASCADE,
-  type TEXT NOT NULL CHECK (type IN ('task', 'call', 'meeting', 'email', 'note')),
-  title TEXT NOT NULL,
   description TEXT,
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'cancelled')),
-  due_date TIMESTAMPTZ,
-  completed_at TIMESTAMPTZ,
-  assigned_to UUID REFERENCES public.users(id) ON DELETE SET NULL,
-  created_by UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
-);
-
-CREATE INDEX IF NOT EXISTS idx_opportunity_activities_opportunity
-  ON public.opportunity_activities(opportunity_id, due_date);
-CREATE INDEX IF NOT EXISTS idx_opportunity_activities_assignee
-  ON public.opportunity_activities(assigned_to);
-
-DROP TRIGGER IF EXISTS set_opportunity_activities_updated_at ON public.opportunity_activities;
-CREATE TRIGGER set_opportunity_activities_updated_at
-  BEFORE UPDATE ON public.opportunity_activities
-  FOR EACH ROW
-  EXECUTE FUNCTION public.touch_updated_at();
-
-ALTER TABLE public.opportunity_activities ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY IF NOT EXISTS "opportunity_activities_select"
-  ON public.opportunity_activities
-  FOR SELECT
-  USING (
-    opportunity_id IN (
-      SELECT id
-      FROM public.opportunities
-    )
-  );
-
-CREATE POLICY IF NOT EXISTS "opportunity_activities_all"
-  ON public.opportunity_activities
-  FOR ALL
-  USING (
-    opportunity_id IN (
-      SELECT id
-      FROM public.opportunities
-      WHERE owner_id = auth.uid()
-        OR public.is_admin()
-        OR public.is_super_admin()
-    )
-  )
-  WITH CHECK (
-    opportunity_id IN (
-      SELECT id
-      FROM public.opportunities
-      WHERE owner_id = auth.uid()
-        OR public.is_admin()
-        OR public.is_super_admin()
-    )
-  );
-
--- ================================================================
--- client_financials
--- ================================================================
-CREATE TABLE IF NOT EXISTS public.client_financials (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
-  equity_stake NUMERIC(6,2),
-  monthly_revenue NUMERIC(12,2),
-  projected_annual_revenue NUMERIC(12,2),
-  last_updated TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
-);
-
-CREATE INDEX IF NOT EXISTS idx_client_financials_client_id
-  ON public.client_financials(client_id, last_updated DESC);
-
-DROP TRIGGER IF EXISTS set_client_financials_updated_at ON public.client_financials;
-CREATE TRIGGER set_client_financials_updated_at
-  BEFORE UPDATE ON public.client_financials
-  FOR EACH ROW
-  EXECUTE FUNCTION public.touch_updated_at();
-
-ALTER TABLE public.client_financials ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY IF NOT EXISTS "client_financials_select"
-  ON public.client_financials
-  FOR SELECT
-  USING (
-    client_id IN (
-      SELECT id
-      FROM public.clients
-    )
-  );
-
-CREATE POLICY IF NOT EXISTS "client_financials_all"
-  ON public.client_financials
-  FOR ALL
-  USING (
-    client_id IN (
-      SELECT id
-      FROM public.clients
-      WHERE owner_id = auth.uid()
-        OR public.is_admin()
-        OR public.is_super_admin()
-    )
-  )
-  WITH CHECK (
-    client_id IN (
-      SELECT id
-      FROM public.clients
-      WHERE owner_id = auth.uid()
-        OR public.is_admin()
-        OR public.is_super_admin()
-    )
-  );
-
--- ================================================================
--- invoices
--- ================================================================
-CREATE TABLE IF NOT EXISTS public.invoices (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  invoice_number TEXT UNIQUE NOT NULL,
-  client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
-  status TEXT NOT NULL CHECK (status IN ('Draft', 'Sent', 'Paid', 'Overdue', 'Cancelled')),
-  issue_date DATE NOT NULL,
-  due_date DATE NOT NULL,
-  paid_date DATE,
-  amount NUMERIC(12,2) NOT NULL,
-  tax NUMERIC(12,2) DEFAULT 0,
-  total NUMERIC(12,2) NOT NULL,
-  payment_term TEXT CHECK (payment_term IN ('Due on Receipt', 'Net 15', 'Net 30', 'Net 60', 'Net 90')),
-  notes TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
-);
-
-CREATE INDEX IF NOT EXISTS idx_invoices_client_id
-  ON public.invoices(client_id);
-CREATE INDEX IF NOT EXISTS idx_invoices_status
-  ON public.invoices(status);
-CREATE INDEX IF NOT EXISTS idx_invoices_due_date
-  ON public.invoices(due_date);
-
-DROP TRIGGER IF EXISTS set_invoices_updated_at ON public.invoices;
-CREATE TRIGGER set_invoices_updated_at
-  BEFORE UPDATE ON public.invoices
-  FOR EACH ROW
-  EXECUTE FUNCTION public.touch_updated_at();
-
-ALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY IF NOT EXISTS "invoices_select"
-  ON public.invoices
-  FOR SELECT
-  USING (
-    client_id IN (
-      SELECT id
-      FROM public.clients
-    )
-  );
-
-CREATE POLICY IF NOT EXISTS "invoices_manage"
-  ON public.invoices
-  FOR ALL
-  USING (
-    client_id IN (
-      SELECT id
-      FROM public.clients
-      WHERE owner_id = auth.uid()
-        OR public.is_admin()
-        OR public.is_super_admin()
-    )
-  )
-  WITH CHECK (
-    client_id IN (
-      SELECT id
-      FROM public.clients
-      WHERE owner_id = auth.uid()
-        OR public.is_admin()
-        OR public.is_super_admin()
-    )
-  );
-
--- ================================================================
--- integrations
--- ================================================================
-CREATE TABLE IF NOT EXISTS public.integrations (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
-  provider TEXT NOT NULL CHECK (provider IN ('gmail', 'google_calendar', 'quickbooks')),
-  connection_scope TEXT DEFAULT 'organization' CHECK (connection_scope IN ('organization', 'user')),
-  status TEXT NOT NULL DEFAULT 'disconnected' CHECK (status IN ('disconnected', 'pending', 'connected', 'error')),
-  settings JSONB NOT NULL DEFAULT '{}'::jsonb,
-  sync_cursor TEXT,
-  last_synced_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
-);
-
-CREATE UNIQUE INDEX IF NOT EXISTS idx_integrations_org_provider
-  ON public.integrations(organization_id, provider);
-
-DROP TRIGGER IF EXISTS set_integrations_updated_at ON public.integrations;
-CREATE TRIGGER set_integrations_updated_at
-  BEFORE UPDATE ON public.integrations
-  FOR EACH ROW
-  EXECUTE FUNCTION public.touch_updated_at();
-
-ALTER TABLE public.integrations ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY IF NOT EXISTS "integrations_select"
-  ON public.integrations
-  FOR SELECT
-  USING (
-    organization_id IS NULL
-    OR organization_id = public.user_organization_id()
-    OR public.is_super_admin()
-  );
-
-CREATE POLICY IF NOT EXISTS "integrations_manage"
-  ON public.integrations
-  FOR ALL
-  USING (
-    auth.role() = 'service_role'
-    OR public.is_admin()
-    OR public.is_super_admin()
-  )
-  WITH CHECK (
-    organization_id = public.user_organization_id()
-    OR auth.role() = 'service_role'
-    OR public.is_super_admin()
-  );
-
--- ================================================================
--- opportunity_notes
--- ================================================================
-CREATE TABLE IF NOT EXISTS public.opportunity_notes (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  opportunity_id UUID NOT NULL REFERENCES public.opportunities(id) ON DELETE CASCADE,
-  author_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-  body TEXT NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
-);
-
-CREATE INDEX IF NOT EXISTS idx_opportunity_notes_opportunity_id
-  ON public.opportunity_notes(opportunity_id);
-
-ALTER TABLE public.opportunity_notes ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY IF NOT EXISTS "opportunity_notes_select"
-  ON public.opportunity_notes
-  FOR SELECT
-  USING (
-    opportunity_id IN (
-      SELECT id FROM public.opportunities
-    )
-  );
-
-CREATE POLICY IF NOT EXISTS "opportunity_notes_all"
-  ON public.opportunity_notes
-  FOR ALL
-  USING (
-    opportunity_id IN (
-      SELECT id FROM public.opportunities
-    )
-  )
-  WITH CHECK (
-    opportunity_id IN (
-      SELECT id FROM public.opportunities
-    )
-  );
-
--- ================================================================
--- client_health_history
--- ================================================================
-CREATE TABLE IF NOT EXISTS public.client_health_history (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
-  snapshot_date DATE NOT NULL,
-  health INTEGER,
-  churn_risk INTEGER,
-  trs_score INTEGER,
-  notes TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
-);
-
-CREATE INDEX IF NOT EXISTS idx_client_health_history_client_date
-  ON public.client_health_history(client_id, snapshot_date DESC);
-
-ALTER TABLE public.client_health_history ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY IF NOT EXISTS "client_health_history_select"
-  ON public.client_health_history
-  FOR SELECT
-  USING (
-    client_id IN (
-      SELECT id FROM public.clients
-    )
-  );
-
-CREATE POLICY IF NOT EXISTS "client_health_history_write"
-  ON public.client_health_history
-  FOR INSERT TO authenticated, service_role
-  WITH CHECK (
-    auth.role() = 'service_role' OR public.is_admin()
-  );
-
-CREATE POLICY IF NOT EXISTS "client_health_history_update"
-  ON public.client_health_history
-  FOR UPDATE
-  USING (auth.role() = 'service_role' OR public.is_admin())
-  WITH CHECK (auth.role() = 'service_role' OR public.is_admin());
-
--- ================================================================
--- project_updates
--- ================================================================
-CREATE TABLE IF NOT EXISTS public.project_updates (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  project_id UUID NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
-  author_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-  status TEXT,
-  summary TEXT,
-  risk_level TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
-);
-
-CREATE INDEX IF NOT EXISTS idx_project_updates_project_id
-  ON public.project_updates(project_id DESC, created_at DESC);
-
-ALTER TABLE public.project_updates ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY IF NOT EXISTS "project_updates_select"
-  ON public.project_updates
-  FOR SELECT
-  USING (
-    project_id IN (
-      SELECT id FROM public.projects
-    )
-  );
-
-CREATE POLICY IF NOT EXISTS "project_updates_mutate"
-  ON public.project_updates
-  FOR ALL
-  USING (
-    project_id IN (
-      SELECT id FROM public.projects WHERE owner_id = auth.uid() OR public.is_admin()
-    )
-  )
-  WITH CHECK (
-    project_id IN (
-      SELECT id FROM public.projects WHERE owner_id = auth.uid() OR public.is_admin()
-    )
-  );
-
--- project_milestones
-CREATE TABLE IF NOT EXISTS public.project_milestones (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  project_id UUID NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
-  owner_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
-  title TEXT NOT NULL,
-  status TEXT NOT NULL CHECK (status IN ('Planned', 'In Progress', 'Complete', 'Blocked')),
-  confidence INTEGER CHECK (confidence >= 0 AND confidence <= 100),
+  status TEXT NOT NULL DEFAULT 'planned' CHECK (status IN ('planned', 'in_progress', 'on_hold', 'completed', 'cancelled')),
+  start_date DATE,
   due_date DATE,
-  description TEXT,
+  completed_at DATE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
 );
 
-CREATE INDEX IF NOT EXISTS idx_project_milestones_project_id
-  ON public.project_milestones(project_id, due_date);
+CREATE INDEX IF NOT EXISTS idx_projects_user_id ON public.projects(user_id);
+CREATE INDEX IF NOT EXISTS idx_projects_client_id ON public.projects(client_id);
+CREATE INDEX IF NOT EXISTS idx_projects_status ON public.projects(status);
 
-ALTER TABLE public.project_milestones ENABLE ROW LEVEL SECURITY;
+DROP TRIGGER IF EXISTS trg_projects_set_updated_at ON public.projects;
+CREATE TRIGGER trg_projects_set_updated_at
+  BEFORE UPDATE ON public.projects
+  FOR EACH ROW
+  EXECUTE FUNCTION public.set_updated_at();
 
-CREATE POLICY IF NOT EXISTS "project_milestones_select"
-  ON public.project_milestones
-  FOR SELECT
-  USING (
-    project_id IN (
-      SELECT id FROM public.projects
-    )
-  );
+ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "project_milestones_mutate"
-  ON public.project_milestones
-  FOR ALL
-  USING (
-    project_id IN (
-      SELECT id FROM public.projects WHERE owner_id = auth.uid() OR public.is_admin()
-    )
-  )
-  WITH CHECK (
-    project_id IN (
-      SELECT id FROM public.projects WHERE owner_id = auth.uid() OR public.is_admin()
-    )
-  );
+CREATE POLICY "Allow select for authenticated users"
+ON public.projects
+FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Allow insert for authenticated users"
+ON public.projects
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Allow update/delete for record owners"
+ON public.projects
+FOR ALL
+TO authenticated
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
 
 -- ================================================================
--- content_metrics
+-- FINANCE
 -- ================================================================
-CREATE TABLE IF NOT EXISTS public.content_metrics (
+DROP TABLE IF EXISTS public.finance CASCADE;
+CREATE TABLE public.finance (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  content_id UUID NOT NULL REFERENCES public.content_items(id) ON DELETE CASCADE,
-  metric_date DATE NOT NULL,
-  influenced NUMERIC(12,2),
-  advanced NUMERIC(12,2),
-  closed_won NUMERIC(12,2),
-  usage_rate NUMERIC(12,2),
-  views INTEGER,
-  ctr NUMERIC(6,3),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  project_id UUID REFERENCES public.projects(id) ON DELETE SET NULL,
+  quickbooks_id TEXT,
+  record_type TEXT NOT NULL CHECK (record_type IN ('invoice', 'payment', 'expense', 'adjustment')),
+  amount NUMERIC(14,2) NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'USD',
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'sent', 'paid', 'void', 'overdue')),
+  issued_date DATE,
+  due_date DATE,
+  paid_at TIMESTAMPTZ,
+  memo TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
 );
 
-CREATE INDEX IF NOT EXISTS idx_content_metrics_content_date
-  ON public.content_metrics(content_id, metric_date DESC);
+CREATE INDEX IF NOT EXISTS idx_finance_user_id ON public.finance(user_id);
+CREATE INDEX IF NOT EXISTS idx_finance_client_id ON public.finance(client_id);
+CREATE INDEX IF NOT EXISTS idx_finance_project_id ON public.finance(project_id);
+CREATE INDEX IF NOT EXISTS idx_finance_status ON public.finance(status);
 
-ALTER TABLE public.content_metrics ENABLE ROW LEVEL SECURITY;
+DROP TRIGGER IF EXISTS trg_finance_set_updated_at ON public.finance;
+CREATE TRIGGER trg_finance_set_updated_at
+  BEFORE UPDATE ON public.finance
+  FOR EACH ROW
+  EXECUTE FUNCTION public.set_updated_at();
 
-CREATE POLICY IF NOT EXISTS "content_metrics_select"
-  ON public.content_metrics
-  FOR SELECT
-  USING (
-    content_id IN (
-      SELECT id FROM public.content_items
-    )
-  );
+ALTER TABLE public.finance ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "content_metrics_insert"
-  ON public.content_metrics
-  FOR INSERT TO authenticated, service_role
-  WITH CHECK (auth.role() = 'service_role');
+CREATE POLICY "Allow select for authenticated users"
+ON public.finance
+FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "content_metrics_update"
-  ON public.content_metrics
-  FOR UPDATE
-  USING (auth.role() = 'service_role')
-  WITH CHECK (auth.role() = 'service_role');
+CREATE POLICY "Allow insert for authenticated users"
+ON public.finance
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Allow update/delete for record owners"
+ON public.finance
+FOR ALL
+TO authenticated
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
 
 -- ================================================================
--- media_assets
+-- CONTENT
 -- ================================================================
-CREATE TABLE IF NOT EXISTS public.media_assets (
+DROP TABLE IF EXISTS public.content CASCADE;
+CREATE TABLE public.content (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  project_id UUID NOT NULL REFERENCES public.media_projects(id) ON DELETE CASCADE,
-  asset_type TEXT NOT NULL,
-  uri TEXT NOT NULL,
-  metadata JSONB DEFAULT '{}'::jsonb,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
-);
-
-CREATE INDEX IF NOT EXISTS idx_media_assets_project_id
-  ON public.media_assets(project_id, created_at DESC);
-
-ALTER TABLE public.media_assets ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY IF NOT EXISTS "media_assets_select"
-  ON public.media_assets
-  FOR SELECT
-  USING (
-    project_id IN (
-      SELECT id FROM public.media_projects
-    )
-  );
-
-CREATE POLICY IF NOT EXISTS "media_assets_all"
-  ON public.media_assets
-  FOR ALL
-  USING (
-    project_id IN (
-      SELECT id FROM public.media_projects
-    )
-  )
-  WITH CHECK (
-    project_id IN (
-      SELECT id FROM public.media_projects
-    )
-  );
-
--- ================================================================
--- focus_sessions
--- ================================================================
-CREATE TABLE IF NOT EXISTS public.focus_sessions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  daily_plan_id UUID NOT NULL REFERENCES public.daily_plans(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-  started_at TIMESTAMPTZ,
-  completed_at TIMESTAMPTZ,
-  duration_minutes INTEGER,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
-);
-
-CREATE INDEX IF NOT EXISTS idx_focus_sessions_user_day
-  ON public.focus_sessions(user_id, daily_plan_id, started_at);
-
-ALTER TABLE public.focus_sessions ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY IF NOT EXISTS "focus_sessions_select"
-  ON public.focus_sessions
-  FOR SELECT
-  USING (
-    user_id = auth.uid() OR public.is_admin()
-  );
-
-CREATE POLICY IF NOT EXISTS "focus_sessions_mutate"
-  ON public.focus_sessions
-  FOR ALL
-  USING (
-    user_id = auth.uid() OR public.is_admin()
-  )
-  WITH CHECK (
-    user_id = auth.uid() OR public.is_admin()
-  );
-
--- ================================================================
--- analytics_events
--- ================================================================
-CREATE TABLE IF NOT EXISTS public.analytics_events (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES public.organizations(id) ON DELETE SET NULL,
-  user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
-  event_type TEXT NOT NULL,
-  entity_type TEXT,
-  entity_id TEXT,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  client_id UUID REFERENCES public.clients(id) ON DELETE CASCADE,
+  project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  content_type TEXT NOT NULL DEFAULT 'note' CHECK (content_type IN ('note', 'briefing', 'update', 'asset')),
+  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'review', 'published', 'archived')),
+  visibility TEXT NOT NULL DEFAULT 'private' CHECK (visibility IN ('private', 'team', 'client')),
+  body TEXT,
   metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
+  published_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
 );
 
-CREATE INDEX IF NOT EXISTS idx_analytics_events_org_time
-  ON public.analytics_events(organization_id, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_analytics_events_event_type
-  ON public.analytics_events(event_type);
-CREATE INDEX IF NOT EXISTS idx_analytics_events_entity
-  ON public.analytics_events(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_content_user_id ON public.content(user_id);
+CREATE INDEX IF NOT EXISTS idx_content_client_id ON public.content(client_id);
+CREATE INDEX IF NOT EXISTS idx_content_project_id ON public.content(project_id);
+CREATE INDEX IF NOT EXISTS idx_content_status ON public.content(status);
+
+DROP TRIGGER IF EXISTS trg_content_set_updated_at ON public.content;
+CREATE TRIGGER trg_content_set_updated_at
+  BEFORE UPDATE ON public.content
+  FOR EACH ROW
+  EXECUTE FUNCTION public.set_updated_at();
+
+ALTER TABLE public.content ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow select for authenticated users"
+ON public.content
+FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Allow insert for authenticated users"
+ON public.content
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Allow update/delete for record owners"
+ON public.content
+FOR ALL
+TO authenticated
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+-- ================================================================
+-- ANALYTICS EVENTS
+-- ================================================================
+DROP TABLE IF EXISTS public.analytics_events CASCADE;
+CREATE TABLE public.analytics_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  client_id UUID REFERENCES public.clients(id) ON DELETE CASCADE,
+  event_type TEXT NOT NULL,
+  source TEXT,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  occurred_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_analytics_events_user_id ON public.analytics_events(user_id);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_client_id ON public.analytics_events(client_id);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_type ON public.analytics_events(event_type);
+
+DROP TRIGGER IF EXISTS trg_analytics_events_set_updated_at ON public.analytics_events;
+CREATE TRIGGER trg_analytics_events_set_updated_at
+  BEFORE UPDATE ON public.analytics_events
+  FOR EACH ROW
+  EXECUTE FUNCTION public.set_updated_at();
 
 ALTER TABLE public.analytics_events ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "analytics_events_select"
-  ON public.analytics_events
-  FOR SELECT
-  USING (
-    auth.role() = 'service_role'
-    OR public.is_admin()
-    OR organization_id IS NULL
-  );
+CREATE POLICY "Allow select for authenticated users"
+ON public.analytics_events
+FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "analytics_events_insert"
-  ON public.analytics_events
-  FOR INSERT TO public
-  WITH CHECK (
-    organization_id = public.user_organization_id()
-    OR organization_id IS NULL
-    OR auth.role() = 'service_role'
-  );
+CREATE POLICY "Allow insert for authenticated users"
+ON public.analytics_events
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Allow update/delete for record owners"
+ON public.analytics_events
+FOR ALL
+TO authenticated
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
 
 -- ================================================================
--- audit_log
+-- DASHBOARD SNAPSHOTS
 -- ================================================================
-CREATE TABLE IF NOT EXISTS public.audit_log (
+DROP TABLE IF EXISTS public.dashboard_snapshots CASCADE;
+CREATE TABLE public.dashboard_snapshots (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES public.organizations(id) ON DELETE SET NULL,
-  actor_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
-  action TEXT NOT NULL,
-  resource_type TEXT NOT NULL,
-  resource_id UUID,
-  metadata JSONB DEFAULT '{}'::jsonb,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
-);
-
-CREATE INDEX IF NOT EXISTS idx_audit_log_org_time
-  ON public.audit_log(organization_id, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_audit_log_resource
-  ON public.audit_log(resource_type, resource_id);
-
-ALTER TABLE public.audit_log ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY IF NOT EXISTS "audit_log_select"
-  ON public.audit_log
-  FOR SELECT
-  USING (
-    public.is_admin() OR auth.role() = 'service_role'
-  );
-
-CREATE POLICY IF NOT EXISTS "audit_log_insert"
-  ON public.audit_log
-  FOR INSERT TO service_role
-  WITH CHECK (auth.role() = 'service_role');
-
--- ================================================================
--- agent_definitions
--- ================================================================
-CREATE TABLE IF NOT EXISTS public.agent_definitions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  agent_key TEXT UNIQUE NOT NULL,
-  organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-  definition JSONB NOT NULL DEFAULT '{}'::jsonb,
-  auto_runnable BOOLEAN NOT NULL DEFAULT false,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
-);
-
-CREATE INDEX IF NOT EXISTS idx_agent_definitions_org_key
-  ON public.agent_definitions(organization_id, agent_key);
-
-ALTER TABLE public.agent_definitions ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY IF NOT EXISTS "agent_definitions_select"
-  ON public.agent_definitions
-  FOR SELECT
-  USING (
-    organization_id = public.user_organization_id() OR public.is_super_admin()
-  );
-
-CREATE POLICY IF NOT EXISTS "agent_definitions_all"
-  ON public.agent_definitions
-  FOR ALL
-  USING (
-    organization_id = public.user_organization_id() AND public.is_admin()
-  )
-  WITH CHECK (
-    organization_id = public.user_organization_id() AND public.is_admin()
-  );
-
--- ================================================================
--- agent_behaviors
--- ================================================================
-CREATE TABLE IF NOT EXISTS public.agent_behaviors (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  agent_key TEXT NOT NULL REFERENCES public.agent_definitions(agent_key) ON DELETE CASCADE,
-  organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-  behavior JSONB NOT NULL DEFAULT '{}'::jsonb,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
-);
-
-CREATE INDEX IF NOT EXISTS idx_agent_behaviors_org_agent
-  ON public.agent_behaviors(organization_id, agent_key);
-
-ALTER TABLE public.agent_behaviors ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY IF NOT EXISTS "agent_behaviors_select"
-  ON public.agent_behaviors
-  FOR SELECT
-  USING (
-    organization_id = public.user_organization_id() OR public.is_super_admin()
-  );
-
-CREATE POLICY IF NOT EXISTS "agent_behaviors_all"
-  ON public.agent_behaviors
-  FOR ALL
-  USING (
-    organization_id = public.user_organization_id() AND public.is_admin()
-  )
-  WITH CHECK (
-    organization_id = public.user_organization_id() AND public.is_admin()
-  );
-
--- ================================================================
--- integration_settings
--- ================================================================
-CREATE TABLE IF NOT EXISTS public.integration_settings (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-  settings JSONB NOT NULL DEFAULT '{}'::jsonb,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
-);
-
-CREATE INDEX IF NOT EXISTS idx_integration_settings_org
-  ON public.integration_settings(organization_id);
-
-ALTER TABLE public.integration_settings ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY IF NOT EXISTS "integration_settings_select"
-  ON public.integration_settings
-  FOR SELECT
-  USING (
-    organization_id = public.user_organization_id() AND public.is_admin()
-  );
-
-CREATE POLICY IF NOT EXISTS "integration_settings_all"
-  ON public.integration_settings
-  FOR ALL
-  USING (auth.role() = 'service_role' OR (organization_id = public.user_organization_id() AND public.is_admin()))
-  WITH CHECK (auth.role() = 'service_role' OR (organization_id = public.user_organization_id() AND public.is_admin()));
-
--- ================================================================
--- share_space_artifacts
--- ================================================================
-CREATE TABLE IF NOT EXISTS public.share_space_artifacts (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  share_id UUID NOT NULL REFERENCES public.share_spaces(id) ON DELETE CASCADE,
-  artifact_type TEXT NOT NULL,
-  uri TEXT NOT NULL,
-  metadata JSONB DEFAULT '{}'::jsonb,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
-);
-
-CREATE INDEX IF NOT EXISTS idx_share_space_artifacts_share_id
-  ON public.share_space_artifacts(share_id, created_at DESC);
-
-ALTER TABLE public.share_space_artifacts ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY IF NOT EXISTS "share_space_artifacts_select"
-  ON public.share_space_artifacts
-  FOR SELECT
-  USING (
-    share_id IN (
-      SELECT id FROM public.share_spaces
-    )
-  );
-
-CREATE POLICY IF NOT EXISTS "share_space_artifacts_all"
-  ON public.share_space_artifacts
-  FOR ALL
-  USING (
-    share_id IN (
-      SELECT id FROM public.share_spaces
-    )
-  )
-  WITH CHECK (
-    share_id IN (
-      SELECT id FROM public.share_spaces
-    )
-  );
-
--- ================================================================
--- dashboard_snapshots
--- ================================================================
-CREATE TABLE IF NOT EXISTS public.dashboard_snapshots (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
-  time_scope TEXT NOT NULL,
-  segment_filter JSONB DEFAULT '{}'::jsonb,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  snapshot_date DATE NOT NULL,
   metrics JSONB NOT NULL DEFAULT '{}'::jsonb,
-  computed_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
 );
 
-CREATE INDEX IF NOT EXISTS idx_dashboard_snapshots_org_scope
-  ON public.dashboard_snapshots(organization_id, time_scope, computed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_dashboard_snapshots_user_id ON public.dashboard_snapshots(user_id);
+CREATE INDEX IF NOT EXISTS idx_dashboard_snapshots_date ON public.dashboard_snapshots(snapshot_date);
+
+DROP TRIGGER IF EXISTS trg_dashboard_snapshots_set_updated_at ON public.dashboard_snapshots;
+CREATE TRIGGER trg_dashboard_snapshots_set_updated_at
+  BEFORE UPDATE ON public.dashboard_snapshots
+  FOR EACH ROW
+  EXECUTE FUNCTION public.set_updated_at();
 
 ALTER TABLE public.dashboard_snapshots ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "dashboard_snapshots_select"
-  ON public.dashboard_snapshots
-  FOR SELECT
-  USING (
-    organization_id = public.user_organization_id()
-    OR organization_id IS NULL
-    OR public.is_super_admin()
-  );
+CREATE POLICY "Allow select for authenticated users"
+ON public.dashboard_snapshots
+FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "dashboard_snapshots_all"
-  ON public.dashboard_snapshots
-  FOR ALL TO public
-  USING (
-    auth.role() = 'service_role'
-    OR organization_id = public.user_organization_id()
-    OR organization_id IS NULL
-  )
-  WITH CHECK (
-    auth.role() = 'service_role'
-    OR organization_id = public.user_organization_id()
-    OR organization_id IS NULL
-  );
+CREATE POLICY "Allow insert for authenticated users"
+ON public.dashboard_snapshots
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Allow update/delete for record owners"
+ON public.dashboard_snapshots
+FOR ALL
+TO authenticated
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
 
 -- ================================================================
--- user_integrations
+-- FOCUS SESSIONS
 -- ================================================================
-CREATE TABLE IF NOT EXISTS public.user_integrations (
+DROP TABLE IF EXISTS public.focus_sessions CASCADE;
+CREATE TABLE public.focus_sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  provider TEXT NOT NULL,
-  access_token TEXT,
-  refresh_token TEXT,
-  scope TEXT,
-  token_type TEXT,
-  expiry_date TIMESTAMPTZ,
-  connected_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
-  UNIQUE (user_id, provider)
+  client_id UUID REFERENCES public.clients(id) ON DELETE SET NULL,
+  project_id UUID REFERENCES public.projects(id) ON DELETE SET NULL,
+  started_at TIMESTAMPTZ NOT NULL,
+  ended_at TIMESTAMPTZ,
+  summary TEXT,
+  outcome TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
 );
 
-ALTER TABLE public.user_integrations ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS idx_focus_sessions_user_id ON public.focus_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_focus_sessions_client_id ON public.focus_sessions(client_id);
 
-CREATE POLICY IF NOT EXISTS "user_integrations_manage"
-  ON public.user_integrations
-  FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+DROP TRIGGER IF EXISTS trg_focus_sessions_set_updated_at ON public.focus_sessions;
+CREATE TRIGGER trg_focus_sessions_set_updated_at
+  BEFORE UPDATE ON public.focus_sessions
+  FOR EACH ROW
+  EXECUTE FUNCTION public.set_updated_at();
+
+ALTER TABLE public.focus_sessions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow select for authenticated users"
+ON public.focus_sessions
+FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Allow insert for authenticated users"
+ON public.focus_sessions
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Allow update/delete for record owners"
+ON public.focus_sessions
+FOR ALL
+TO authenticated
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+-- ================================================================
+-- CLIENT HEALTH HISTORY
+-- ================================================================
+DROP TABLE IF EXISTS public.client_health_history CASCADE;
+CREATE TABLE public.client_health_history (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  score INTEGER NOT NULL CHECK (score BETWEEN 0 AND 100),
+  trend TEXT CHECK (trend IN ('improving', 'steady', 'declining')),
+  notes TEXT,
+  recorded_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_client_health_history_user_id ON public.client_health_history(user_id);
+CREATE INDEX IF NOT EXISTS idx_client_health_history_client_id ON public.client_health_history(client_id);
+CREATE INDEX IF NOT EXISTS idx_client_health_history_recorded_at ON public.client_health_history(recorded_at);
+
+DROP TRIGGER IF EXISTS trg_client_health_history_set_updated_at ON public.client_health_history;
+CREATE TRIGGER trg_client_health_history_set_updated_at
+  BEFORE UPDATE ON public.client_health_history
+  FOR EACH ROW
+  EXECUTE FUNCTION public.set_updated_at();
+
+ALTER TABLE public.client_health_history ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow select for authenticated users"
+ON public.client_health_history
+FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Allow insert for authenticated users"
+ON public.client_health_history
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Allow update/delete for record owners"
+ON public.client_health_history
+FOR ALL
+TO authenticated
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+-- ================================================================
+-- AUDIT LOG
+-- ================================================================
+DROP TABLE IF EXISTS public.audit_log CASCADE;
+CREATE TABLE public.audit_log (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  entity_type TEXT NOT NULL,
+  entity_id UUID,
+  action TEXT NOT NULL,
+  changes JSONB NOT NULL DEFAULT '{}'::jsonb,
+  request_id TEXT,
+  ip_address TEXT,
+  occurred_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_log_user_id ON public.audit_log(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_log_entity ON public.audit_log(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_audit_log_occurred_at ON public.audit_log(occurred_at DESC);
+
+DROP TRIGGER IF EXISTS trg_audit_log_set_updated_at ON public.audit_log;
+CREATE TRIGGER trg_audit_log_set_updated_at
+  BEFORE UPDATE ON public.audit_log
+  FOR EACH ROW
+  EXECUTE FUNCTION public.set_updated_at();
+
+ALTER TABLE public.audit_log ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow select for authenticated users"
+ON public.audit_log
+FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Allow insert for authenticated users"
+ON public.audit_log
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Allow update/delete for record owners"
+ON public.audit_log
+FOR ALL
+TO authenticated
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+-- ================================================================
+-- INTEGRATIONS
+-- ================================================================
+DROP TABLE IF EXISTS public.integrations CASCADE;
+CREATE TABLE public.integrations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  provider TEXT NOT NULL CHECK (provider IN ('gmail', 'quickbooks')),
+  external_id TEXT,
+  access_token TEXT,
+  refresh_token TEXT,
+  expires_at TIMESTAMPTZ,
+  scopes TEXT[] DEFAULT ARRAY[]::TEXT[],
+  settings JSONB NOT NULL DEFAULT '{}'::jsonb,
+  status TEXT NOT NULL DEFAULT 'connected' CHECK (status IN ('connected', 'requires_action', 'disconnected')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_integrations_user_id ON public.integrations(user_id);
+CREATE INDEX IF NOT EXISTS idx_integrations_provider ON public.integrations(provider);
+
+DROP TRIGGER IF EXISTS trg_integrations_set_updated_at ON public.integrations;
+CREATE TRIGGER trg_integrations_set_updated_at
+  BEFORE UPDATE ON public.integrations
+  FOR EACH ROW
+  EXECUTE FUNCTION public.set_updated_at();
+
+ALTER TABLE public.integrations ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow select for authenticated users"
+ON public.integrations
+FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Allow insert for authenticated users"
+ON public.integrations
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Allow update/delete for record owners"
+ON public.integrations
+FOR ALL
+TO authenticated
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+-- ================================================================
+-- CALENDAR EVENTS
+-- ================================================================
+DROP TABLE IF EXISTS public.calendar_events CASCADE;
+CREATE TABLE public.calendar_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  integration_id UUID NOT NULL REFERENCES public.integrations(id) ON DELETE CASCADE,
+  client_id UUID REFERENCES public.clients(id) ON DELETE SET NULL,
+  project_id UUID REFERENCES public.projects(id) ON DELETE SET NULL,
+  event_external_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  start_at TIMESTAMPTZ NOT NULL,
+  end_at TIMESTAMPTZ NOT NULL,
+  location TEXT,
+  meeting_link TEXT,
+  status TEXT NOT NULL DEFAULT 'confirmed' CHECK (status IN ('confirmed', 'tentative', 'cancelled')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_calendar_events_user_id ON public.calendar_events(user_id);
+CREATE INDEX IF NOT EXISTS idx_calendar_events_integration_id ON public.calendar_events(integration_id);
+CREATE INDEX IF NOT EXISTS idx_calendar_events_client_id ON public.calendar_events(client_id);
+CREATE INDEX IF NOT EXISTS idx_calendar_events_time ON public.calendar_events(start_at, end_at);
+
+DROP TRIGGER IF EXISTS trg_calendar_events_set_updated_at ON public.calendar_events;
+CREATE TRIGGER trg_calendar_events_set_updated_at
+  BEFORE UPDATE ON public.calendar_events
+  FOR EACH ROW
+  EXECUTE FUNCTION public.set_updated_at();
+
+ALTER TABLE public.calendar_events ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow select for authenticated users"
+ON public.calendar_events
+FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Allow insert for authenticated users"
+ON public.calendar_events
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Allow update/delete for record owners"
+ON public.calendar_events
+FOR ALL
+TO authenticated
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+-- ================================================================
+-- COMMUNICATIONS
+-- ================================================================
+DROP TABLE IF EXISTS public.communications CASCADE;
+CREATE TABLE public.communications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  client_id UUID REFERENCES public.clients(id) ON DELETE CASCADE,
+  integration_id UUID REFERENCES public.integrations(id) ON DELETE SET NULL,
+  channel TEXT NOT NULL CHECK (channel IN ('email', 'call', 'meeting', 'note')),
+  direction TEXT NOT NULL CHECK (direction IN ('inbound', 'outbound', 'internal')),
+  subject TEXT,
+  body TEXT,
+  occurred_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_communications_user_id ON public.communications(user_id);
+CREATE INDEX IF NOT EXISTS idx_communications_client_id ON public.communications(client_id);
+CREATE INDEX IF NOT EXISTS idx_communications_channel ON public.communications(channel);
+CREATE INDEX IF NOT EXISTS idx_communications_occurred_at ON public.communications(occurred_at DESC);
+
+DROP TRIGGER IF EXISTS trg_communications_set_updated_at ON public.communications;
+CREATE TRIGGER trg_communications_set_updated_at
+  BEFORE UPDATE ON public.communications
+  FOR EACH ROW
+  EXECUTE FUNCTION public.set_updated_at();
+
+ALTER TABLE public.communications ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow select for authenticated users"
+ON public.communications
+FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Allow insert for authenticated users"
+ON public.communications
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Allow update/delete for record owners"
+ON public.communications
+FOR ALL
+TO authenticated
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+COMMIT;
