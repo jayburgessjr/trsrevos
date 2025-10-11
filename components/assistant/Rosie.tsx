@@ -188,7 +188,7 @@ export default function Rosie() {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-lg transition hover:shadow-xl"
+          className="fixed right-4 bottom-24 z-50 flex items-center gap-2 rounded-full px-4 py-3 transition sm:right-6 sm:bottom-6 border border-gray-200 bg-white shadow-lg hover:shadow-xl text-gray-900 text-sm font-medium"
           aria-label="Open Rosie assistant"
         >
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-900 text-white">
