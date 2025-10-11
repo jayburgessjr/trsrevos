@@ -320,6 +320,10 @@ export async function createProspect(input: {
 
   console.log("Creating client with owner_id:", owner_id, "authenticated user:", user.id);
 
+  // Check auth session
+  const { data: { session } } = await supabase.auth.getSession();
+  console.log("Has session:", !!session, "Session user:", session?.user?.id);
+
   // First, create a placeholder client
   const { data: client, error: clientError } = await supabase
     .from("clients")
@@ -336,6 +340,7 @@ export async function createProspect(input: {
   if (clientError) {
     console.error("Error creating client:", clientError);
     console.error("User context:", { userId: user.id, email: user.email });
+    console.error("Auth session exists:", !!session);
     return { success: false, error: clientError.message };
   }
 

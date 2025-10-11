@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { TRS_CARD, TRS_SUBTITLE } from "@/lib/style";
 import { PipelineKanban } from "@/components/pipeline/PipelineKanban";
 import { AddProspectModal } from "@/components/pipeline/AddProspectModal";
+import { PipelineFilters } from "@/components/pipeline/PipelineFilters";
 import type { OpportunityWithNotes } from "@/core/pipeline/actions";
 
 type Props = {
@@ -26,11 +27,17 @@ type Props = {
 export default function PipelineClient({ opportunities, metrics, userId }: Props) {
   const [activeTab, setActiveTab] = useState("Overview");
   const [showAddProspect, setShowAddProspect] = useState(false);
+  const [filteredOpportunities, setFilteredOpportunities] = useState<OpportunityWithNotes[]>(opportunities);
 
   const handleOpenModal = () => {
     console.log("Opening Add Prospect modal");
     setShowAddProspect(true);
   };
+
+  // Update filtered opportunities when opportunities prop changes
+  useMemo(() => {
+    setFilteredOpportunities(opportunities);
+  }, [opportunities]);
 
   // Group opportunities by stage for Kanban
   const opportunitiesByStage = useMemo(() => {
@@ -38,11 +45,11 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
     const grouped: { [stage: string]: OpportunityWithNotes[] } = {};
 
     stages.forEach((stage) => {
-      grouped[stage] = opportunities.filter((opp) => opp.stage === stage);
+      grouped[stage] = filteredOpportunities.filter((opp) => opp.stage === stage);
     });
 
     return grouped;
-  }, [opportunities]);
+  }, [filteredOpportunities]);
 
   // Calculate additional metrics
   const quarterlyTarget = 1200000; // $1.2M target
@@ -279,6 +286,12 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
               </Button>
             </div>
           </div>
+
+          {/* Filters */}
+          <PipelineFilters
+            opportunities={opportunities}
+            onFilterChange={setFilteredOpportunities}
+          />
 
           <PipelineKanban opportunitiesByStage={opportunitiesByStage} userId={userId} />
         </div>

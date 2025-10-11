@@ -12,6 +12,7 @@ import {
   type OpportunityWithNotes
 } from "@/core/pipeline/actions";
 import { cn } from "@/lib/utils";
+import { ActivitySection } from "./ActivitySection";
 
 type DealDetailModalProps = {
   deal: OpportunityWithNotes;
@@ -32,6 +33,7 @@ export function DealDetailModal({ deal, onClose, userId }: DealDetailModalProps)
   const [isEditing, setIsEditing] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"notes" | "activities">("activities");
 
   const [formData, setFormData] = useState({
     name: deal.name,
@@ -274,49 +276,81 @@ export function DealDetailModal({ deal, onClose, userId }: DealDetailModalProps)
               </div>
             </div>
 
-            {/* Right Column - Notes & Activity */}
+            {/* Right Column - Activities & Notes */}
             <div className="space-y-4">
-              <div>
-                <h3 className="text-lg font-semibold mb-3">Notes & Activity</h3>
-
-                {/* Add Note */}
-                <div className="mb-4">
-                  <textarea
-                    value={noteText}
-                    onChange={(e) => setNoteText(e.target.value)}
-                    placeholder="Add a note..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none"
-                    rows={3}
-                    disabled={isPending}
-                  />
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={handleAddNote}
-                    disabled={isPending || !noteText.trim()}
-                    className="mt-2"
-                  >
-                    Add Note
-                  </Button>
-                </div>
-
-                {/* Notes List */}
-                <div className="space-y-3 max-h-[300px] overflow-y-auto">
-                  {deal.notes && deal.notes.length > 0 ? (
-                    deal.notes.map((note) => (
-                      <div key={note.id} className="p-3 bg-gray-50 rounded-md">
-                        <div className="text-sm text-gray-900">{note.body}</div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {new Date(note.created_at).toLocaleDateString()} at{" "}
-                          {new Date(note.created_at).toLocaleTimeString()}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-gray-500">No notes yet</p>
+              {/* Tabs */}
+              <div className="flex items-center gap-2 border-b border-gray-200">
+                <button
+                  onClick={() => setActiveTab("activities")}
+                  className={cn(
+                    "px-3 py-2 text-sm font-medium transition-colors",
+                    activeTab === "activities"
+                      ? "border-b-2 border-black text-black"
+                      : "text-gray-600 hover:text-black"
                   )}
-                </div>
+                >
+                  Activities
+                </button>
+                <button
+                  onClick={() => setActiveTab("notes")}
+                  className={cn(
+                    "px-3 py-2 text-sm font-medium transition-colors",
+                    activeTab === "notes"
+                      ? "border-b-2 border-black text-black"
+                      : "text-gray-600 hover:text-black"
+                  )}
+                >
+                  Notes
+                </button>
               </div>
+
+              {/* Activities Tab */}
+              {activeTab === "activities" && (
+                <ActivitySection opportunityId={deal.id} userId={userId} />
+              )}
+
+              {/* Notes Tab */}
+              {activeTab === "notes" && (
+                <div>
+                  {/* Add Note */}
+                  <div className="mb-4">
+                    <textarea
+                      value={noteText}
+                      onChange={(e) => setNoteText(e.target.value)}
+                      placeholder="Add a note..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none"
+                      rows={3}
+                      disabled={isPending}
+                    />
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleAddNote}
+                      disabled={isPending || !noteText.trim()}
+                      className="mt-2"
+                    >
+                      Add Note
+                    </Button>
+                  </div>
+
+                  {/* Notes List */}
+                  <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                    {deal.notes && deal.notes.length > 0 ? (
+                      deal.notes.map((note) => (
+                        <div key={note.id} className="p-3 bg-gray-50 rounded-md">
+                          <div className="text-sm text-gray-900">{note.body}</div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {new Date(note.created_at).toLocaleDateString()} at{" "}
+                            {new Date(note.created_at).toLocaleTimeString()}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500">No notes yet</p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
