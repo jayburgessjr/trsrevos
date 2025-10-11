@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/ui/input";
 import { Button } from "@/ui/button";
 import { cn } from "@/lib/utils";
@@ -30,6 +30,11 @@ export function PipelineFilters({ opportunities, onFilterChange }: PipelineFilte
     minProbability: "",
   });
   const [isExpanded, setIsExpanded] = useState(false);
+  const [filteredCount, setFilteredCount] = useState(opportunities.length);
+
+  useEffect(() => {
+    setFilteredCount(opportunities.length);
+  }, [opportunities]);
 
   // Get unique owners for filter dropdown
   const uniqueOwners = Array.from(
@@ -81,6 +86,7 @@ export function PipelineFilters({ opportunities, onFilterChange }: PipelineFilte
       filtered = filtered.filter((opp) => opp.probability >= minProb);
     }
 
+    setFilteredCount(filtered.length);
     onFilterChange(filtered);
   };
 
@@ -94,6 +100,7 @@ export function PipelineFilters({ opportunities, onFilterChange }: PipelineFilte
       minProbability: "",
     };
     setFilters(emptyFilters);
+    setFilteredCount(opportunities.length);
     onFilterChange(opportunities);
   };
 
@@ -246,7 +253,7 @@ export function PipelineFilters({ opportunities, onFilterChange }: PipelineFilte
           {/* Filter Stats */}
           <div className="md:col-span-2 lg:col-span-3 flex items-end">
             <div className="text-sm text-gray-600">
-              Showing {opportunities.length} of {opportunities.length} deals
+              Showing {filteredCount} of {opportunities.length} deals
               {hasActiveFilters && (
                 <span className="ml-2 text-black font-medium">
                   (filtered)
