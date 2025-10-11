@@ -748,15 +748,58 @@ export async function createAdCampaign(
  * Get content snapshot (all state)
  */
 export async function getContentSnapshot() {
-  const [items, pieces, campaigns, metrics] = await Promise.all([
-    getContentItems(),
+  const supabase = await createClient()
+
+  // Fetch all items first
+  const items = await getContentItems()
+
+  // Fetch all variants, distributions, and touches for all items
+  const [variantsData, distributionsData, touchesData, pieces, campaigns, metrics] = await Promise.all([
+    supabase.from('content_variants').select('*').order('created_at', { ascending: false }),
+    supabase.from('content_distribution').select('*').order('scheduled_at', { ascending: true }),
+    supabase.from('content_touches').select('*').order('ts', { ascending: false }).limit(1000),
     getContentPieces(),
     getAdCampaigns(),
     getMetrics(),
   ])
 
+  // Map variants
+  const variants: Variant[] = (variantsData.data || []).map((variant: any) => ({
+    id: variant.id,
+    contentId: variant.content_id,
+    kind: variant.kind,
+    headline: variant.headline,
+    cta: variant.cta,
+    group: variant.group,
+    status: variant.status,
+  }))
+
+  // Map distributions
+  const distributions: Distribution[] = (distributionsData.data || []).map((dist: any) => ({
+    id: dist.id,
+    contentId: dist.content_id,
+    channel: dist.channel,
+    scheduledAt: dist.scheduled_at,
+    publishedAt: dist.published_at,
+    utm: dist.utm,
+    clicks: dist.clicks,
+  }))
+
+  // Map touches
+  const touches: Touch[] = (touchesData.data || []).map((touch: any) => ({
+    id: touch.id,
+    contentId: touch.content_id,
+    opportunityId: touch.opportunity_id,
+    actor: touch.actor,
+    action: touch.action,
+    ts: touch.ts,
+  }))
+
   return {
     items,
+    variants,
+    distributions,
+    touches,
     pieces,
     campaigns,
     metrics,

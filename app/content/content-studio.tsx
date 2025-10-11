@@ -272,7 +272,7 @@ export function ContentStudio(props: ContentStudioProps) {
       await actionScheduleDistribution({
         contentId: selectedItem.id,
         channel: (formData.get('channel') as string) || 'LinkedIn',
-        whenISO: formData.get('when') as string,
+        scheduledAt: formData.get('when') as string,
         utm: (formData.get('utm') as string) || undefined,
       })
       event.currentTarget.reset()
