@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import { PageTemplate } from "@/components/layout/PageTemplate";
+import type { PageTemplateBadge } from "@/components/layout/PageTemplate";
 import { AddProspectModal } from "@/components/pipeline/AddProspectModal";
 import { PipelineFilters } from "@/components/pipeline/PipelineFilters";
 import { PipelineKanban } from "@/components/pipeline/PipelineKanban";
@@ -78,7 +79,7 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
     });
   }, [opportunities]);
 
-  const headerBadges = useMemo(
+  const headerBadges = useMemo<PageTemplateBadge[]>(
     () => [
       { label: "Quarterly target $1.2M" },
       {
@@ -87,7 +88,7 @@ export default function PipelineClient({ opportunities, metrics, userId }: Props
       },
       {
         label: `${recentlyMovedDeals.length} moved this week`,
-        variant: "default" as const,
+        variant: "default",
       },
     ],
     [atRiskDeals.length, recentlyMovedDeals.length],
