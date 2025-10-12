@@ -3,9 +3,20 @@
 import { revalidatePath } from "next/cache";
 
 import { logAnalyticsEvent } from "@/core/analytics/actions";
+import { computeStrategies, StrategyVariant } from "@/core/qra/engine";
 import { requireAuth } from "@/lib/server/auth";
 import { createClient } from "@/lib/supabase/server";
-import { RevOSPhase, Client, ClientDeliverable, ClientFinancialSnapshot } from "./types";
+import {
+  RevOSPhase,
+  Client,
+  ClientDeliverable,
+  ClientFinancialSnapshot,
+  ActivityItem,
+  DiscoveryResponse,
+  DataRequirement,
+  ClientStrategy,
+  QRARun,
+} from "./types";
 
 const hasSupabaseCredentials = () =>
   Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
@@ -413,3 +424,351 @@ export async function actionRecordClientFinancials(input: {
   return data;
 }
 
+export async function saveDiscovery(
+  formType: "gap_selling" | "clarity_gap" | "revenue_research",
+  clientId: string,
+  answers: Record<string, unknown>,
+  options?: { completed?: boolean }
+): Promise<DiscoveryResponse | null> {
+  const { supabase, user } = await requireAuth({ redirectTo: `/clients/${clientId}` });
+  const now = new Date().toISOString();
+  const payload: Record<string, unknown> = {
+    client_id: clientId,
+    form_type: formType,
+    answers,
+    updated_at: now,
+  };
+
+  if (options?.completed) {
+    payload.completed_at = now;
+  }
+
+  const { data, error } = await supabase
+    .from("discovery_responses")
+    .upsert(payload, { onConflict: "client_id,form_type" })
+    .select("*")
+    .single();
+
+  if (error) {
+    console.error("clients:save-discovery", error);
+    return null;
+  }
+
+  await logAnalyticsEvent({
+    eventKey: "client.discovery.saved",
+    payload: { clientId, formType, userId: user.id },
+  });
+
+  revalidatePath(`/clients/${clientId}`);
+  return data as DiscoveryResponse;
+}
+
+export async function setDataRequirement(
+  clientId: string,
+  sourceName: string,
+  status: "needed" | "in_progress" | "collected",
+  notes?: string
+): Promise<DataRequirement | null> {
+  const { supabase, user } = await requireAuth({ redirectTo: `/clients/${clientId}` });
+  const now = new Date().toISOString();
+  const payload = {
+    client_id: clientId,
+    source_name: sourceName,
+    status,
+    notes: notes ?? null,
+    updated_at: now,
+  };
+
+  const { data, error } = await supabase
+    .from("data_requirements")
+    .upsert(payload, { onConflict: "client_id,source_name" })
+    .select("*")
+    .single();
+
+  if (error) {
+    console.error("clients:set-data-requirement", error);
+    return null;
+  }
+
+  await logAnalyticsEvent({
+    eventKey: "client.data.updated",
+    payload: { clientId, sourceName, status, userId: user.id },
+  });
+
+  revalidatePath(`/clients/${clientId}`);
+  return data as DataRequirement;
+}
+
+export async function runQRA(
+  clientId: string,
+  inputs: Record<string, unknown>
+): Promise<{ strategies: StrategyVariant[]; run: QRARun | null }> {
+  const { supabase, user } = await requireAuth({ redirectTo: `/clients/${clientId}` });
+  const strategies = computeStrategies(inputs);
+
+  const insertPayload = {
+    client_id: clientId,
+    inputs,
+    outputs: { strategies },
+    created_by: user.id,
+  };
+
+  const { data, error } = await supabase
+    .from("qra_runs")
+    .insert(insertPayload)
+    .select("*")
+    .single();
+
+  if (error) {
+    console.error("clients:run-qra", error);
+    return { strategies, run: null };
+  }
+
+  await logAnalyticsEvent({
+    eventKey: "client.qra.run",
+    payload: { clientId, strategies: strategies.length, userId: user.id },
+  });
+
+  revalidatePath(`/clients/${clientId}`);
+  return { strategies, run: data as QRARun };
+}
+
+export async function selectStrategy(
+  clientId: string,
+  key: string,
+  body: Record<string, unknown>,
+  title?: string
+): Promise<ClientStrategy | null> {
+  const { supabase, user } = await requireAuth({ redirectTo: `/clients/${clientId}` });
+  const now = new Date().toISOString();
+
+  const archiveError = await supabase
+    .from("client_strategies")
+    .update({ status: "archived" })
+    .eq("client_id", clientId)
+    .eq("status", "active");
+
+  if (archiveError.error) {
+    console.error("clients:select-strategy.archive", archiveError.error);
+  }
+
+  const payload = {
+    client_id: clientId,
+    key,
+    title: title ?? (typeof body.title === "string" ? (body.title as string) : key),
+    body,
+    status: "active" as const,
+    created_at: now,
+  };
+
+  const { data, error } = await supabase
+    .from("client_strategies")
+    .insert(payload)
+    .select("*")
+    .single();
+
+  if (error) {
+    console.error("clients:select-strategy.insert", error);
+    return null;
+  }
+
+  const latestRun = await supabase
+    .from("qra_runs")
+    .update({ selected_strategy_key: key })
+    .eq("client_id", clientId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .select("id")
+    .maybeSingle();
+
+  if (latestRun.error) {
+    console.error("clients:select-strategy.qra-update", latestRun.error);
+  }
+
+  await logAnalyticsEvent({
+    eventKey: "client.strategy.selected",
+    payload: { clientId, key, userId: user.id },
+  });
+
+  revalidatePath(`/clients/${clientId}`);
+  return data as ClientStrategy;
+}
+
+export async function linkDeliverable(input: {
+  clientId: string;
+  title: string;
+  type: string;
+  url?: string | null;
+  contentId?: string | null;
+  share_expires_at?: string | null;
+}): Promise<ClientDeliverable | null> {
+  const { supabase, user } = await requireAuth({ redirectTo: `/clients/${input.clientId}` });
+
+  const payload = {
+    client_id: input.clientId,
+    title: input.title,
+    type: input.type,
+    url: input.url ?? null,
+    content_id: input.contentId ?? null,
+    share_expires_at: input.share_expires_at ?? null,
+  };
+
+  const { data, error } = await supabase
+    .from("client_deliverables")
+    .insert(payload)
+    .select("*")
+    .single();
+
+  if (error) {
+    console.error("clients:link-deliverable", error);
+    return null;
+  }
+
+  await logAnalyticsEvent({
+    eventKey: "client.deliverable.linked",
+    payload: { clientId: input.clientId, deliverableId: data.id, userId: user.id },
+  });
+
+  revalidatePath(`/clients/${input.clientId}`);
+  return data as ClientDeliverable;
+}
+
+export async function unlinkDeliverable(id: string): Promise<boolean> {
+  const { supabase } = await requireAuth();
+
+  const { error } = await supabase.from("client_deliverables").delete().eq("id", id);
+
+  if (error) {
+    console.error("clients:unlink-deliverable", error);
+    return false;
+  }
+
+  return true;
+}
+
+export async function saveFinanceTerms(input: {
+  clientId: string;
+  arrangement_type: string | null;
+  equity_stake_pct?: number | null;
+  projection_mrr?: number | null;
+}): Promise<Record<string, unknown> | null> {
+  const { supabase, user } = await requireAuth({ redirectTo: `/clients/${input.clientId}` });
+  const now = new Date().toISOString();
+
+  const payload = {
+    client_id: input.clientId,
+    arrangement_type: input.arrangement_type,
+    equity_stake_pct: input.equity_stake_pct ?? null,
+    projection_mrr: input.projection_mrr ?? null,
+    updated_at: now,
+  };
+
+  const { data, error } = await supabase
+    .from("finance")
+    .upsert(payload, { onConflict: "client_id" })
+    .select("*")
+    .single();
+
+  if (error) {
+    console.error("clients:save-finance-terms", error);
+    return null;
+  }
+
+  await logAnalyticsEvent({
+    eventKey: "client.finance.updated",
+    payload: { clientId: input.clientId, userId: user.id },
+  });
+
+  revalidatePath(`/clients/${input.clientId}`);
+  return data as Record<string, unknown>;
+}
+
+export async function getActivity(clientId: string): Promise<ActivityItem[]> {
+  const supabase = await createClient();
+
+  const [analytics, emails, calendar, notes] = await Promise.all([
+    supabase
+      .from("analytics_events")
+      .select("id, event_type, created_at, metadata")
+      .eq("entity_type", "client")
+      .eq("entity_id", clientId)
+      .order("created_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("google_emails")
+      .select("id, subject, sender, received_at")
+      .eq("client_id", clientId)
+      .order("received_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("google_calendar_events")
+      .select("id, summary, start_time, end_time")
+      .eq("client_id", clientId)
+      .order("start_time", { ascending: false })
+      .limit(50),
+    supabase
+      .from("opportunity_notes")
+      .select("id, body, created_at")
+      .eq("client_id", clientId)
+      .order("created_at", { ascending: false })
+      .limit(50),
+  ]);
+
+  const items: ActivityItem[] = [];
+
+  if (!analytics.error && analytics.data) {
+    items.push(
+      ...analytics.data.map((event) => ({
+        id: `analytics-${event.id}`,
+        type: "event" as const,
+        occurred_at: event.created_at,
+        title: event.event_type,
+        details: event.metadata ?? {},
+      }))
+    );
+  }
+
+  if (!emails.error && emails.data) {
+    items.push(
+      ...emails.data.map((email) => ({
+        id: `email-${email.id}`,
+        type: "email" as const,
+        occurred_at: email.received_at,
+        title: email.subject ?? "Email",
+        details: { sender: email.sender },
+      }))
+    );
+  }
+
+  if (!calendar.error && calendar.data) {
+    items.push(
+      ...calendar.data.map((event) => ({
+        id: `meeting-${event.id}`,
+        type: "meeting" as const,
+        occurred_at: event.start_time,
+        title: event.summary ?? "Meeting",
+        details: { end_time: event.end_time },
+      }))
+    );
+  }
+
+  if (!notes.error && notes.data) {
+    items.push(
+      ...notes.data.map((note) => ({
+        id: `note-${note.id}`,
+        type: "note" as const,
+        occurred_at: note.created_at,
+        title: "Opportunity Note",
+        details: { body: note.body },
+      }))
+    );
+  }
+
+  return items
+    .filter((item) => Boolean(item.occurred_at))
+    .sort((a, b) => {
+      const aDate = a.occurred_at ? new Date(a.occurred_at).getTime() : 0;
+      const bDate = b.occurred_at ? new Date(b.occurred_at).getTime() : 0;
+      return bDate - aDate;
+    });
+}

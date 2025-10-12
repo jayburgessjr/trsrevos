@@ -111,14 +111,75 @@ export type Client = {
   notes?: string;
 };
 
+export type DiscoveryResponse = {
+  id: string;
+  client_id: string;
+  form_type: "gap_selling" | "clarity_gap" | "revenue_research" | string;
+  answers: Record<string, unknown>;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DataRequirementStatus = "needed" | "in_progress" | "collected";
+
+export type DataRequirement = {
+  id: string;
+  client_id: string;
+  source_name: string;
+  required: boolean;
+  status: DataRequirementStatus;
+  notes: string | null;
+  meta: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ClientStrategyStatus = "active" | "archived";
+
+export type ClientStrategy = {
+  id: string;
+  client_id: string;
+  title: string;
+  key: string | null;
+  body: Record<string, unknown>;
+  status: ClientStrategyStatus;
+  created_at: string;
+};
+
+export type QRARun = {
+  id: string;
+  client_id: string;
+  inputs: Record<string, unknown>;
+  outputs: Record<string, unknown>;
+  selected_strategy_key: string | null;
+  created_by: string | null;
+  created_at: string;
+};
+
+export type ActivityItemType = "event" | "email" | "meeting" | "note";
+
+export type ActivityItem = {
+  id: string;
+  type: ActivityItemType;
+  occurred_at: string | null;
+  title: string;
+  details?: Record<string, unknown>;
+};
+
 export type ClientDeliverable = {
   id: string;
   client_id: string;
-  name: string;
+  name?: string;
+  title?: string;
   type: string | null;
-  link: string | null;
-  status: string | null;
-  updated_at: string | null;
+  link?: string | null;
+  url?: string | null;
+  status?: string | null;
+  share_expires_at?: string | null;
+  meta?: Record<string, unknown> | null;
+  updated_at?: string | null;
+  created_at?: string | null;
 };
 
 export type ClientFinancialSnapshot = {
