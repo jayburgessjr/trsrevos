@@ -684,6 +684,10 @@ export async function saveFinanceTerms(input: {
 }
 
 export async function getActivity(clientId: string): Promise<ActivityItem[]> {
+  if (!hasSupabaseCredentials()) {
+    return []
+  }
+
   const supabase = await createClient();
 
   const [analytics, emails, calendar, notes] = await Promise.all([
