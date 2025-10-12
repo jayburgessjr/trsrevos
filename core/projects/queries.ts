@@ -1,5 +1,7 @@
 "use server"
 
+import type { PostgrestError } from "@supabase/supabase-js"
+
 import { createClient } from "@/lib/supabase/server"
 
 const hasSupabaseCredentials = () =>
@@ -93,7 +95,15 @@ export async function fetchOverviewJoin() {
   const supabase = await getClient()
   const { data, error } = await supabase.from("vw_client_overview").select("*")
 
-  if (error) throw error
+  if (error) {
+    if (isMissingRelationError(error)) {
+      console.warn(
+        "[projects] vw_client_overview view is missing in Supabase – returning empty overview data.",
+      )
+      return [] as ClientOverview[]
+    }
+    throw error
+  }
   return (data ?? []) as ClientOverview[]
 }
 
@@ -121,7 +131,15 @@ export async function fetchProjects() {
     .select("id,client_id,name,status,health,start_date,end_date")
     .order("start_date", { ascending: true })
 
-  if (error) throw error
+  if (error) {
+    if (isMissingRelationError(error)) {
+      console.warn(
+        "[projects] projects table is missing in Supabase – returning empty project data.",
+      )
+      return [] as ProjectRecord[]
+    }
+    throw error
+  }
   return (data ?? []) as ProjectRecord[]
 }
 
@@ -136,6 +154,18 @@ export async function fetchOpportunities() {
       "id,client_id,name,stage,amount,probability,next_step,next_step_date,close_date,owner_id",
     )
 
-  if (error) throw error
+  if (error) {
+    if (isMissingRelationError(error)) {
+      console.warn(
+        "[projects] opportunities table is missing in Supabase – returning empty opportunity data.",
+      )
+      return [] as OpportunityRecord[]
+    }
+    throw error
+  }
   return (data ?? []) as OpportunityRecord[]
+}
+
+function isMissingRelationError(error: PostgrestError) {
+  return error.code === "42P01"
 }
