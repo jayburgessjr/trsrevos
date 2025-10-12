@@ -164,14 +164,17 @@ export default async function ClientsPage({
   }
 
   const clients = (clientsData ?? []).filter((client) => {
+    const normalizedPhase = (client.phase ?? "").toLowerCase();
+    const normalizedStatus = (client.status ?? "").toLowerCase();
+
     if (phaseFilter === "onboarding") {
-      return client.phase === "Onboarding";
+      return normalizedPhase === "onboarding";
     }
     if (phaseFilter === "active") {
-      return client.status === "active";
+      return normalizedStatus === "active";
     }
     if (phaseFilter === "churned") {
-      return client.status === "churned";
+      return normalizedStatus === "churned";
     }
     return true;
   });
@@ -183,7 +186,9 @@ export default async function ClientsPage({
           clients.length,
       )
     : 0;
-  const onboardingCount = clients.filter((client) => client.phase === "Onboarding").length;
+  const onboardingCount = clients.filter(
+    (client) => (client.phase ?? "").toLowerCase() === "onboarding",
+  ).length;
 
   return (
     <div className="min-h-screen bg-white text-black">
