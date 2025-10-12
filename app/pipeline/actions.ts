@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createServerClient } from "@/lib/supabase/server";
@@ -19,6 +20,11 @@ export async function markClosedWon({
 
   if (error) {
     throw error
+  }
+
+  if (data) {
+    revalidatePath("/clients")
+    revalidatePath(`/clients/${data}`)
   }
 
   redirect(`/clients/${data}`)
