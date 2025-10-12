@@ -9,11 +9,7 @@ import { Button } from '@/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card'
 import { Textarea } from '@/ui/textarea'
 
-const FORM_DEFINITIONS: Array<{
-  key: DiscoveryResponse['form_type']
-  title: string
-  description: string
-}> = [
+const FORM_DEFINITIONS = [
   {
     key: 'gap_selling',
     title: 'Gap Selling Brief',
@@ -29,7 +25,16 @@ const FORM_DEFINITIONS: Array<{
     title: 'Revenue Research Notes',
     description: 'Document qualitative signal from customers, partners, and internal stakeholders.',
   },
-]
+] as const satisfies ReadonlyArray<{
+  key: 'gap_selling' | 'clarity_gap' | 'revenue_research'
+  title: string
+  description: string
+}>
+
+type FormKey = (typeof FORM_DEFINITIONS)[number]['key']
+
+const isKnownFormType = (value: DiscoveryResponse['form_type']): value is FormKey =>
+  FORM_DEFINITIONS.some((form) => form.key === value)
 
 type DiscoveryTabProps = {
   clientId: string
@@ -52,12 +57,16 @@ const formatTimestamp = (value: string | null) => {
 
 export default function DiscoveryTab({ clientId, responses }: DiscoveryTabProps) {
   const responseMap = useMemo(() => {
-    const map = new Map<DiscoveryResponse['form_type'], DiscoveryResponse>()
-    responses.forEach((response) => map.set(response.form_type, response))
+    const map = new Map<FormKey, DiscoveryResponse>()
+    responses.forEach((response) => {
+      if (isKnownFormType(response.form_type)) {
+        map.set(response.form_type, response)
+      }
+    })
     return map
   }, [responses])
 
-  const initialState = useMemo<Record<string, FormState>>(
+  const initialState = useMemo<Record<FormKey, FormState>>(
     () =>
       FORM_DEFINITIONS.reduce((acc, form) => {
         const existing = responseMap.get(form.key)
@@ -68,15 +77,15 @@ export default function DiscoveryTab({ clientId, responses }: DiscoveryTabProps)
           updatedAt: existing?.updated_at ?? existing?.created_at ?? null,
         }
         return acc
-      }, {} as Record<string, FormState>),
+      }, {} as Record<FormKey, FormState>),
     [responseMap],
   )
 
-  const [forms, setForms] = useState(initialState)
-  const [pendingKey, setPendingKey] = useState<string | null>(null)
+  const [forms, setForms] = useState<Record<FormKey, FormState>>(initialState)
+  const [pendingKey, setPendingKey] = useState<FormKey | null>(null)
   const [isPending, startTransition] = useTransition()
 
-  const handleChange = (key: string, value: string) => {
+  const handleChange = (key: FormKey, value: string) => {
     setForms((prev) => ({
       ...prev,
       [key]: {
@@ -87,7 +96,7 @@ export default function DiscoveryTab({ clientId, responses }: DiscoveryTabProps)
     }))
   }
 
-  const handleSave = (key: string, markComplete: boolean) => {
+  const handleSave = (key: FormKey, markComplete: boolean) => {
     const raw = forms[key]
     if (!raw) return
 
@@ -104,7 +113,7 @@ export default function DiscoveryTab({ clientId, responses }: DiscoveryTabProps)
 
     setPendingKey(key)
     startTransition(async () => {
-      const result = await saveDiscovery(key as DiscoveryResponse['form_type'], clientId, parsed, {
+      const result = await saveDiscovery(key, clientId, parsed, {
         completed: markComplete,
       })
       setForms((prev) => ({
