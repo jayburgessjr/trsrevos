@@ -1,427 +1,249 @@
-"use client";
+"use client"
 
-import { useCallback, useMemo, useState, useTransition } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { useCallback, useMemo } from 'react'
+import { usePathname, useSearchParams } from 'next/navigation'
 
-import { PageTabs } from "@/components/layout/PageTabs";
-import { Card } from "@/components/kit/Card";
-import { resolveTabs } from "@/lib/tabs";
-import { cn } from "@/lib/utils";
-import { TRS_CARD, TRS_SUBTITLE } from "@/lib/style";
-import type { Project, ProjectMilestone, ProjectStats, ProjectUpdate } from "@/core/projects/types";
-import { actionSubmitProjectAgentPrompt } from "@/core/projects/actions";
+import { AgentsPanel } from '@/components/projects/AgentsPanel'
+import { FiltersBar, useProjectsFilters } from '@/components/projects/Filters'
+import { KpiStrip } from '@/components/projects/KpiStrip'
+import { ProjectBoard } from '@/components/projects/Board'
+import { ProjectTimeline, type TimelineItem } from '@/components/projects/Timeline'
+import { ProjectsTable } from '@/components/projects/ProjectsTable'
+import { PageTemplate } from '@/components/layout/PageTemplate'
+import { PageTabs } from '@/components/layout/PageTabs'
+import { Input } from '@/ui/input'
+import type {
+  ClientOverview,
+  ClientRow,
+  OpportunityRecord,
+  OwnerRow,
+  ProjectRecord,
+} from '@/core/projects/queries'
 
-type ActivityData = {
-  updates: ProjectUpdate[];
-  milestones: ProjectMilestone[];
-};
+const PAGE_TABS = ["Overview", "Board", "Timeline", "Agents", "Reports"] as const
 
-type ForecastData = {
-  metrics: { label: string; value: string; context?: string }[];
-  timeline: { period: string; count: number; highlight: string }[];
-};
+type Tab = (typeof PAGE_TABS)[number]
 
-const agentPrompts = [
-  "Where are we trending behind schedule?",
-  "Summarize project risks for tomorrow's QBR",
-  "What is the next milestone for RevenueOS expansion?",
-];
-
-const dateFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-});
-
-const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  hour: "numeric",
-  minute: "2-digit",
-});
-
-function formatDate(value?: string | null) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "—";
-  return dateFormatter.format(parsed);
+type ProjectsPageClientProps = {
+  clients: ClientRow[]
+  activeClients: ClientRow[]
+  overview: ClientOverview[]
+  owners: OwnerRow[]
+  projects: ProjectRecord[]
+  opportunities: OpportunityRecord[]
+  stages: string[]
+  healths: string[]
+  kpis: { label: string; value: string }[]
+  generatedAt: string
 }
 
-function formatDateTime(value: string) {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return dateTimeFormatter.format(parsed);
-}
+type OwnerOption = { id: string; label: string }
 
-function healthBadge(health: Project["health"]) {
-  switch (health) {
-    case "green":
-      return "bg-emerald-100 text-emerald-700";
-    case "yellow":
-      return "bg-amber-100 text-amber-700";
-    case "red":
-      return "bg-rose-100 text-rose-700";
-    default:
-      return "bg-gray-100 text-gray-700";
-  }
+type OpportunitySummary = {
+  clientId: string
+  nextStep: string | null
+  dueDate: string | null
+  stage: string | null
 }
 
 export default function ProjectsPageClient({
+  clients,
+  activeClients,
+  overview,
+  owners,
   projects,
-  stats,
-  activity,
-  forecast,
-}: {
-  projects: Project[];
-  stats: ProjectStats;
-  activity: ActivityData;
-  forecast: ForecastData;
-}) {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const tabs = useMemo(() => resolveTabs(pathname), [pathname]);
-  const activeTab = useMemo(() => {
-    const current = searchParams.get("tab");
-    return current && tabs.includes(current) ? current : tabs[0];
-  }, [searchParams, tabs]);
+  opportunities,
+  stages,
+  healths,
+  kpis,
+  generatedAt,
+}: ProjectsPageClientProps) {
+  const { filters, setFilters } = useProjectsFilters()
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
+
+  const activeTab = useMemo<Tab>(() => {
+    const raw = searchParams.get('tab') ?? ''
+    const match = PAGE_TABS.find((tab) => tab.toLowerCase() === raw.toLowerCase())
+    return (match ?? 'Overview') as Tab
+  }, [searchParams])
 
   const buildTabHref = useCallback(
     (tab: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("tab", tab);
-      return `${pathname}?${params.toString()}`;
+      const params = new URLSearchParams(searchParams.toString())
+      if (tab === 'Overview') {
+        params.delete('tab')
+      } else {
+        params.set('tab', tab)
+      }
+      const query = params.toString()
+      return query ? `${pathname}?${query}` : pathname
     },
     [pathname, searchParams],
-  );
+  )
 
-  const [prompt, setPrompt] = useState("");
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const ownerOptions = useMemo<OwnerOption[]>(() => {
+    return owners
+      .map((owner) => ({
+        id: owner.id,
+        label: owner.full_name || owner.email || owner.id,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+  }, [owners])
 
-  const submitPrompt = useCallback(
-    (value: string) => {
-      if (!value.trim()) return;
-      startTransition(async () => {
-        const result = await actionSubmitProjectAgentPrompt({ prompt: value });
-        if (result.ok) {
-          setStatusMessage("Request sent to project agent. We'll notify you when the response is ready.");
-          setPrompt("");
-        } else {
-          setStatusMessage(result.error ?? "Unable to submit agent prompt. Please try again.");
-        }
-      });
-    },
-    [],
-  );
+  const opportunitySummaries = useMemo(() => buildOpportunitySummaries(opportunities), [opportunities])
+
+  const timelineItems = useMemo<TimelineItem[]>(() => {
+    const clientNameMap = new Map(clients.map((client) => [client.id, client.name]))
+    return projects.map((project) => ({
+      id: project.id,
+      projectName: project.name,
+      clientName: clientNameMap.get(project.client_id) ?? null,
+      startDate: project.start_date,
+      endDate: project.end_date,
+    }))
+  }, [clients, projects])
+
+  const generatedLabel = useMemo(() => {
+    const parsed = new Date(generatedAt)
+    if (Number.isNaN(parsed.getTime())) return ""
+    return parsed.toLocaleString()
+  }, [generatedAt])
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
-      <section className="space-y-4">
-        <header className="flex flex-col gap-2">
-          <h1 className="text-2xl font-semibold text-black">
-            Projects Control Center
-          </h1>
-          <p className="text-sm text-gray-600">
-            Coordinate delivery motions, surface risk, and keep stakeholders
-            aligned across TRS programs.
-          </p>
-        </header>
+    <PageTemplate
+      title="Projects"
+      description="Project Management Hub for live client delivery."
+      toolbar={
+        <div className="flex w-full flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div className="w-full md:max-w-md">
+            <Input
+              placeholder="Search clients or next steps"
+              value={filters.q}
+              onChange={(event) =>
+                setFilters((current) => ({ ...current, q: event.target.value }))
+              }
+            />
+          </div>
+          {generatedLabel ? (
+            <span className="text-xs text-gray-500 md:text-sm">Updated {generatedLabel}</span>
+          ) : null}
+        </div>
+      }
+      stats={<KpiStrip items={kpis} />}
+      statsWrapperClassName="grid gap-3"
+      contentClassName="space-y-4"
+    >
+      <div className="space-y-4">
+        <PageTabs tabs={[...PAGE_TABS]} activeTab={activeTab} hrefForTab={buildTabHref} />
 
-        <PageTabs tabs={tabs} activeTab={activeTab} hrefForTab={buildTabHref} />
-
-        {activeTab === "Overview" && (
+        {activeTab === "Overview" ? (
           <div className="space-y-4">
-            <Card className={cn(TRS_CARD, "p-4")}>
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div>
-                  <div className="text-sm font-semibold text-black">
-                    Live Programs
-                  </div>
-                  <p className="text-xs text-gray-600">
-                    Snapshot of core initiatives and momentum.
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-                  <div className={cn(TRS_CARD, "p-3")}>
-                    <div className={TRS_SUBTITLE}>Active Projects</div>
-                    <div className="mt-1 text-xl font-semibold text-black">
-                      {stats.active}
-                    </div>
-                    <div className="text-[11px] text-gray-600">
-                      Live delivery
-                    </div>
-                  </div>
-                  <div className={cn(TRS_CARD, "p-3")}>
-                    <div className={TRS_SUBTITLE}>On Track</div>
-                    <div className="mt-1 text-xl font-semibold text-black">
-                      {stats.onTrack}
-                    </div>
-                    <div className="text-[11px] text-gray-600">
-                      Healthy projects
-                    </div>
-                  </div>
-                  <div className={cn(TRS_CARD, "p-3")}>
-                    <div className={TRS_SUBTITLE}>At Risk</div>
-                    <div className="mt-1 text-xl font-semibold text-black">
-                      {stats.atRisk}
-                    </div>
-                    <div className="text-[11px] text-gray-600">
-                      Requires action
-                    </div>
-                  </div>
-                  <div className={cn(TRS_CARD, "p-3")}>
-                    <div className={TRS_SUBTITLE}>Budget Utilization</div>
-                    <div className="mt-1 text-xl font-semibold text-black">
-                      {stats.totalBudget > 0 ? `${stats.budgetUtilization}%` : "—"}
-                    </div>
-                    <div className="text-[11px] text-gray-600">
-                      {stats.totalBudget > 0 ? "Portfolio spend" : "No portfolio budget"}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-4 overflow-hidden rounded-lg border border-gray-200">
-                <table className="w-full text-sm">
-                  <thead className="bg-white text-left text-[12px] uppercase tracking-wide text-gray-500">
-                    <tr>
-                      <th className="px-3 py-2 font-medium">Project</th>
-                      <th className="px-3 py-2 font-medium">Client</th>
-                      <th className="px-3 py-2 font-medium">Phase</th>
-                      <th className="px-3 py-2 font-medium">Owner</th>
-                      <th className="px-3 py-2 font-medium">Health</th>
-                      <th className="px-3 py-2 font-medium">Progress</th>
-                      <th className="px-3 py-2 font-medium">Due</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 bg-white">
-                    {projects.map((project) => (
-                      <tr key={project.id} className="hover:bg-gray-50">
-                        <td className="px-3 py-2 font-medium text-black">
-                          {project.name}
-                        </td>
-                        <td className="px-3 py-2">
-                          <Link
-                            href={`/clients/${project.clientId}?tab=Projects`}
-                            className="text-gray-700 hover:text-black hover:underline"
-                          >
-                            {project.clientName}
-                          </Link>
-                        </td>
-                        <td className="px-3 py-2 text-gray-700">
-                          {project.phase}
-                        </td>
-                        <td className="px-3 py-2 text-gray-700">
-                          {project.owner}
-                        </td>
-                        <td className="px-3 py-2">
-                          <span
-                            className={cn(
-                              "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold",
-                              healthBadge(project.health),
-                            )}
-                          >
-                            {project.health === "green"
-                              ? "On Track"
-                              : project.health === "yellow"
-                                ? "Watching"
-                                : "Critical"}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2 text-gray-700">
-                          {project.progress}%
-                        </td>
-                        <td className="px-3 py-2 text-gray-700">
-                          {formatDate(project.dueDate)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
+            <FiltersBar
+              stagesAvailable={stages}
+              healthAvailable={healths}
+              owners={ownerOptions}
+              value={filters}
+              onChange={setFilters}
+              showSearch={false}
+            />
+            <ProjectsTable
+              rows={activeClients}
+              overview={overview}
+              owners={ownerOptions}
+              filters={filters}
+              opportunities={opportunitySummaries}
+            />
           </div>
-        )}
+        ) : null}
 
-        {activeTab === "Active" && (
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-            <Card className={cn(TRS_CARD, "p-4")}> 
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold text-black">Recent updates</div>
-                <span className="text-[11px] uppercase tracking-wide text-gray-500">
-                  {activity.updates.length} logged
-                </span>
-              </div>
-              <div className="mt-3 space-y-3">
-                {activity.updates.length === 0 && (
-                  <div className="rounded-lg border border-dashed border-gray-200 bg-white p-4 text-sm text-gray-600">
-                    Project updates will appear here as delivery owners post check-ins.
-                  </div>
-                )}
-                {activity.updates.slice(0, 6).map((update) => (
-                  <div key={update.id} className="rounded-lg border border-gray-200 bg-white p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="text-sm font-semibold text-black">{update.projectName}</div>
-                        {update.summary && (
-                          <div className="mt-1 text-[12px] text-gray-600">{update.summary}</div>
-                        )}
-                        <div className="mt-2 text-[11px] uppercase tracking-wide text-gray-500">
-                          {update.authorName} • {formatDateTime(update.createdAt)}
-                        </div>
-                      </div>
-                      {update.status && (
-                        <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                          {update.status}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
+        {activeTab === "Board" ? <ProjectBoard rows={activeClients} /> : null}
 
-            <Card className={cn(TRS_CARD, "p-4")}>
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold text-black">Upcoming milestones</div>
-                <span className="text-[11px] uppercase tracking-wide text-gray-500">
-                  {activity.milestones.length} tracked
-                </span>
-              </div>
-              <div className="mt-3 space-y-3">
-                {activity.milestones.length === 0 && (
-                  <div className="rounded-lg border border-dashed border-gray-200 bg-white p-4 text-sm text-gray-600">
-                    Once milestones are defined, due dates and owners will populate here.
-                  </div>
-                )}
-                {activity.milestones.slice(0, 6).map((milestone) => (
-                  <div key={milestone.id} className="rounded-lg border border-gray-200 bg-white p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="text-sm font-semibold text-black">{milestone.title}</div>
-                        <div className="text-[12px] text-gray-600">
-                          {milestone.projectName}
-                        </div>
-                        <div className="mt-2 text-[11px] uppercase tracking-wide text-gray-500">
-                          {milestone.ownerName ?? "Unassigned"} • Due {formatDate(milestone.dueDate)}
-                        </div>
-                      </div>
-                      <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                        {milestone.status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </div>
-        )}
+        {activeTab === "Timeline" ? <ProjectTimeline items={timelineItems} /> : null}
 
-        {activeTab === "Forecast" && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-              {forecast.metrics.map((metric) => (
-                <Card key={metric.label} className={cn(TRS_CARD, "p-4")}>
-                  <div className={TRS_SUBTITLE}>{metric.label}</div>
-                  <div className="mt-2 text-2xl font-semibold text-black">
-                    {metric.value}
-                  </div>
-                  <div className="text-[12px] text-gray-600">
-                    {metric.context}
-                  </div>
-                </Card>
-              ))}
-            </div>
-            <Card className={cn(TRS_CARD, "p-4")}>
-              <div className="text-sm font-semibold text-black">Milestone outlook</div>
-              <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-4">
-                {forecast.timeline.length === 0 && (
-                  <div className="rounded-lg border border-dashed border-gray-200 bg-white p-4 text-sm text-gray-600">
-                    No upcoming milestones have been scheduled.
-                  </div>
-                )}
-                {forecast.timeline.map((point) => (
-                  <div key={point.period} className="rounded-lg border border-gray-200 bg-white p-3">
-                    <div className="text-[11px] uppercase tracking-wide text-gray-500">{point.period}</div>
-                    <div className="mt-1 text-lg font-semibold text-black">{point.count} milestone{point.count === 1 ? "" : "s"}</div>
-                    <div className="text-[12px] text-gray-600">Next: {point.highlight}</div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </div>
-        )}
+        {activeTab === "Agents" ? <AgentsPanel /> : null}
 
-        {activeTab === "Agent" && (
-          <Card className={cn(TRS_CARD, "p-4")}>
-            <div className="text-sm font-semibold text-black">
-              Project Intelligence Agent
-            </div>
-            <p className="mt-2 text-sm text-gray-600">
-              Ask the agent to analyze timelines, forecast budget impact, or
-              surface risk across delivery tracks.
+        {activeTab === "Reports" ? (
+          <div className="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-700">
+            <div className="text-sm font-medium text-black">Reports</div>
+            <p className="mt-1 text-xs text-gray-600">
+              Export project data for stakeholder reviews.
             </p>
-            <div className="mt-4 space-y-3">
-              <form
-                className="space-y-2"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  submitPrompt(prompt);
-                }}
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="h-9 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-800 transition hover:bg-gray-100"
               >
-                <textarea
-                  value={prompt}
-                  onChange={(event) => setPrompt(event.target.value)}
-                  placeholder="Ask about delivery risks, timing, or budget scenarios..."
-                  className="h-28 w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700 shadow-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
-                  disabled={isPending}
-                />
-                <div className="flex items-center justify-between">
-                  <div className="text-[12px] text-gray-500">
-                    Agent logs are stored in analytics events for auditing.
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={isPending || !prompt.trim()}
-                    className={cn(
-                      "inline-flex items-center rounded-full border border-black px-4 py-1 text-[12px] font-semibold transition",
-                      isPending
-                        ? "cursor-wait bg-black text-white opacity-80"
-                        : "bg-black text-white hover:bg-white hover:text-black",
-                    )}
-                  >
-                    {isPending ? "Submitting..." : "Send to agent"}
-                  </button>
-                </div>
-              </form>
-              {statusMessage && (
-                <div className="rounded-lg border border-gray-200 bg-white p-3 text-[12px] text-gray-600">
-                  {statusMessage}
-                </div>
-              )}
-              <div>
-                <div className="text-[12px] uppercase tracking-wide text-gray-500">
-                  Quick prompts
-                </div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {agentPrompts.map((prompt) => (
-                    <button
-                      key={prompt}
-                      className="rounded-full border border-gray-300 px-3 py-1 text-[12px] text-gray-700 transition hover:border-black hover:text-black"
-                      type="button"
-                      onClick={() => {
-                        setPrompt(prompt);
-                        setStatusMessage(null);
-                      }}
-                    >
-                      {prompt}
-                    </button>
-                  ))}
-                </div>
-              </div>
+                Export CSV
+              </button>
+              <button
+                type="button"
+                className="h-9 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-800 transition hover:bg-gray-100"
+              >
+                Export ICS
+              </button>
             </div>
-          </Card>
-        )}
-      </section>
-    </div>
-  );
+          </div>
+        ) : null}
+      </div>
+    </PageTemplate>
+  )
+}
+
+function buildOpportunitySummaries(opportunities: OpportunityRecord[]): OpportunitySummary[] {
+  const byClient = new Map<string, OpportunitySummary>()
+
+  opportunities.forEach((opportunity) => {
+    if (!opportunity.client_id) {
+      return
+    }
+    const candidate: OpportunitySummary = {
+      clientId: opportunity.client_id,
+      nextStep: opportunity.next_step,
+      dueDate: opportunity.next_step_date ?? opportunity.close_date ?? null,
+      stage: normalizeOpportunityStage(opportunity.stage),
+    }
+    const existing = byClient.get(opportunity.client_id)
+    if (!existing) {
+      byClient.set(opportunity.client_id, candidate)
+      return
+    }
+    const chosen = chooseBetterOpportunity(existing, candidate)
+    byClient.set(opportunity.client_id, chosen)
+  })
+
+  return Array.from(byClient.values())
+}
+
+const OPPORTUNITY_STAGE_LABELS: Record<string, string> = {
+  Prospect: "Discovery",
+  Qualify: "Qualification",
+  Proposal: "Proposal",
+  Negotiation: "Negotiation",
+  ClosedWon: "Closed Won",
+  ClosedLost: "Closed Lost",
+}
+
+function normalizeOpportunityStage(stage: string | null) {
+  if (!stage) return null
+  return OPPORTUNITY_STAGE_LABELS[stage] ?? stage
+}
+
+function chooseBetterOpportunity(current: OpportunitySummary, candidate: OpportunitySummary): OpportunitySummary {
+  const currentDue = current.dueDate ? new Date(current.dueDate).getTime() : null
+  const candidateDue = candidate.dueDate ? new Date(candidate.dueDate).getTime() : null
+
+  if (candidateDue != null && currentDue != null) {
+    return candidateDue < currentDue ? candidate : current
+  }
+  if (candidateDue != null && currentDue == null) {
+    return candidate
+  }
+  if (candidateDue == null && currentDue != null) {
+    return current
+  }
+  if (!current.nextStep && candidate.nextStep) {
+    return candidate
+  }
+  return current
 }

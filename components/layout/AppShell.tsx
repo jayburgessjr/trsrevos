@@ -12,6 +12,7 @@ import MobileBottomNav from '@/components/nav/MobileBottomNav'
 import SearchOverlay from '@/components/nav/SearchOverlay'
 import { MAIN_NAV, type NavItem } from '@/lib/navigation'
 import { cn, isActivePath } from '@/lib/utils'
+import { ToastViewport } from '@/ui/toast'
 
 const FULL_SHELL_EXCLUSIONS = new Set(['/login'])
 
@@ -89,6 +90,7 @@ export default function AppShell({ children }: AppShellProps) {
         </main>
       </div>
       <MobileBottomNav currentPath={pathname ?? ''} className="lg:hidden" />
+      <ToastViewport />
     </div>
   )
 }
