@@ -20,9 +20,27 @@ export const MAIN_NAV: NavItem[] = [
     roles: ['SuperAdmin', 'Admin', 'Director', 'Member', 'Client'],
   },
   {
+    label: 'Dashboard',
+    href: '/dashboard',
+    icon: 'LayoutDashboard',
+    roles: ['SuperAdmin', 'Admin', 'Director', 'Member'],
+  },
+  {
     label: 'Pipeline',
     href: '/pipeline',
     icon: 'TrendingUp',
+    roles: ['SuperAdmin', 'Admin', 'Director', 'Member'],
+  },
+  {
+    label: 'Clients',
+    href: '/clients',
+    icon: 'Users',
+    roles: ['SuperAdmin', 'Admin', 'Director', 'Member', 'Client'],
+  },
+  {
+    label: 'Partners',
+    href: '/partners',
+    icon: 'Building2',
     roles: ['SuperAdmin', 'Admin', 'Director', 'Member'],
   },
   {
@@ -38,27 +56,15 @@ export const MAIN_NAV: NavItem[] = [
     roles: ['SuperAdmin', 'Admin', 'Director', 'Member'],
   },
   {
-    label: 'Finance',
-    href: '/finance',
-    icon: 'PiggyBank',
-    roles: ['SuperAdmin', 'Admin', 'Director', 'Member'],
-  },
-  {
-    label: 'Partners',
-    href: '/partners',
-    icon: 'Building2',
-    roles: ['SuperAdmin', 'Admin', 'Director', 'Member'],
-  },
-  {
-    label: 'Clients',
-    href: '/clients',
-    icon: 'Users',
-    roles: ['SuperAdmin', 'Admin', 'Director', 'Member', 'Client'],
-  },
-  {
     label: 'Agents',
     href: '/agents',
     icon: 'Bot',
+    roles: ['SuperAdmin', 'Admin', 'Director', 'Member'],
+  },
+  {
+    label: 'Finance',
+    href: '/finance',
+    icon: 'PiggyBank',
     roles: ['SuperAdmin', 'Admin', 'Director', 'Member'],
   },
   {
@@ -67,20 +73,14 @@ export const MAIN_NAV: NavItem[] = [
     icon: 'Settings',
     roles: ['SuperAdmin', 'Admin', 'Director', 'Member'],
   },
-  {
-    label: 'Dashboard',
-    href: '/dashboard',
-    icon: 'LayoutDashboard',
-    roles: ['SuperAdmin', 'Admin', 'Director', 'Member'],
-  },
 ]
 
 export const BOTTOM_NAV_ITEMS: NavItem[] = [
   { label: 'Morning Brief', href: '/', icon: 'Sun' },
-  { label: 'Pipeline', href: '/pipeline', icon: 'TrendingUp' },
-  { label: 'Projects', href: '/projects', icon: 'Kanban' },
-  { label: 'Clients', href: '/clients', icon: 'Users' },
   { label: 'Dashboard', href: '/dashboard', icon: 'LayoutDashboard' },
+  { label: 'Pipeline', href: '/pipeline', icon: 'TrendingUp' },
+  { label: 'Clients', href: '/clients', icon: 'Users' },
+  { label: 'Partners', href: '/partners', icon: 'Building2' },
 ]
 
 export const APP_TITLE = 'TRS Internal SaaS'
