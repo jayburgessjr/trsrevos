@@ -169,12 +169,27 @@ export async function moveOpportunityStage(
     return { success: false, error: error.message };
   }
 
-  // If moved to ClosedWon, automatically convert prospect to client
+  // If moved to ClosedWon, invoke conversion routine in Supabase
   let clientId: string | undefined;
   if (newStage === "ClosedWon") {
-    const result = await convertProspectToClient(id);
-    if (result.success) {
-      clientId = result.clientId;
+    const { data: convertedId, error: convertError } = await supabase.rpc(
+      "rpc_convert_won_to_client",
+      {
+        p_pipeline_id: null,
+        p_opportunity_id: id,
+      }
+    );
+
+    if (convertError) {
+      console.error("Error converting opportunity to client:", convertError);
+      return { success: false, error: convertError.message };
+    }
+
+    clientId = convertedId ?? undefined;
+
+    if (clientId) {
+      revalidatePath("/clients");
+      revalidatePath(`/clients/${clientId}`);
     }
   }
 
@@ -394,55 +409,6 @@ export async function createProspect(input: {
   revalidatePath("/pipeline");
   revalidatePath("/clients");
   return { success: true, opportunity };
-}
-
-/**
- * Convert prospect to client when deal is won
- */
-export async function convertProspectToClient(
-  opportunityId: string
-): Promise<{ success: boolean; clientId?: string; error?: string }> {
-  const supabase = await createClient();
-
-  // Get the opportunity with client info
-  const { data: opportunity } = await supabase
-    .from("opportunities")
-    .select("*, client:clients(*)")
-    .eq("id", opportunityId)
-    .single();
-
-  if (!opportunity) {
-    return { success: false, error: "Opportunity not found" };
-  }
-
-  // Update client status from prospect to active
-  const { data: client, error: clientError } = await supabase
-    .from("clients")
-    .update({
-      status: "active",
-      phase: "Data",
-    })
-    .eq("id", opportunity.client_id)
-    .select()
-    .single();
-
-  if (clientError) {
-    console.error("Error converting client:", clientError);
-    return { success: false, error: clientError.message };
-  }
-
-  await emitAnalyticsEvent({
-    event_type: "prospect_converted_to_client",
-    entity_type: "client",
-    entity_id: client.id,
-    metadata: { opportunity_id: opportunityId },
-  });
-
-  revalidatePath("/pipeline");
-  revalidatePath("/clients");
-  revalidatePath(`/clients/${client.id}`);
-
-  return { success: true, clientId: client.id };
 }
 
 /**
