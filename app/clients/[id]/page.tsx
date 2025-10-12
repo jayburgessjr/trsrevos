@@ -75,6 +75,8 @@ export default async function ClientPage({
   if (strategyRows.error) throw strategyRows.error
   if (deliverableRows.error) throw deliverableRows.error
 
+  const ownerRecord = Array.isArray(clientRow.owner) ? clientRow.owner[0] : clientRow.owner
+
   const client: ClientWorkspaceClient = {
     id: clientRow.id,
     name: clientRow.name,
@@ -86,8 +88,8 @@ export default async function ClientPage({
     phase: clientRow.phase,
     status: clientRow.status,
     notes: clientRow.notes,
-    ownerName: clientRow.owner?.name ?? null,
-    ownerEmail: clientRow.owner?.email ?? null,
+    ownerName: ownerRecord?.name ?? null,
+    ownerEmail: ownerRecord?.email ?? null,
     qbrDate: clientRow.qbr_date,
   }
 
