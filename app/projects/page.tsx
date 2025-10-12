@@ -1,100 +1,98 @@
-import {
-  actionGetProjectStats,
-  actionListProjectMilestones,
-  actionListProjectUpdates,
-  actionListProjects,
-} from "@/core/projects/actions";
 import ProjectsPageClient from "./ProjectsPageClient";
-import type { ProjectMilestone, ProjectStats } from "@/core/projects/types";
 
-const currencyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
+import {
+  fetchClientsForProjects,
+  fetchOverviewJoin,
+  fetchOwners,
+  fetchProjects,
+  fetchOpportunities,
+  type ClientRow,
+} from "@/core/projects/queries";
 
-const percentFormatter = new Intl.NumberFormat("en-US", {
-  style: "percent",
-  maximumFractionDigits: 0,
-});
+export const dynamic = "force-dynamic";
 
-const monthFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-});
-
-type ForecastMetric = { label: string; value: string; context?: string };
-type ForecastTimelinePoint = { period: string; count: number; highlight: string };
-type ForecastData = { metrics: ForecastMetric[]; timeline: ForecastTimelinePoint[] };
-
-function buildForecastMetrics(stats: ProjectStats): ForecastMetric[] {
-  const portfolioBudget = stats.totalBudget > 0 ? currencyFormatter.format(stats.totalBudget) : "—";
-  const totalSpend = stats.totalSpent > 0 ? currencyFormatter.format(stats.totalSpent) : "—";
-  const utilization = stats.totalBudget > 0 ? `${stats.budgetUtilization}% utilized` : "No budget captured";
-
-  return [
-    { label: "Portfolio Budget", value: portfolioBudget, context: utilization },
-    {
-      label: "Total Spend",
-      value: totalSpend,
-      context: stats.totalBudget > 0 ? `${percentFormatter.format(stats.totalSpent / stats.totalBudget)} of budget` : "—",
-    },
-    {
-      label: "Average Progress",
-      value: `${stats.avgProgress}%`,
-      context: `${stats.active} active projects`,
-    },
-  ];
-}
-
-function buildForecastTimeline(milestones: ProjectMilestone[]): ForecastTimelinePoint[] {
-  const buckets = new Map<string, { count: number; highlight: string }>();
-
-  milestones
-    .filter((milestone) => milestone.dueDate)
-    .forEach((milestone) => {
-      const due = new Date(milestone.dueDate!);
-      const key = `${due.getUTCFullYear()}-${due.getUTCMonth()}`;
-      const bucket = buckets.get(key) ?? { count: 0, highlight: milestone.title };
-      const highlight = bucket.highlight || milestone.title;
-      buckets.set(key, {
-        count: bucket.count + 1,
-        highlight,
-      });
-    });
-
-  return Array.from(buckets.entries())
-    .sort(([a], [b]) => (a < b ? -1 : 1))
-    .slice(0, 4)
-    .map(([key, value]) => {
-      const [year, month] = key.split("-").map((part) => Number(part));
-      const periodDate = new Date(Date.UTC(year, month, 1));
-      return {
-        period: `${monthFormatter.format(periodDate)} ${year}`,
-        count: value.count,
-        highlight: value.highlight,
-      };
-    });
-}
+const STAGE_ORDER = ["Discovery", "Data", "Algorithm", "Architecture", "Closed"] as const;
 
 export default async function ProjectsPage() {
-  const [projects, stats, updates, milestones] = await Promise.all([
-    actionListProjects(),
-    actionGetProjectStats(),
-    actionListProjectUpdates(),
-    actionListProjectMilestones(),
+  const [clients, overview, owners, projects, opportunities] = await Promise.all([
+    fetchClientsForProjects(),
+    fetchOverviewJoin(),
+    fetchOwners(),
+    fetchProjects(),
+    fetchOpportunities(),
   ]);
 
-  const forecast: ForecastData = {
-    metrics: buildForecastMetrics(stats),
-    timeline: buildForecastTimeline(milestones),
-  };
+  const activeClients = clients.filter(
+    (client) => (client.status ?? "").toLowerCase() === "active"
+  );
+
+  const stages = buildStageFilters(activeClients);
+  const healths = buildHealthFilters(activeClients);
+  const kpis = buildKpis(clients);
 
   return (
     <ProjectsPageClient
+      clients={clients}
+      activeClients={activeClients}
+      overview={overview}
+      owners={owners}
       projects={projects}
-      stats={stats}
-      activity={{ updates, milestones }}
-      forecast={forecast}
+      opportunities={opportunities}
+      stages={stages}
+      healths={healths}
+      kpis={kpis}
+      generatedAt={new Date().toISOString()}
     />
   );
+}
+
+function buildStageFilters(clients: ClientRow[]) {
+  const stageSet = new Set<string>();
+  clients.forEach((client) => {
+    if (client.stage) {
+      stageSet.add(client.stage);
+    }
+  });
+  const preferred = STAGE_ORDER.filter((stage) => stageSet.has(stage));
+  const extras = Array.from(stageSet).filter((stage) => !STAGE_ORDER.includes(stage as typeof STAGE_ORDER[number]));
+  extras.sort((a, b) => a.localeCompare(b));
+  return [...preferred, ...extras];
+}
+
+function buildHealthFilters(clients: ClientRow[]) {
+  const healthSet = new Set<string>();
+  clients.forEach((client) => {
+    if (client.health) {
+      healthSet.add(client.health);
+    }
+  });
+  return Array.from(healthSet).sort((a, b) => a.localeCompare(b));
+}
+
+function buildKpis(clients: ClientRow[]) {
+  const activeClients = clients.filter((client) => (client.status ?? "").toLowerCase() === "active").length;
+  const onboardingClients = clients.filter((client) => (client.phase ?? "").toLowerCase() === "onboarding").length;
+
+  const stageCounts = STAGE_ORDER.map((stage) => ({
+    stage,
+    count: clients.filter((client) => (client.stage ?? "").toLowerCase() === stage.toLowerCase()).length,
+  }));
+
+  const arrTotal = clients.reduce((sum, client) => {
+    return sum + (typeof client.arr === "number" ? client.arr : 0);
+  }, 0);
+  const arrFormatter = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  });
+
+  const items = [
+    { label: "Active clients", value: String(activeClients) },
+    { label: "Onboarding", value: String(onboardingClients) },
+    ...stageCounts.map(({ stage, count }) => ({ label: stage, value: String(count) })),
+    { label: "ARR total", value: arrFormatter.format(arrTotal) },
+  ];
+
+  return items;
 }
