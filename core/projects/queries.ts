@@ -2,6 +2,9 @@
 
 import { createClient } from "@/lib/supabase/server"
 
+const hasSupabaseCredentials = () =>
+  Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+
 export type ClientRow = {
   id: string
   name: string
@@ -68,6 +71,9 @@ async function getClient() {
 }
 
 export async function fetchClientsForProjects() {
+  if (!hasSupabaseCredentials()) {
+    return [] as ClientRow[]
+  }
   const supabase = await getClient()
   const { data, error } = await supabase
     .from("clients")
@@ -81,6 +87,9 @@ export async function fetchClientsForProjects() {
 }
 
 export async function fetchOverviewJoin() {
+  if (!hasSupabaseCredentials()) {
+    return [] as ClientOverview[]
+  }
   const supabase = await getClient()
   const { data, error } = await supabase.from("vw_client_overview").select("*")
 
@@ -89,6 +98,9 @@ export async function fetchOverviewJoin() {
 }
 
 export async function fetchOwners() {
+  if (!hasSupabaseCredentials()) {
+    return [] as OwnerRow[]
+  }
   const supabase = await getClient()
   const { data, error } = await supabase
     .from("users")
@@ -100,6 +112,9 @@ export async function fetchOwners() {
 }
 
 export async function fetchProjects() {
+  if (!hasSupabaseCredentials()) {
+    return [] as ProjectRecord[]
+  }
   const supabase = await getClient()
   const { data, error } = await supabase
     .from("projects")
@@ -111,6 +126,9 @@ export async function fetchProjects() {
 }
 
 export async function fetchOpportunities() {
+  if (!hasSupabaseCredentials()) {
+    return [] as OpportunityRecord[]
+  }
   const supabase = await getClient()
   const { data, error } = await supabase
     .from("opportunities")
