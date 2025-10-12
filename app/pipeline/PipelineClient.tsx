@@ -9,6 +9,7 @@ import { AddProspectModal } from "@/components/pipeline/AddProspectModal";
 import { ImportProspectsModal } from "@/components/pipeline/ImportProspectsModal";
 import { PipelineFilters } from "@/components/pipeline/PipelineFilters";
 import { PipelineKanban } from "@/components/pipeline/PipelineKanban";
+import { markClosedWon } from "@/app/pipeline/actions";
 import type { OpportunityWithNotes } from "@/core/pipeline/actions";
 import { syncPipelineAnalytics } from "@/core/pipeline/actions";
 import { Badge } from "@/ui/badge";
@@ -42,6 +43,20 @@ export default function PipelineClient({
     useState<OpportunityWithNotes[]>(opportunities);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [syncPending, startSync] = useTransition();
+  const sampleOpportunity = useMemo(
+    () => opportunities.find((opp) => opp.stage !== "ClosedWon" && opp.stage !== "ClosedLost"),
+    [opportunities],
+  );
+  const sampleClosedWonAction = useMemo(
+    () =>
+      sampleOpportunity
+        ? markClosedWon.bind(null, {
+            pipelineId: undefined,
+            opportunityId: sampleOpportunity.id,
+          })
+        : null,
+    [sampleOpportunity],
+  );
 
   const handleSync = () => {
     startSync(async () => {
@@ -208,6 +223,13 @@ export default function PipelineClient({
           >
             {syncPending ? "Syncing…" : "Sync analytics"}
           </Button>
+          {sampleClosedWonAction ? (
+            <form action={sampleClosedWonAction} className="inline-flex">
+              <Button variant="outline" size="sm" type="submit">
+                Playground: Closed Won
+              </Button>
+            </form>
+          ) : null}
           <Button variant="outline" size="sm" onClick={handleOpenImport}>
             Import CSV
           </Button>

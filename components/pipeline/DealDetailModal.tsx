@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/ui/card";
 import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
 import { Badge } from "@/ui/badge";
+import { markClosedWon } from "@/app/pipeline/actions";
 import {
   updateOpportunity,
   deleteOpportunity,
@@ -107,6 +108,11 @@ export function DealDetailModal({ deal, onClose, userId }: DealDetailModalProps)
     });
   };
 
+  const markClosedWonAction = markClosedWon.bind(null, {
+    opportunityId: deal.id,
+    pipelineId: undefined,
+  });
+
   const getDaysInStage = () => {
     const updated = new Date(deal.updated_at);
     const now = new Date();
@@ -147,9 +153,16 @@ export function DealDetailModal({ deal, onClose, userId }: DealDetailModalProps)
                 <span>{getDaysInStage()} days in stage</span>
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={onClose} disabled={isPending}>
-              ✕
-            </Button>
+            <div className="flex items-center gap-2">
+              <form action={markClosedWonAction}>
+                <Button type="submit" size="sm" variant="primary">
+                  Mark Closed Won
+                </Button>
+              </form>
+              <Button variant="ghost" size="sm" onClick={onClose} disabled={isPending}>
+                ✕
+              </Button>
+            </div>
           </div>
 
           {/* Main Content Grid */}
