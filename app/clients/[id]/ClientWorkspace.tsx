@@ -24,6 +24,7 @@ import ArchitectureTab from './tabs/ArchitectureTab'
 import DeliverablesTab from './tabs/DeliverablesTab'
 import FinanceTab from './tabs/FinanceTab'
 import ActivityTab from './tabs/ActivityTab'
+import OnboardingTab from './tabs/OnboardingTab'
 
 const TAB_ITEMS: { key: TabKey; label: string }[] = [
   { key: 'discovery', label: 'Discovery' },
@@ -33,6 +34,7 @@ const TAB_ITEMS: { key: TabKey; label: string }[] = [
   { key: 'deliverables', label: 'Deliverables' },
   { key: 'finance', label: 'Finance' },
   { key: 'activity', label: 'Activity' },
+  { key: 'onboarding', label: 'Onboarding' },
 ]
 
 export type TabKey =
@@ -43,6 +45,7 @@ export type TabKey =
   | 'deliverables'
   | 'finance'
   | 'activity'
+  | 'onboarding'
 
 export type ClientWorkspaceClient = {
   id: string
@@ -203,6 +206,9 @@ export default function ClientWorkspace({
         </TabsContent>
         <TabsContent value="activity" className="border border-dashed border-[color:var(--color-outline)]">
           <ActivityTab items={activity} />
+        </TabsContent>
+        <TabsContent value="onboarding" className="border border-dashed border-[color:var(--color-outline)]">
+          <OnboardingTab clientId={client.id} phase={client.phase} status={client.status} />
         </TabsContent>
       </Tabs>
     </div>

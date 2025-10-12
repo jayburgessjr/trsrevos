@@ -5,7 +5,16 @@ import type { ActivityItem, ClientDeliverable, ClientStrategy, DataRequirement, 
 import ClientWorkspace, { ClientFinance, ClientWorkspaceClient, TabKey } from './ClientWorkspace'
 import { createServerClient } from '@/lib/supabase/server'
 
-const TAB_KEYS: TabKey[] = ['discovery', 'data', 'algorithm', 'architecture', 'deliverables', 'finance', 'activity']
+const TAB_KEYS: TabKey[] = [
+  'discovery',
+  'data',
+  'algorithm',
+  'architecture',
+  'deliverables',
+  'finance',
+  'activity',
+  'onboarding',
+]
 
 export default async function ClientPage({
   params,
@@ -76,8 +85,8 @@ export default async function ClientPage({
   if (deliverableRows.error) throw deliverableRows.error
 
   const ownerRecord = Array.isArray(clientRow.owner)
-    ? clientRow.owner[0] ?? null
-    : (clientRow.owner ?? null)
+    ? clientRow.owner[0]
+    : clientRow.owner
 
   const client: ClientWorkspaceClient = {
     id: clientRow.id,
