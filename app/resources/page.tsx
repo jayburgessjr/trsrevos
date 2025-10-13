@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { PageTemplate } from "@/components/layout/PageTemplate";
 import { PageTabs } from "@/components/layout/PageTabs";
@@ -128,6 +128,7 @@ const whatIfLevers = [
 
 export default function ResourcesPage() {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const tabs = useMemo(() => resolveTabs(pathname), [pathname]);
   const activeTab = useMemo(() => {
@@ -137,12 +138,21 @@ export default function ResourcesPage() {
 
   const buildTabHref = useCallback(
     (tab: string) => {
+      if (tab === "Forms") {
+        return "/resources/forms";
+      }
       const params = new URLSearchParams(searchParams.toString());
       params.set("tab", tab);
       return `${pathname}?${params.toString()}`;
     },
     [pathname, searchParams],
   );
+
+  useEffect(() => {
+    if (activeTab === "Forms") {
+      router.replace("/resources/forms");
+    }
+  }, [activeTab, router]);
 
   return (
     <PageTemplate

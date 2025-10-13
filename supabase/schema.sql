@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS public.clients (
   name text NOT NULL,
   user_id uuid REFERENCES public.users(id) ON DELETE SET NULL,
   type text DEFAULT 'standard',
+  industry text,
+  mrr numeric,
   created_at timestamptz DEFAULT timezone('utc', now())
 );
 
@@ -67,6 +69,24 @@ CREATE TABLE IF NOT EXISTS public.analytics_events (
   event_type text,
   entity text,
   entity_id text,
+  created_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE TABLE IF NOT EXISTS public.client_forms (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id uuid REFERENCES public.clients(id) ON DELETE CASCADE,
+  form_id text,
+  data jsonb,
+  status text DEFAULT 'draft',
+  created_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE TABLE IF NOT EXISTS public.client_deliverables (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id uuid REFERENCES public.clients(id) ON DELETE CASCADE,
+  reference text,
+  type text,
+  status text,
   created_at timestamptz DEFAULT timezone('utc', now())
 );
 
