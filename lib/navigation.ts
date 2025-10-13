@@ -68,6 +68,12 @@ export const MAIN_NAV: NavItem[] = [
     roles: ['SuperAdmin', 'Admin', 'Director', 'Member'],
   },
   {
+    label: 'Resources',
+    href: '/resources',
+    icon: 'BookOpen',
+    roles: ['SuperAdmin', 'Admin', 'Director', 'Member', 'Client'],
+  },
+  {
     label: 'Settings',
     href: '/settings',
     icon: 'Settings',
