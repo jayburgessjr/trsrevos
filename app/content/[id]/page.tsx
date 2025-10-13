@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card } from "@/components/kit/Card";
-import { getContentPiece, updateContentPiece } from "@/core/content/store";
+import { fetchContentPiece, updateContentPiece } from "@/core/content/api";
 import type { ContentPiece } from "@/core/content/types";
 
 export default function ContentDetailPage({ params }: { params: { id: string } }) {
@@ -14,16 +14,23 @@ export default function ContentDetailPage({ params }: { params: { id: string } }
   const [editedContent, setEditedContent] = useState<Partial<ContentPiece>>({});
 
   useEffect(() => {
-    const piece = getContentPiece(params.id);
-    if (piece) {
-      setContent(piece);
-      setEditedContent(piece);
-    }
+    let active = true;
+
+    fetchContentPiece(params.id).then((piece) => {
+      if (active && piece) {
+        setContent(piece);
+        setEditedContent(piece);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
   }, [params.id]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (content && editedContent) {
-      const updated = updateContentPiece(content.id, editedContent);
+      const updated = await updateContentPiece(content.id, editedContent);
       if (updated) {
         setContent(updated);
         setIsEditing(false);

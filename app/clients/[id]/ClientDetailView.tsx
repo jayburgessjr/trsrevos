@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 import ClientTabs from "@/components/clients/ClientTabs";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { resolveTabs } from "@/lib/tabs";
-import { getContentPiecesByClient } from "@/core/content/store";
+import { fetchContentPiecesForClient } from "@/core/content/api";
+import type { ContentPiece } from "@/core/content/types";
 import type {
   Client,
   ClientDeliverable,
@@ -59,10 +60,21 @@ export default function ClientDetailView({
     [pathname, searchParams],
   );
 
-  const clientContent = useMemo(
-    () => getContentPiecesByClient(client.id),
-    [client.id],
-  );
+  const [clientContent, setClientContent] = useState<ContentPiece[]>([]);
+
+  useEffect(() => {
+    let active = true;
+
+    fetchContentPiecesForClient(client.id).then((pieces) => {
+      if (active) {
+        setClientContent(pieces);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [client.id]);
 
   return (
     <div className="flex h-full flex-col bg-white">
