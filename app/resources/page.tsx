@@ -17,6 +17,7 @@ import {
 import { TRS_CARD } from "@/lib/style";
 import { resolveTabs } from "@/lib/tabs";
 import { cn } from "@/lib/utils";
+import RevenueClearInteractiveModel from "@/components/resources/RevenueClearInteractiveModel";
 
 const pricingScenarios = [
   {
@@ -308,6 +309,12 @@ export default function ResourcesPage() {
               ))}
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {activeTab === "Revenue Clear" && (
+        <div className="py-6">
+          <RevenueClearInteractiveModel />
         </div>
       )}
 
