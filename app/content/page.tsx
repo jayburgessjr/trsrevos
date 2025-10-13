@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -10,12 +10,42 @@ import { resolveTabs } from "@/lib/tabs";
 import { cn } from "@/lib/utils";
 import { TRS_CARD, TRS_SUBTITLE } from "@/lib/style";
 import {
-  listContentPieces,
-  listAdCampaigns,
-  getMarketingKPIs,
-  createAdCampaign,
-} from "@/core/content/store";
-import type { CreateAdCampaignInput } from "@/core/content/types";
+  calculateMarketingKPIs,
+  createAdCampaignDraft,
+  createContentDraft,
+  fetchAdCampaigns,
+  fetchContentPieces,
+  generateIdeaBatch,
+  type MarketingKPIs,
+} from "@/core/content/api";
+import type { AdCampaign, ContentPiece, CreateAdCampaignInput } from "@/core/content/types";
+
+const DELIVERABLE_OPTIONS: ContentPiece["format"][] = [
+  "Post",
+  "Webinar",
+  "Workshop",
+  "One-Pager",
+  "Email",
+  "Case Study",
+  "White Paper",
+  "Video",
+  "Infographic",
+];
+
+const PURPOSE_OPTIONS: ContentPiece["purpose"][] = [
+  "Inspire",
+  "Sell",
+  "Add Value",
+];
+
+const CHANNEL_OPTIONS: (ContentPiece["channel"])[] = [
+  "LinkedIn",
+  "Email",
+  "Website",
+  "Event",
+  "Direct Mail",
+  "Social Media",
+];
 
 export default function ContentStudioPage() {
   const pathname = usePathname();
@@ -35,12 +65,64 @@ export default function ContentStudioPage() {
     [pathname, searchParams],
   );
 
-  const contentPieces = useMemo(() => listContentPieces(), []);
-  const [adCampaigns, setAdCampaigns] = useState(() => listAdCampaigns());
-  const kpis = useMemo(() => getMarketingKPIs(), []);
+  const [contentPieces, setContentPieces] = useState<ContentPiece[]>([]);
+  const [adCampaigns, setAdCampaigns] = useState<AdCampaign[]>([]);
+  const [kpis, setKpis] = useState<MarketingKPIs | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [showCampaignModal, setShowCampaignModal] = useState(false);
   const [showAgentModal, setShowAgentModal] = useState(false);
+  const [showNewContentModal, setShowNewContentModal] = useState(false);
+  const [showIdeaModal, setShowIdeaModal] = useState(false);
+
+  const [newContentForm, setNewContentForm] = useState({
+    audience: "",
+    goal: "",
+    deliverable: "Post",
+    purpose: "Inspire" as const,
+    channel: "LinkedIn" as const,
+  });
+  const [generatedSummary, setGeneratedSummary] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isGeneratingContent, setIsGeneratingContent] = useState(false);
+
+  const [ideaForm, setIdeaForm] = useState({ audience: "", goal: "" });
+  const [isGeneratingIdeas, setIsGeneratingIdeas] = useState(false);
+  const [ideaError, setIdeaError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const load = async () => {
+      try {
+        setIsLoading(true);
+        const [pieces, campaigns] = await Promise.all([
+          fetchContentPieces(),
+          fetchAdCampaigns(),
+        ]);
+
+        if (!mounted) return;
+        setContentPieces(pieces);
+        setAdCampaigns(campaigns);
+        setKpis(calculateMarketingKPIs(pieces, campaigns));
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    load();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const resolvedKpis = useMemo(
+    () => kpis ?? calculateMarketingKPIs(contentPieces, adCampaigns),
+    [kpis, contentPieces, adCampaigns],
+  );
   const [campaignForm, setCampaignForm] = useState<CreateAdCampaignInput>({
     name: "",
     platform: "LinkedIn",
@@ -54,34 +136,140 @@ export default function ContentStudioPage() {
   });
   const [agentPrompt, setAgentPrompt] = useState("");
 
-  const pipelineContent = contentPieces.filter(
-    (p) => p.status === "Draft" || p.status === "Review",
+  const resetNewContentForm = () => {
+    setNewContentForm({
+      audience: "",
+      goal: "",
+      deliverable: "Post",
+      purpose: "Inspire",
+      channel: "LinkedIn",
+    });
+    setGeneratedSummary(null);
+    setFormError(null);
+  };
+
+  const closeNewContentModal = () => {
+    setShowNewContentModal(false);
+    resetNewContentForm();
+    setIsGeneratingContent(false);
+  };
+
+  const closeIdeaModal = () => {
+    setShowIdeaModal(false);
+    setIdeaError(null);
+    setIdeaForm({ audience: "", goal: "" });
+    setIsGeneratingIdeas(false);
+  };
+
+  const handleGenerateContent = async () => {
+    if (!newContentForm.audience.trim() || !newContentForm.goal.trim()) {
+      setFormError("Please tell us who this content is for and what you want to accomplish.");
+      return;
+    }
+
+    setIsGeneratingContent(true);
+    setFormError(null);
+
+    try {
+      const title = `${newContentForm.goal.trim()} for ${newContentForm.audience.trim()}`;
+      const summary = `Purpose-built ${newContentForm.deliverable.toLowerCase()} for ${newContentForm.audience.trim()} that advances ${newContentForm.goal.trim()} with clear next steps and metrics.`;
+
+      const piece = await createContentDraft({
+        title,
+        contentType: "Marketing",
+        format: newContentForm.deliverable as ContentPiece["format"],
+        status: "Draft",
+        purpose: newContentForm.purpose,
+        channel: newContentForm.channel,
+        targetAudience: newContentForm.audience,
+        description: summary,
+        createdBy: "Automation",
+        aiGenerated: true,
+      });
+
+      setContentPieces((prev) => {
+        const next = [piece, ...prev];
+        setKpis(calculateMarketingKPIs(next, adCampaigns));
+        return next;
+      });
+      setGeneratedSummary(summary);
+    } catch (error) {
+      console.error("content-page:generate-content", error);
+      setFormError("We couldn't generate content right now. Please try again.");
+    } finally {
+      setIsGeneratingContent(false);
+    }
+  };
+
+  const handleGenerateIdeas = async () => {
+    if (!ideaForm.audience.trim() || !ideaForm.goal.trim()) {
+      setIdeaError("Enter both audience and goal to generate ideas.");
+      return;
+    }
+
+    setIsGeneratingIdeas(true);
+    setIdeaError(null);
+
+    try {
+      const ideas = await generateIdeaBatch(ideaForm.audience.trim(), ideaForm.goal.trim());
+      setContentPieces((prev) => {
+        const next = [...ideas, ...prev];
+        setKpis(calculateMarketingKPIs(next, adCampaigns));
+        return next;
+      });
+      closeIdeaModal();
+    } catch (error) {
+      console.error("content-page:generate-ideas", error);
+      setIdeaError("We couldn't generate ideas right now. Please try again.");
+    } finally {
+      setIsGeneratingIdeas(false);
+    }
+  };
+
+  const pipelineContent = useMemo(
+    () =>
+      contentPieces.filter(
+        (p) => p.status === "Draft" || p.status === "Review",
+      ),
+    [contentPieces],
   );
-  const scheduledContent = contentPieces.filter(
-    (p) => p.status === "Scheduled",
+  const scheduledContent = useMemo(
+    () => contentPieces.filter((p) => p.status === "Scheduled"),
+    [contentPieces],
   );
-  const ideaContent = contentPieces.filter((p) => p.status === "Idea");
-  const publishedContent = contentPieces.filter(
-    (p) => p.status === "Published",
+  const ideaContent = useMemo(
+    () => contentPieces.filter((p) => p.status === "Idea"),
+    [contentPieces],
+  );
+  const publishedContent = useMemo(
+    () => contentPieces.filter((p) => p.status === "Published"),
+    [contentPieces],
   );
 
-  const handleCreateCampaign = () => {
-    if (campaignForm.name && campaignForm.targetAudience) {
-      const newCampaign = createAdCampaign(campaignForm);
-      setAdCampaigns([...adCampaigns, newCampaign]);
-      setShowCampaignModal(false);
-      setCampaignForm({
-        name: "",
-        platform: "LinkedIn",
-        objective: "Lead Generation",
-        status: "Draft",
-        budget: 0,
-        spent: 0,
-        startDate: "",
-        targetAudience: "",
-        createdBy: "User",
-      });
+  const handleCreateCampaign = async () => {
+    if (!campaignForm.name || !campaignForm.targetAudience) {
+      return;
     }
+
+    const newCampaign = await createAdCampaignDraft({
+      ...campaignForm,
+      createdBy: campaignForm.createdBy,
+    });
+    const nextCampaigns = [newCampaign, ...adCampaigns];
+    setAdCampaigns(nextCampaigns);
+    setKpis(calculateMarketingKPIs(contentPieces, nextCampaigns));
+    setShowCampaignModal(false);
+    setCampaignForm({
+      name: "",
+      platform: "LinkedIn",
+      objective: "Lead Generation",
+      status: "Draft",
+      budget: 0,
+      spent: 0,
+      startDate: "",
+      targetAudience: "",
+      createdBy: "User",
+    });
   };
 
   const handleGenerateWithAgent = () => {
@@ -97,8 +285,13 @@ export default function ContentStudioPage() {
         targetAudience: "AI-selected audience",
         createdBy: "AI Agent",
       };
-      const generatedCampaign = createAdCampaign(campaignInput);
-      setAdCampaigns([...adCampaigns, generatedCampaign]);
+      createAdCampaignDraft(campaignInput).then((generatedCampaign) => {
+        setAdCampaigns((prev) => {
+          const next = [generatedCampaign, ...prev];
+          setKpis(calculateMarketingKPIs(contentPieces, next));
+          return next;
+        });
+      });
       setShowAgentModal(false);
       setAgentPrompt("");
     }
@@ -129,35 +322,35 @@ export default function ContentStudioPage() {
                 <div className={cn(TRS_CARD, "p-3")}>
                   <div className={TRS_SUBTITLE}>Total Content</div>
                   <div className="mt-1 text-2xl font-semibold text-black">
-                    {kpis.content.total}
+                    {resolvedKpis.content.total}
                   </div>
                   <div className="text-[11px] text-gray-600">All pieces</div>
                 </div>
                 <div className={cn(TRS_CARD, "p-3")}>
                   <div className={TRS_SUBTITLE}>Published</div>
                   <div className="mt-1 text-2xl font-semibold text-black">
-                    {kpis.content.published}
+                    {resolvedKpis.content.published}
                   </div>
                   <div className="text-[11px] text-gray-600">Live content</div>
                 </div>
                 <div className={cn(TRS_CARD, "p-3")}>
                   <div className={TRS_SUBTITLE}>Scheduled</div>
                   <div className="mt-1 text-2xl font-semibold text-black">
-                    {kpis.content.scheduled}
+                    {resolvedKpis.content.scheduled}
                   </div>
                   <div className="text-[11px] text-gray-600">Ready to ship</div>
                 </div>
                 <div className={cn(TRS_CARD, "p-3")}>
                   <div className={TRS_SUBTITLE}>In Draft</div>
                   <div className="mt-1 text-2xl font-semibold text-black">
-                    {kpis.content.draft}
+                    {resolvedKpis.content.draft}
                   </div>
                   <div className="text-[11px] text-gray-600">In progress</div>
                 </div>
                 <div className={cn(TRS_CARD, "p-3")}>
                   <div className={TRS_SUBTITLE}>Ideas</div>
                   <div className="mt-1 text-2xl font-semibold text-black">
-                    {kpis.content.ideas}
+                    {resolvedKpis.content.ideas}
                   </div>
                   <div className="text-[11px] text-gray-600">In backlog</div>
                 </div>
@@ -172,7 +365,7 @@ export default function ContentStudioPage() {
                 <div className={cn(TRS_CARD, "p-3")}>
                   <div className={TRS_SUBTITLE}>Total Views</div>
                   <div className="mt-1 text-2xl font-semibold text-black">
-                    {kpis.content.views.toLocaleString()}
+                    {resolvedKpis.content.views.toLocaleString()}
                   </div>
                   <div className="text-[11px] text-gray-600">
                     Across all content
@@ -181,14 +374,14 @@ export default function ContentStudioPage() {
                 <div className={cn(TRS_CARD, "p-3")}>
                   <div className={TRS_SUBTITLE}>Engagement</div>
                   <div className="mt-1 text-2xl font-semibold text-black">
-                    {kpis.content.engagement.toLocaleString()}
+                    {resolvedKpis.content.engagement.toLocaleString()}
                   </div>
                   <div className="text-[11px] text-gray-600">Interactions</div>
                 </div>
                 <div className={cn(TRS_CARD, "p-3")}>
                   <div className={TRS_SUBTITLE}>Conversions</div>
                   <div className="mt-1 text-2xl font-semibold text-black">
-                    {kpis.content.conversions}
+                    {resolvedKpis.content.conversions}
                   </div>
                   <div className="text-[11px] text-gray-600">
                     Generated leads
@@ -205,24 +398,24 @@ export default function ContentStudioPage() {
                 <div className={cn(TRS_CARD, "p-3")}>
                   <div className={TRS_SUBTITLE}>Active Campaigns</div>
                   <div className="mt-1 text-2xl font-semibold text-black">
-                    {kpis.advertising.activeCampaigns}
+                    {resolvedKpis.advertising.activeCampaigns}
                   </div>
                   <div className="text-[11px] text-gray-600">Running now</div>
                 </div>
                 <div className={cn(TRS_CARD, "p-3")}>
                   <div className={TRS_SUBTITLE}>Ad Spend</div>
                   <div className="mt-1 text-2xl font-semibold text-black">
-                    ${(kpis.advertising.totalSpend / 1000).toFixed(1)}k
+                    ${(resolvedKpis.advertising.totalSpend / 1000).toFixed(1)}k
                   </div>
                   <div className="text-[11px] text-gray-600">
-                    of ${(kpis.advertising.totalBudget / 1000).toFixed(1)}k
+                    of ${(resolvedKpis.advertising.totalBudget / 1000).toFixed(1)}k
                     budget
                   </div>
                 </div>
                 <div className={cn(TRS_CARD, "p-3")}>
                   <div className={TRS_SUBTITLE}>Avg CTR</div>
                   <div className="mt-1 text-2xl font-semibold text-black">
-                    {kpis.advertising.avgCTR.toFixed(2)}%
+                    {resolvedKpis.advertising.avgCTR.toFixed(2)}%
                   </div>
                   <div className="text-[11px] text-gray-600">
                     Click-through rate
@@ -231,7 +424,7 @@ export default function ContentStudioPage() {
                 <div className={cn(TRS_CARD, "p-3")}>
                   <div className={TRS_SUBTITLE}>Avg ROAS</div>
                   <div className="mt-1 text-2xl font-semibold text-black">
-                    {kpis.advertising.avgROAS.toFixed(1)}x
+                    {resolvedKpis.advertising.avgROAS.toFixed(1)}x
                   </div>
                   <div className="text-[11px] text-gray-600">
                     Return on ad spend
@@ -253,7 +446,13 @@ export default function ContentStudioPage() {
                   Content in Draft and Review stages
                 </p>
               </div>
-              <button className="text-xs px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-100 bg-white">
+              <button
+                onClick={() => {
+                  resetNewContentForm();
+                  setShowNewContentModal(true);
+                }}
+                className="text-xs px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-100 bg-white"
+              >
                 + New Content
               </button>
             </div>
@@ -326,7 +525,14 @@ export default function ContentStudioPage() {
                   AI-generated ideas based on sales trends and market conditions
                 </p>
               </div>
-              <button className="text-xs px-3 py-1.5 rounded-md bg-black text-white hover:bg-gray-800">
+              <button
+                onClick={() => {
+                  setIdeaForm({ audience: "", goal: "" });
+                  setIdeaError(null);
+                  setShowIdeaModal(true);
+                }}
+                className="text-xs px-3 py-1.5 rounded-md bg-black text-white hover:bg-gray-800"
+              >
                 Generate Ideas
               </button>
             </div>
@@ -644,19 +850,19 @@ export default function ContentStudioPage() {
                   <div className={cn(TRS_CARD, "p-3")}>
                     <div className={TRS_SUBTITLE}>Total Impressions</div>
                     <div className="mt-1 text-2xl font-semibold text-black">
-                      {kpis.advertising.impressions.toLocaleString()}
+                      {resolvedKpis.advertising.impressions.toLocaleString()}
                     </div>
                   </div>
                   <div className={cn(TRS_CARD, "p-3")}>
                     <div className={TRS_SUBTITLE}>Total Clicks</div>
                     <div className="mt-1 text-2xl font-semibold text-black">
-                      {kpis.advertising.clicks.toLocaleString()}
+                      {resolvedKpis.advertising.clicks.toLocaleString()}
                     </div>
                   </div>
                   <div className={cn(TRS_CARD, "p-3")}>
                     <div className={TRS_SUBTITLE}>Total Conversions</div>
                     <div className="mt-1 text-2xl font-semibold text-black">
-                      {kpis.advertising.conversions}
+                      {resolvedKpis.advertising.conversions}
                     </div>
                   </div>
                 </div>
@@ -822,6 +1028,212 @@ export default function ContentStudioPage() {
                   className="flex-1 px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800"
                 >
                   Create Campaign
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showNewContentModal && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4 py-8">
+            <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl max-h-full overflow-y-auto p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-semibold text-black">Generate a New Content Draft</h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Tell Rosie who this asset is for and the outcome you need. We will draft the narrative and save it into your pipeline.
+                  </p>
+                </div>
+                <button
+                  onClick={closeNewContentModal}
+                  className="text-sm text-gray-500 hover:text-black"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="mt-4 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Who is this for?
+                  </label>
+                  <input
+                    type="text"
+                    value={newContentForm.audience}
+                    onChange={(e) => setNewContentForm((prev) => ({ ...prev, audience: e.target.value }))}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    placeholder="e.g. CROs at mid-market SaaS firms"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    What do we want to accomplish?
+                  </label>
+                  <textarea
+                    value={newContentForm.goal}
+                    onChange={(e) => setNewContentForm((prev) => ({ ...prev, goal: e.target.value }))}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    rows={4}
+                    placeholder="Describe the motion, objection, or revenue target you want to hit"
+                  />
+                </div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Deliverable Type
+                    </label>
+                    <select
+                      value={newContentForm.deliverable}
+                      onChange={(e) => setNewContentForm((prev) => ({ ...prev, deliverable: e.target.value }))}
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    >
+                      {DELIVERABLE_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Purpose
+                    </label>
+                    <select
+                      value={newContentForm.purpose}
+                      onChange={(e) =>
+                        setNewContentForm((prev) => ({
+                          ...prev,
+                          purpose: e.target.value as ContentPiece["purpose"],
+                        }))
+                      }
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    >
+                      {PURPOSE_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Primary Channel
+                    </label>
+                    <select
+                      value={newContentForm.channel}
+                      onChange={(e) =>
+                        setNewContentForm((prev) => ({
+                          ...prev,
+                          channel: e.target.value as ContentPiece["channel"],
+                        }))
+                      }
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    >
+                      {CHANNEL_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {formError && (
+                  <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    {formError}
+                  </div>
+                )}
+
+                {generatedSummary && (
+                  <div className="rounded-md border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+                    <div className="mb-2 text-sm font-semibold text-black">Draft Summary</div>
+                    <p>{generatedSummary}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 flex justify-end gap-2">
+                <button
+                  onClick={closeNewContentModal}
+                  className="rounded-md border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleGenerateContent}
+                  disabled={isGeneratingContent}
+                  className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isGeneratingContent ? "Generating..." : "Generate Content"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showIdeaModal && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4 py-8">
+            <div className="bg-white rounded-lg shadow-lg w-full max-w-lg p-6">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-black">Generate Idea Backlog</h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Capture a persona and outcome to spin up three fresh ideas ready for grooming.
+                  </p>
+                </div>
+                <button
+                  onClick={closeIdeaModal}
+                  className="text-sm text-gray-500 hover:text-black"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="mt-4 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Audience
+                  </label>
+                  <input
+                    type="text"
+                    value={ideaForm.audience}
+                    onChange={(e) => setIdeaForm((prev) => ({ ...prev, audience: e.target.value }))}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    placeholder="e.g. Revenue operations leaders"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Desired Outcome
+                  </label>
+                  <input
+                    type="text"
+                    value={ideaForm.goal}
+                    onChange={(e) => setIdeaForm((prev) => ({ ...prev, goal: e.target.value }))}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    placeholder="e.g. accelerate pipeline velocity"
+                  />
+                </div>
+                {ideaError && (
+                  <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    {ideaError}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 flex justify-end gap-2">
+                <button
+                  onClick={closeIdeaModal}
+                  className="rounded-md border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleGenerateIdeas}
+                  disabled={isGeneratingIdeas}
+                  className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isGeneratingIdeas ? "Generating..." : "Generate Ideas"}
                 </button>
               </div>
             </div>

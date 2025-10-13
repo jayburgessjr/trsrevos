@@ -146,6 +146,192 @@ VALUES
    '{"revenue": "Year-end renewals and new contracts", "expenses": "Year-end bonuses included"}', NOW(), NOW());
 
 -- ============================================================================
+-- CONTENT & MARKETING DATA
+-- ============================================================================
+WITH creator AS (
+  SELECT id FROM users ORDER BY created_at LIMIT 1
+),
+assignee AS (
+  SELECT id FROM users ORDER BY created_at OFFSET 1 LIMIT 1
+),
+primary_client AS (
+  SELECT id FROM clients ORDER BY created_at LIMIT 1
+)
+INSERT INTO content_pieces (
+  id, title, content_type, format, status, purpose, channel, target_audience, target_id,
+  description, created_by, assigned_to, scheduled_date, due_date, ai_generated, performance_metrics, tags, created_at, updated_at
+)
+VALUES
+  (
+    'a50e8400-e29b-41d4-a716-446655440001',
+    'AI RevOps Playbook',
+    'Prospect',
+    'Guide',
+    'Scheduled',
+    'Sell',
+    'LinkedIn',
+    'Revenue Leaders',
+    (SELECT id FROM primary_client),
+    'A tactical guide for CROs on orchestrating an AI-powered revenue engine across sales, success, and finance.',
+    (SELECT id FROM creator),
+    (SELECT id FROM assignee),
+    '2025-02-18',
+    '2025-02-28',
+    FALSE,
+    '{"views": 1280, "engagement": 460, "conversions": 38, "clicks": 520, "shares": 32}'::jsonb,
+    ARRAY['revops', 'playbook', 'ai'],
+    '2025-02-10T08:30:00Z',
+    '2025-02-12T09:15:00Z'
+  ),
+  (
+    'a50e8400-e29b-41d4-a716-446655440002',
+    'Weekly Forecast Pulse',
+    'Client',
+    'Post',
+    'Draft',
+    'Add Value',
+    'Email',
+    'Executive Stakeholders',
+    (SELECT id FROM primary_client),
+    'Snapshot of forecast accuracy, pipeline coverage, and risks synthesized from Rosie and the Finance module.',
+    (SELECT id FROM creator),
+    NULL,
+    NULL,
+    '2025-02-20',
+    TRUE,
+    '{"views": 640, "engagement": 220, "conversions": 14}'::jsonb,
+    ARRAY['forecast', 'insights'],
+    '2025-02-14T11:00:00Z',
+    '2025-02-14T11:00:00Z'
+  ),
+  (
+    'a50e8400-e29b-41d4-a716-446655440003',
+    'Partner Co-Marketing One-Pager',
+    'Partner',
+    'One-Pager',
+    'Draft',
+    'Add Value',
+    NULL,
+    'Salesforce Partner Network',
+    NULL,
+    'Joint solution brief for Salesforce integration.',
+    (SELECT id FROM creator),
+    (SELECT id FROM assignee),
+    NULL,
+    '2025-02-28',
+    FALSE,
+    NULL,
+    ARRAY['partner', 'salesforce', 'integration'],
+    '2025-02-10T13:45:00Z',
+    '2025-02-12T08:10:00Z'
+  ),
+  (
+    'a50e8400-e29b-41d4-a716-446655440004',
+    'Email: Revenue Intelligence White Paper',
+    'Marketing',
+    'White Paper',
+    'Review',
+    'Add Value',
+    'Email',
+    'Email Subscribers',
+    NULL,
+    'Deep dive on AI-powered revenue intelligence.',
+    (SELECT id FROM creator),
+    (SELECT id FROM assignee),
+    NULL,
+    '2025-02-18',
+    TRUE,
+    '{"views": 980, "engagement": 320, "conversions": 22}'::jsonb,
+    ARRAY['white paper', 'revenue intelligence', 'ai'],
+    '2025-01-28T09:15:00Z',
+    '2025-02-08T17:30:00Z'
+  ),
+  (
+    'a50e8400-e29b-41d4-a716-446655440005',
+    'Case Study Video: Globex Implementation',
+    'Prospect',
+    'Video',
+    'Idea',
+    'Inspire',
+    NULL,
+    'Mid-Market SaaS',
+    NULL,
+    'Video case study showing Globex''s implementation journey.',
+    (SELECT id FROM creator),
+    NULL,
+    NULL,
+    NULL,
+    FALSE,
+    NULL,
+    ARRAY['case study', 'video', 'implementation'],
+    '2025-02-14T10:00:00Z',
+    '2025-02-14T10:00:00Z'
+  );
+
+WITH campaign_creator AS (
+  SELECT id FROM users ORDER BY created_at LIMIT 1
+)
+INSERT INTO ad_campaigns (
+  id, name, platform, objective, status, budget, spent, start_date, end_date,
+  target_audience, created_by, metrics, content_ids, notes, created_at, updated_at
+)
+VALUES
+  (
+    'b60e8400-e29b-41d4-a716-446655440001',
+    'Q1 Revenue Leaders Campaign',
+    'LinkedIn',
+    'Lead Generation',
+    'Active',
+    15000,
+    8500,
+    '2025-01-15',
+    '2025-03-31',
+    'CROs, VP Revenue, Enterprise SaaS',
+    (SELECT id FROM campaign_creator),
+    '{"impressions": 125000, "clicks": 2400, "conversions": 180, "ctr": 1.92, "cpc": 3.54, "roas": 3.8}'::jsonb,
+    ARRAY['a50e8400-e29b-41d4-a716-446655440001', 'a50e8400-e29b-41d4-a716-446655440004'],
+    'Primary ABM motion for enterprise leaders.',
+    '2025-01-10T09:00:00Z',
+    '2025-02-15T09:00:00Z'
+  ),
+  (
+    'b60e8400-e29b-41d4-a716-446655440002',
+    'Partner Co-Marketing Push',
+    'Multi-Channel',
+    'Brand Awareness',
+    'Active',
+    8000,
+    3200,
+    '2025-02-01',
+    '2025-04-30',
+    'Salesforce ecosystem',
+    (SELECT id FROM campaign_creator),
+    '{"impressions": 45000, "clicks": 890, "conversions": 45, "ctr": 1.98}'::jsonb,
+    ARRAY['a50e8400-e29b-41d4-a716-446655440003'],
+    'Joint messaging with partner ecosystem.',
+    '2025-01-25T12:00:00Z',
+    '2025-02-10T08:15:00Z'
+  ),
+  (
+    'b60e8400-e29b-41d4-a716-446655440003',
+    'Forecast Webinar Promotion',
+    'LinkedIn',
+    'Conversion',
+    'Draft',
+    5000,
+    0,
+    '2025-02-18',
+    '2025-02-25',
+    'Finance & RevOps Leaders',
+    (SELECT id FROM campaign_creator),
+    NULL,
+    ARRAY['a50e8400-e29b-41d4-a716-446655440002'],
+    'Webinar invite campaign targeting forecasting leads.',
+    '2025-02-12T14:20:00Z',
+    '2025-02-12T14:20:00Z'
+  );
+
+-- ============================================================================
 -- PROFIT & LOSS PERIODS
 -- ============================================================================
 INSERT INTO profit_loss_periods (id, period, period_start, period_end, revenue, cogs, gross_profit, operating_expenses, net_income, gross_margin, net_margin, created_at, updated_at)
