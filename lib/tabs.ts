@@ -1,3 +1,7 @@
+import { calculatorCategories } from "@/app/resources/calculator-data";
+
+const resourceTabs = calculatorCategories.map((category) => category.name);
+
 export const PAGE_TABS: Record<string, string[]> = {
   "/": ["Today", "This Week", "Focus Blocks", "Risks", "Morning Brief"],
   "/dashboard": ["Overview", "Analytics", "Reports", "Notifications"],
@@ -8,16 +12,7 @@ export const PAGE_TABS: Record<string, string[]> = {
   "/content": ["Overview", "Pipeline", "Ideas", "Scheduled", "Performance", "Create", "Advertising"],
   "/agents": ["All", "Projects", "Content", "Clients", "GPT Agents"],
   "/mail-calendar": ["Inbox", "Calendar", "Integrations"],
-  "/resources": [
-    "Core Revenue",
-    "Pricing",
-    "Retention & LTV",
-    "Growth & Demand",
-    "Profitability & Margin",
-    "Strategic Value",
-    "Specialized Industry",
-    "Advisory Layer",
-  ],
+  "/resources": resourceTabs,
   "/settings": ["Agents", "Appearance", "Integrations", "Feature Flags", "Behavior"],
   "/clients": ["Overview", "Accounts", "Engagement", "Renewals", "Signals"],
   "/clients/[id]": [
