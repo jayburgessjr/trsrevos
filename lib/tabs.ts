@@ -1,3 +1,17 @@
+export const RESOURCE_TABS = [
+  "Pricing",
+  "Revenue",
+  "Revenue Clear",
+  "Financial Plan",
+  "Profit",
+  "Board Scenarios",
+  "Forms",
+] as const;
+
+function resourceTabs(): string[] {
+  return [...RESOURCE_TABS];
+}
+
 export const PAGE_TABS: Record<string, string[]> = {
   "/": ["Today", "This Week", "Focus Blocks", "Risks", "Morning Brief"],
   "/dashboard": ["Overview", "Analytics", "Reports", "Notifications"],
@@ -8,33 +22,9 @@ export const PAGE_TABS: Record<string, string[]> = {
   "/content": ["Overview", "Pipeline", "Ideas", "Scheduled", "Performance", "Create", "Advertising"],
   "/agents": ["All", "Projects", "Content", "Clients", "GPT Agents"],
   "/mail-calendar": ["Inbox", "Calendar", "Integrations"],
-  "/resources": [
-    "Pricing",
-    "Revenue",
-    "Revenue Clear",
-    "Financial Plan",
-    "Profit",
-    "Board Scenarios",
-    "Forms",
-  ],
-  "/resources/forms": [
-    "Pricing",
-    "Revenue",
-    "Revenue Clear",
-    "Financial Plan",
-    "Profit",
-    "Board Scenarios",
-    "Forms",
-  ],
-  "/resources/forms/[formId]": [
-    "Pricing",
-    "Revenue",
-    "Revenue Clear",
-    "Financial Plan",
-    "Profit",
-    "Board Scenarios",
-    "Forms",
-  ],
+  "/resources": resourceTabs(),
+  "/resources/forms": resourceTabs(),
+  "/resources/forms/[formId]": resourceTabs(),
   "/settings": ["Agents", "Appearance", "Integrations", "Feature Flags", "Behavior"],
   "/clients": ["Overview", "Accounts", "Engagement", "Renewals", "Signals"],
   "/clients/[id]": [

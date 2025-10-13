@@ -5,7 +5,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 export type PageTabsProps = {
-  tabs: string[];
+  tabs: readonly string[];
   activeTab: string;
   onTabChange?: (tab: string) => void;
   hrefForTab?: (tab: string) => string;
