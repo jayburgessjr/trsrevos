@@ -1,4 +1,5 @@
 export const RESOURCE_TABS = [
+  "Calculator",
   "Pricing",
   "Revenue",
   "Revenue Clear",

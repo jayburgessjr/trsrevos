@@ -126,6 +126,81 @@ const whatIfLevers = [
   "Partner-sourced pipeline",
 ];
 
+const calculatorShortcuts = [
+  {
+    tab: "Pricing",
+    title: "Guardrail calculator",
+    description:
+      "Set pricing floors, discount guardrails, and see margin impact instantly.",
+  },
+  {
+    tab: "Pricing",
+    title: "Packaging experiments",
+    description:
+      "Compare seat-based and usage-based models to frame packaging tradeoffs.",
+  },
+  {
+    tab: "Revenue",
+    title: "Revenue bridge",
+    description:
+      "Visualize ARR movement across motions and spotlight the biggest drivers.",
+  },
+  {
+    tab: "Revenue",
+    title: "Coverage calculator",
+    description:
+      "Blend quota capacity, attainment, and forecast confidence to pressure test commits.",
+  },
+  {
+    tab: "Revenue Clear",
+    title: "Revenue Clear model",
+    description:
+      "Interactive calculator to layer scenarios and see board-ready recommendations.",
+  },
+  {
+    tab: "Financial Plan",
+    title: "Financial runway",
+    description:
+      "Forecast burn and runway with CFO controls and efficiency levers built in.",
+  },
+  {
+    tab: "Financial Plan",
+    title: "Cash flow planner",
+    description:
+      "Sequence hiring, vendor spend, and capital strategy to de-risk your plan.",
+  },
+  {
+    tab: "Profit",
+    title: "Profitability snapshot",
+    description:
+      "Track margin, CAC payback, and efficiency benchmarks in one rollup view.",
+  },
+  {
+    tab: "Profit",
+    title: "Margin ideas backlog",
+    description:
+      "Surface automation, partner, and pricing plays to protect blended margin.",
+  },
+  {
+    tab: "Board Scenarios",
+    title: "Board-ready packs",
+    description:
+      "Package scenarios with commentary, risks, and actions for executive reviews.",
+  },
+  {
+    tab: "Board Scenarios",
+    title: "What-if levers",
+    description:
+      "Toggle hiring, win rate, and pricing assumptions to model multi-quarter impact.",
+  },
+  {
+    tab: "Forms",
+    title: "Smart forms library",
+    description:
+      "Collect intake, audits, and playbooks that sync into every calculator workflow.",
+  },
+];
+
 export default function ResourcesPage() {
   const pathname = usePathname();
   const router = useRouter();
@@ -165,6 +240,40 @@ export default function ResourcesPage() {
       ]}
     >
       <PageTabs tabs={tabs} activeTab={activeTab} hrefForTab={buildTabHref} />
+
+      {activeTab === "Calculator" && (
+        <section className="mt-6 space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+              Calculator library
+            </h2>
+            <p className="mt-1 text-sm text-gray-600">
+              Jump straight into the model you need—each shortcut opens the tab with
+              prebuilt formulas ready to go.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {calculatorShortcuts.map((shortcut) => (
+              <Link
+                key={`${shortcut.tab}-${shortcut.title}`}
+                href={buildTabHref(shortcut.tab)}
+                className="group rounded-lg border border-gray-200 bg-white p-4 transition-colors hover:border-gray-300 hover:bg-gray-50"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-black group-hover:text-gray-900">
+                    {shortcut.title}
+                  </p>
+                  <Badge variant="outline">{shortcut.tab}</Badge>
+                </div>
+                <p className="mt-2 text-sm text-gray-600 group-hover:text-gray-700">
+                  {shortcut.description}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {activeTab === "Pricing" && (
         <div className="space-y-4">
