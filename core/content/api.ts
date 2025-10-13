@@ -95,7 +95,7 @@ const fallbackContentPieces: ContentPiece[] = [
     id: "mkt-1",
     title: "AI RevOps Playbook",
     contentType: "Prospect",
-    format: "Guide",
+    format: "White Paper",
     status: "Scheduled",
     purpose: "Sell",
     channel: "LinkedIn",

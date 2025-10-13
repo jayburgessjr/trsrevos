@@ -75,12 +75,18 @@ export default function ContentStudioPage() {
   const [showNewContentModal, setShowNewContentModal] = useState(false);
   const [showIdeaModal, setShowIdeaModal] = useState(false);
 
-  const [newContentForm, setNewContentForm] = useState({
+  const [newContentForm, setNewContentForm] = useState<{
+    audience: string;
+    goal: string;
+    deliverable: ContentPiece["format"];
+    purpose: ContentPiece["purpose"];
+    channel: ContentPiece["channel"];
+  }>({
     audience: "",
     goal: "",
     deliverable: "Post",
-    purpose: "Inspire" as const,
-    channel: "LinkedIn" as const,
+    purpose: "Inspire",
+    channel: "LinkedIn",
   });
   const [generatedSummary, setGeneratedSummary] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -1084,7 +1090,12 @@ export default function ContentStudioPage() {
                     </label>
                     <select
                       value={newContentForm.deliverable}
-                      onChange={(e) => setNewContentForm((prev) => ({ ...prev, deliverable: e.target.value }))}
+                      onChange={(e) =>
+                        setNewContentForm((prev) => ({
+                          ...prev,
+                          deliverable: e.target.value as ContentPiece["format"],
+                        }))
+                      }
                       className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                     >
                       {DELIVERABLE_OPTIONS.map((option) => (
