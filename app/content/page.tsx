@@ -16,6 +16,7 @@ import {
   fetchAdCampaigns,
   fetchContentPieces,
   generateIdeaBatch,
+  updateContentPiece,
   type MarketingKPIs,
 } from "@/core/content/api";
 import type { AdCampaign, ContentPiece, CreateAdCampaignInput } from "@/core/content/types";
@@ -38,7 +39,7 @@ const PURPOSE_OPTIONS: ContentPiece["purpose"][] = [
   "Add Value",
 ];
 
-const CHANNEL_OPTIONS: (ContentPiece["channel"])[] = [
+const CHANNEL_OPTIONS: NonNullable<ContentPiece["channel"]>[] = [
   "LinkedIn",
   "Email",
   "Website",
@@ -46,6 +47,37 @@ const CHANNEL_OPTIONS: (ContentPiece["channel"])[] = [
   "Direct Mail",
   "Social Media",
 ];
+
+const CONTENT_TYPE_OPTIONS: ContentPiece["contentType"][] = [
+  "Client",
+  "Prospect",
+  "Partner",
+  "Marketing",
+];
+
+type ContentFormState = {
+  audience: string;
+  goal: string;
+  deliverable: ContentPiece["format"];
+  purpose: ContentPiece["purpose"];
+  channel: NonNullable<ContentPiece["channel"]>;
+  contentType: ContentPiece["contentType"];
+};
+
+const createDefaultContentForm = (): ContentFormState => ({
+  audience: "",
+  goal: "",
+  deliverable: "Post",
+  purpose: "Inspire",
+  channel: "LinkedIn",
+  contentType: "Marketing",
+});
+
+const createQuickContentForm = (): ContentFormState => ({
+  ...createDefaultContentForm(),
+  audience: "Client",
+  contentType: "Client",
+});
 
 export default function ContentStudioPage() {
   const pathname = usePathname();
@@ -75,26 +107,24 @@ export default function ContentStudioPage() {
   const [showNewContentModal, setShowNewContentModal] = useState(false);
   const [showIdeaModal, setShowIdeaModal] = useState(false);
 
-  const [newContentForm, setNewContentForm] = useState<{
-    audience: string;
-    goal: string;
-    deliverable: ContentPiece["format"];
-    purpose: ContentPiece["purpose"];
-    channel: ContentPiece["channel"];
-  }>({
-    audience: "",
-    goal: "",
-    deliverable: "Post",
-    purpose: "Inspire",
-    channel: "LinkedIn",
-  });
+  const [newContentForm, setNewContentForm] = useState<ContentFormState>(() =>
+    createDefaultContentForm(),
+  );
+  const [quickCreateForm, setQuickCreateForm] = useState<ContentFormState>(() =>
+    createQuickContentForm(),
+  );
   const [generatedSummary, setGeneratedSummary] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [isGeneratingContent, setIsGeneratingContent] = useState(false);
+  const [quickGeneratedSummary, setQuickGeneratedSummary] = useState<string | null>(null);
+  const [quickFormError, setQuickFormError] = useState<string | null>(null);
+  const [isGeneratingQuickContent, setIsGeneratingQuickContent] = useState(false);
 
   const [ideaForm, setIdeaForm] = useState({ audience: "", goal: "" });
   const [isGeneratingIdeas, setIsGeneratingIdeas] = useState(false);
   const [ideaError, setIdeaError] = useState<string | null>(null);
+  const [ideaActionError, setIdeaActionError] = useState<string | null>(null);
+  const [promotingIdeaId, setPromotingIdeaId] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -143,13 +173,7 @@ export default function ContentStudioPage() {
   const [agentPrompt, setAgentPrompt] = useState("");
 
   const resetNewContentForm = () => {
-    setNewContentForm({
-      audience: "",
-      goal: "",
-      deliverable: "Post",
-      purpose: "Inspire",
-      channel: "LinkedIn",
-    });
+    setNewContentForm(createDefaultContentForm());
     setGeneratedSummary(null);
     setFormError(null);
   };
@@ -167,27 +191,28 @@ export default function ContentStudioPage() {
     setIsGeneratingIdeas(false);
   };
 
-  const handleGenerateContent = async () => {
-    if (!newContentForm.audience.trim() || !newContentForm.goal.trim()) {
-      setFormError("Please tell us who this content is for and what you want to accomplish.");
-      return;
+  const getContentFormValidationError = (form: ContentFormState) => {
+    if (!form.audience.trim() || !form.goal.trim()) {
+      return "Please tell us who this content is for and what you want to accomplish.";
     }
+    return null;
+  };
 
-    setIsGeneratingContent(true);
-    setFormError(null);
-
-    try {
-      const title = `${newContentForm.goal.trim()} for ${newContentForm.audience.trim()}`;
-      const summary = `Purpose-built ${newContentForm.deliverable.toLowerCase()} for ${newContentForm.audience.trim()} that advances ${newContentForm.goal.trim()} with clear next steps and metrics.`;
+  const createDraftFromForm = useCallback(
+    async (form: ContentFormState) => {
+      const trimmedAudience = form.audience.trim();
+      const trimmedGoal = form.goal.trim();
+      const title = `${trimmedGoal} for ${trimmedAudience}`;
+      const summary = `Purpose-built ${form.deliverable.toLowerCase()} for ${trimmedAudience} that advances ${trimmedGoal} with clear next steps and metrics.`;
 
       const piece = await createContentDraft({
         title,
-        contentType: "Marketing",
-        format: newContentForm.deliverable as ContentPiece["format"],
+        contentType: form.contentType,
+        format: form.deliverable,
         status: "Draft",
-        purpose: newContentForm.purpose,
-        channel: newContentForm.channel,
-        targetAudience: newContentForm.audience,
+        purpose: form.purpose,
+        channel: form.channel,
+        targetAudience: trimmedAudience,
         description: summary,
         createdBy: "Automation",
         aiGenerated: true,
@@ -198,12 +223,52 @@ export default function ContentStudioPage() {
         setKpis(calculateMarketingKPIs(next, adCampaigns));
         return next;
       });
+
+      return summary;
+    },
+    [adCampaigns],
+  );
+
+  const handleGenerateContent = async () => {
+    const validationError = getContentFormValidationError(newContentForm);
+    if (validationError) {
+      setFormError(validationError);
+      return;
+    }
+
+    setIsGeneratingContent(true);
+    setFormError(null);
+
+    try {
+      const summary = await createDraftFromForm(newContentForm);
       setGeneratedSummary(summary);
     } catch (error) {
       console.error("content-page:generate-content", error);
       setFormError("We couldn't generate content right now. Please try again.");
     } finally {
       setIsGeneratingContent(false);
+    }
+  };
+
+  const handleQuickGenerateContent = async () => {
+    const validationError = getContentFormValidationError(quickCreateForm);
+    if (validationError) {
+      setQuickFormError(validationError);
+      return;
+    }
+
+    setIsGeneratingQuickContent(true);
+    setQuickFormError(null);
+
+    try {
+      const summary = await createDraftFromForm(quickCreateForm);
+      setQuickGeneratedSummary(summary);
+      setQuickCreateForm((prev) => ({ ...prev, goal: "" }));
+    } catch (error) {
+      console.error("content-page:quick-generate", error);
+      setQuickFormError("We couldn't generate content right now. Please try again.");
+    } finally {
+      setIsGeneratingQuickContent(false);
     }
   };
 
@@ -223,12 +288,36 @@ export default function ContentStudioPage() {
         setKpis(calculateMarketingKPIs(next, adCampaigns));
         return next;
       });
+      setIdeaActionError(null);
       closeIdeaModal();
     } catch (error) {
       console.error("content-page:generate-ideas", error);
       setIdeaError("We couldn't generate ideas right now. Please try again.");
     } finally {
       setIsGeneratingIdeas(false);
+    }
+  };
+
+  const handlePromoteIdea = async (idea: ContentPiece) => {
+    setPromotingIdeaId(idea.id);
+    setIdeaActionError(null);
+
+    try {
+      const updated = await updateContentPiece(idea.id, { status: "Draft" });
+      if (!updated) {
+        throw new Error("Failed to promote idea");
+      }
+
+      setContentPieces((prev) => {
+        const next = prev.map((piece) => (piece.id === idea.id ? updated : piece));
+        setKpis(calculateMarketingKPIs(next, adCampaigns));
+        return next;
+      });
+    } catch (error) {
+      console.error("content-page:promote-idea", error);
+      setIdeaActionError("We couldn't move that idea into the pipeline. Please try again.");
+    } finally {
+      setPromotingIdeaId(null);
     }
   };
 
@@ -535,6 +624,7 @@ export default function ContentStudioPage() {
                 onClick={() => {
                   setIdeaForm({ audience: "", goal: "" });
                   setIdeaError(null);
+                  setIdeaActionError(null);
                   setShowIdeaModal(true);
                 }}
                 className="text-xs px-3 py-1.5 rounded-md bg-black text-white hover:bg-gray-800"
@@ -542,6 +632,11 @@ export default function ContentStudioPage() {
                 Generate Ideas
               </button>
             </div>
+            {ideaActionError && (
+              <div className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {ideaActionError}
+              </div>
+            )}
             <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
               {ideaContent.map((idea) => (
                 <div
@@ -549,9 +644,12 @@ export default function ContentStudioPage() {
                   className="rounded-lg border border-gray-200 p-3 hover:border-gray-400 transition"
                 >
                   <div className="flex items-start justify-between">
-                    <div className="text-sm font-medium text-black">
+                    <Link
+                      href={`/content/${idea.id}`}
+                      className="text-sm font-medium text-black hover:text-gray-600"
+                    >
                       {idea.title}
-                    </div>
+                    </Link>
                     {idea.aiGenerated && (
                       <span className="rounded border border-gray-300 px-1.5 py-0.5 text-[10px] text-gray-600">
                         AI
@@ -569,9 +667,11 @@ export default function ContentStudioPage() {
                   </div>
                   <button
                     type="button"
-                    className="mt-3 inline-flex items-center justify-center rounded-lg border border-gray-300 px-3 py-1 text-[12px] font-medium text-gray-700 transition hover:border-black hover:text-black"
+                    onClick={() => handlePromoteIdea(idea)}
+                    disabled={promotingIdeaId === idea.id}
+                    className="mt-3 inline-flex items-center justify-center rounded-lg border border-gray-300 px-3 py-1 text-[12px] font-medium text-gray-700 transition hover:border-black hover:text-black disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Move to Pipeline
+                    {promotingIdeaId === idea.id ? "Moving..." : "Move to Pipeline"}
                   </button>
                 </div>
               ))}
@@ -734,25 +834,68 @@ export default function ContentStudioPage() {
                     className="w-full rounded-lg border border-gray-300 p-3 text-sm resize-none"
                     rows={3}
                     placeholder="Describe the content you want to create... (e.g., 'Create a LinkedIn post about ACME Corp's 40% revenue growth using our platform')"
+                    value={quickCreateForm.goal}
+                    onChange={(e) =>
+                      setQuickCreateForm((prev) => ({
+                        ...prev,
+                        goal: e.target.value,
+                      }))
+                    }
                   />
                   <div className="flex gap-2">
-                    <select className="rounded-lg border border-gray-300 px-3 py-2 text-sm">
-                      <option>Client</option>
-                      <option>Prospect</option>
-                      <option>Partner</option>
-                      <option>Marketing</option>
+                    <select
+                      className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                      value={quickCreateForm.contentType}
+                      onChange={(e) =>
+                        setQuickCreateForm((prev) => ({
+                          ...prev,
+                          contentType: e.target.value as ContentPiece["contentType"],
+                          audience: e.target.value,
+                        }))
+                      }
+                    >
+                      {CONTENT_TYPE_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
                     </select>
-                    <select className="rounded-lg border border-gray-300 px-3 py-2 text-sm">
-                      <option>Post</option>
-                      <option>Email</option>
-                      <option>One-Pager</option>
-                      <option>White Paper</option>
-                      <option>Case Study</option>
+                    <select
+                      className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                      value={quickCreateForm.deliverable}
+                      onChange={(e) =>
+                        setQuickCreateForm((prev) => ({
+                          ...prev,
+                          deliverable: e.target.value as ContentPiece["format"],
+                        }))
+                      }
+                    >
+                      {DELIVERABLE_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
                     </select>
-                    <button className="ml-auto rounded-lg bg-black px-4 py-2 text-sm text-white hover:bg-gray-800">
-                      Generate Content
+                    <button
+                      type="button"
+                      onClick={handleQuickGenerateContent}
+                      disabled={isGeneratingQuickContent}
+                      className="ml-auto rounded-lg bg-black px-4 py-2 text-sm text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isGeneratingQuickContent ? "Generating..." : "Generate Content"}
                     </button>
                   </div>
+                  {quickFormError && (
+                    <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                      {quickFormError}
+                    </div>
+                  )}
+                  {quickGeneratedSummary && (
+                    <div className="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+                      <div className="mb-1 text-sm font-semibold text-black">Draft Summary</div>
+                      <p>{quickGeneratedSummary}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1135,7 +1278,7 @@ export default function ContentStudioPage() {
                       onChange={(e) =>
                         setNewContentForm((prev) => ({
                           ...prev,
-                          channel: e.target.value as ContentPiece["channel"],
+                          channel: e.target.value as NonNullable<ContentPiece["channel"]>,
                         }))
                       }
                       className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
