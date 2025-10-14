@@ -1,19 +1,44 @@
 "use client";
 
+import { useMemo } from "react";
+
 import { Card } from "@/components/kit/Card";
-import { getClientStats } from "@/core/clients/store";
+import { useWorkspaceClients } from "@/hooks/useWorkspaceClients";
 
 export default function HealthPanel() {
-  const d = getClientStats();
+  const { clients, isLoading, error, usingFallback } = useWorkspaceClients();
+
+  const stats = useMemo(() => {
+    const total = clients.length || 1;
+    const avgHealth = Math.round(
+      clients.reduce((sum, client) => sum + (client.health ?? 0), 0) / total,
+    );
+    const atRisk = clients.filter((client) => (client.churnRisk ?? 0) >= 15).length;
+    const expansions = clients.filter((client) => client.isExpansion).length;
+    const churned = clients.filter((client) => client.status === "churned").length;
+
+    return { avgHealth, atRisk, expansions, churned };
+  }, [clients]);
+
   return (
     <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(12,minmax(0,1fr))" }}>
       <Card className="col-span-4 p-3">
-        <div className="text-sm font-semibold text-black">Portfolio Health</div>
+        <div className="flex items-center justify-between text-sm font-semibold text-black">
+          <span>Portfolio Health</span>
+          {usingFallback && (
+            <span className="text-[11px] font-medium text-amber-600">Cached</span>
+          )}
+        </div>
+        {error && (
+          <div className="mt-2 rounded-md border border-rose-200 bg-rose-50 p-2 text-[12px] text-rose-700">
+            Live health telemetry is temporarily unavailable.
+          </div>
+        )}
         <div className="mt-2 grid grid-cols-2 gap-2">
-          <Kpi label="Avg Health" value={`${d.avgHealth}%`} />
-          <Kpi label="At Risk" value={d.atRisk.toString()} />
-          <Kpi label="Expansions" value={d.expansions.toString()} />
-          <Kpi label="Churned" value={d.churned.toString()} />
+          <Kpi label="Avg Health" value={formatPercent(stats.avgHealth, isLoading)} />
+          <Kpi label="At Risk" value={formatValue(stats.atRisk, isLoading)} />
+          <Kpi label="Expansions" value={formatValue(stats.expansions, isLoading)} />
+          <Kpi label="Churned" value={formatValue(stats.churned, isLoading)} />
         </div>
       </Card>
       <Card className="col-span-8 p-3">
@@ -33,4 +58,12 @@ function Kpi({ label, value }: { label: string; value: string }) {
       <div className="text-lg font-semibold text-black">{value}</div>
     </div>
   );
+}
+
+function formatValue(value: number, isLoading: boolean) {
+  return isLoading ? "…" : value.toString();
+}
+
+function formatPercent(value: number, isLoading: boolean) {
+  return isLoading ? "…" : `${value}%`;
 }
