@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/server/auth";
 import { revalidatePath } from "next/cache";
 
+import type { PipelineAlertCandidate } from "./analytics";
+
 export type Opportunity = {
   id: string;
   client_id: string;
@@ -515,4 +517,170 @@ export async function syncPipelineAnalytics() {
 
   revalidatePath("/pipeline");
   return { ok: true, stages: stageCounts } as const;
+}
+
+type PipelineSyncIntegration = "gmail" | "calendar" | "crm" | "billing";
+
+export type PipelineSyncJob = {
+  id: string;
+  integration: PipelineSyncIntegration;
+  cadence: string;
+  status: "scheduled" | "running" | "error";
+  nextRun: string;
+  lastRun?: string;
+};
+
+export type PipelineAlertRecord = PipelineAlertCandidate & {
+  loggedAt: string;
+};
+
+export type PipelineAutomationState = {
+  schedule: PipelineSyncJob[];
+  alerts: PipelineAlertRecord[];
+};
+
+type SyncTemplate = {
+  id: string;
+  integration: PipelineSyncIntegration;
+  cadence: string;
+  minutes?: number;
+};
+
+const SYNC_TEMPLATES: SyncTemplate[] = [
+  { id: "gmail-sync", integration: "gmail", cadence: "hourly", minutes: 60 },
+  { id: "calendar-sync", integration: "calendar", cadence: "30m", minutes: 30 },
+  { id: "crm-sync", integration: "crm", cadence: "15m", minutes: 15 },
+  { id: "billing-sync", integration: "billing", cadence: "daily 02:00" },
+];
+
+let pipelineSyncJobs: PipelineSyncJob[] | null = null;
+let pipelineAlertHistory: PipelineAlertRecord[] = [];
+
+function computeNextRun(template: SyncTemplate, from: Date) {
+  const next = new Date(from);
+  if (template.integration === "billing") {
+    next.setDate(next.getDate() + 1);
+    next.setHours(2, 0, 0, 0);
+    return next.toISOString();
+  }
+
+  const minutes = template.minutes ?? 60;
+  next.setMinutes(next.getMinutes() + minutes);
+  return next.toISOString();
+}
+
+function ensureSyncSchedule() {
+  if (pipelineSyncJobs) {
+    return pipelineSyncJobs;
+  }
+
+  const now = new Date();
+  pipelineSyncJobs = SYNC_TEMPLATES.map((template) => ({
+    id: template.id,
+    integration: template.integration,
+    cadence: template.cadence,
+    status: "scheduled",
+    nextRun: computeNextRun(template, now),
+  }));
+
+  return pipelineSyncJobs;
+}
+
+export async function getPipelineAutomationState(): Promise<PipelineAutomationState> {
+  const schedule = ensureSyncSchedule();
+  return {
+    schedule: schedule.map((job) => ({ ...job })),
+    alerts: pipelineAlertHistory.slice(0, 20),
+  };
+}
+
+export async function schedulePipelineSyncs() {
+  const context = await requireAuth({ redirectTo: "/login?next=/pipeline" });
+
+  if (!context.organizationId) {
+    return { ok: false, error: "missing-organization" } as const;
+  }
+
+  const now = new Date();
+  const schedule = ensureSyncSchedule().map((job) => {
+    const template = SYNC_TEMPLATES.find((item) => item.id === job.id);
+    const nextRun = template ? computeNextRun(template, now) : job.nextRun;
+    return {
+      ...job,
+      status: "scheduled" as const,
+      lastRun: now.toISOString(),
+      nextRun,
+    };
+  });
+
+  pipelineSyncJobs = schedule;
+
+  const { error } = await context.supabase.functions.invoke("analytics-events", {
+    body: {
+      organization_id: context.organizationId,
+      user_id: context.user.id,
+      event_key: "pipeline.sync.automation",
+      payload: {
+        scheduled_at: now.toISOString(),
+        jobs: schedule.map((job) => ({
+          integration: job.integration,
+          next_run: job.nextRun,
+          cadence: job.cadence,
+        })),
+      },
+    },
+  });
+
+  if (error) {
+    console.error("pipeline:automation-schedule-error", error);
+    return { ok: false, error: error.message } as const;
+  }
+
+  return { ok: true, jobs: schedule } as const;
+}
+
+export async function triggerPipelineAlerts(input: { alerts: PipelineAlertCandidate[] }) {
+  if (!input.alerts?.length) {
+    return { ok: true, alerts: pipelineAlertHistory.slice(0, 20), logged: 0 } as const;
+  }
+
+  const context = await requireAuth({ redirectTo: "/login?next=/pipeline" });
+
+  if (!context.organizationId) {
+    return { ok: false, error: "missing-organization" } as const;
+  }
+
+  const loggedAt = new Date().toISOString();
+  const records: PipelineAlertRecord[] = input.alerts.map((alert) => ({
+    ...alert,
+    loggedAt,
+  }));
+
+  pipelineAlertHistory = [...records, ...pipelineAlertHistory].slice(0, 50);
+
+  for (const alert of records) {
+    const { error } = await context.supabase.functions.invoke("analytics-events", {
+      body: {
+        organization_id: context.organizationId,
+        user_id: context.user.id,
+        event_key: `pipeline.alert.${alert.type}`,
+        payload: {
+          severity: alert.severity,
+          summary: alert.summary,
+          detail: alert.detail ?? null,
+          opportunity_id: alert.opportunityId ?? null,
+          stage: alert.stage ?? null,
+          amount: alert.amount ?? null,
+          due_date: alert.dueDate ?? null,
+          logged_at: loggedAt,
+        },
+      },
+    });
+
+    if (error) {
+      console.error("pipeline:alert-log-error", error);
+    }
+  }
+
+  return { ok: true, alerts: pipelineAlertHistory.slice(0, 20), logged: records.length } as const;
 }
