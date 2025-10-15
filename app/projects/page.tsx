@@ -6,8 +6,17 @@ import {
   fetchOwners,
   fetchProjects,
   fetchOpportunities,
+  fetchClientHealthHistory,
   type ClientRow,
 } from "@/core/projects/queries"
+import {
+  actionGetProjectStats,
+  actionListProjectMilestones,
+  actionListDeliveryUpdates,
+  actionListChangeOrders,
+  actionListClientRoiNarratives,
+} from "@/core/projects/actions"
+import { getInvoices as fetchInvoices } from "@/core/finance/actions"
 
 export const dynamic = "force-dynamic"
 
@@ -23,12 +32,32 @@ const STAGE_ORDER = [
 ] as const
 
 export default async function ProjectsPage() {
-  const [clients, overview, owners, projects, opportunities] = await Promise.all([
+  const [
+    clients,
+    overview,
+    owners,
+    projects,
+    opportunities,
+    projectStats,
+    milestones,
+    deliveryUpdates,
+    changeOrders,
+    roiNarratives,
+    healthHistory,
+    invoices,
+  ] = await Promise.all([
     fetchClientsForProjects(),
     fetchOverviewJoin(),
     fetchOwners(),
     fetchProjects(),
     fetchOpportunities(),
+    actionGetProjectStats(),
+    actionListProjectMilestones(),
+    actionListDeliveryUpdates(),
+    actionListChangeOrders(),
+    actionListClientRoiNarratives(),
+    fetchClientHealthHistory(),
+    fetchInvoices().catch(() => []),
   ])
 
   const activeClients = clients.filter((client) => (client.status ?? "").toLowerCase() === "active")
@@ -36,6 +65,10 @@ export default async function ProjectsPage() {
   const stages = buildStageFilters(activeClients)
   const healths = buildHealthFilters(activeClients)
   const kpis = buildKpis(clients)
+  const invoiceOptions = invoices.map((invoice) => ({
+    id: invoice.id,
+    label: invoice.invoiceNumber ?? invoice.id,
+  }))
 
   return (
     <ProjectsPageClient
@@ -49,6 +82,13 @@ export default async function ProjectsPage() {
       healths={healths}
       kpis={kpis}
       generatedAt={new Date().toISOString()}
+      projectStats={projectStats}
+      milestones={milestones}
+      deliveryUpdates={deliveryUpdates}
+      changeOrders={changeOrders}
+      roiNarratives={roiNarratives}
+      healthHistory={healthHistory}
+      invoiceOptions={invoiceOptions}
     />
   )
 }

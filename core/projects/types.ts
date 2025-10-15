@@ -75,3 +75,104 @@ export type ProjectStats = {
   budgetUtilization: number;
   upcomingMilestones: number;
 };
+
+export type ProjectDeliveryUpdateApproval = {
+  approverId: string;
+  approverName: string;
+  status: "Pending" | "Approved" | "Rejected";
+  respondedAt?: string | null;
+};
+
+export type ProjectDeliveryUpdate = {
+  id: string;
+  projectId: string;
+  projectName: string;
+  authorId: string;
+  authorName: string;
+  status: string;
+  blockers?: string | null;
+  decisions?: string | null;
+  reminderCadence?: "Daily" | "Weekly" | "Biweekly" | "Monthly" | null;
+  nextReviewAt?: string | null;
+  approvalState: "Pending" | "Approved" | "Escalated";
+  approvals: ProjectDeliveryUpdateApproval[];
+  createdAt: string;
+};
+
+export type CreateProjectDeliveryUpdateInput = {
+  projectId: string;
+  status: string;
+  blockers?: string;
+  decisions?: string;
+  reminderCadence?: "Daily" | "Weekly" | "Biweekly" | "Monthly";
+  nextReviewAt?: string;
+  requiresApproval?: boolean;
+  approverIds?: string[];
+};
+
+export type ProjectChangeOrder = {
+  id: string;
+  projectId: string;
+  projectName: string;
+  invoiceId?: string | null;
+  invoiceNumber?: string | null;
+  opportunityId?: string | null;
+  opportunityName?: string | null;
+  title: string;
+  description?: string | null;
+  value: number;
+  status: "Draft" | "Submitted" | "Approved" | "Rejected";
+  submittedAt: string;
+  approvedAt?: string | null;
+  ownerId?: string | null;
+  ownerName?: string | null;
+};
+
+export type CreateProjectChangeOrderInput = {
+  projectId: string;
+  title: string;
+  description?: string;
+  value: number;
+  invoiceId?: string;
+  opportunityId?: string;
+  status?: "Draft" | "Submitted" | "Approved" | "Rejected";
+};
+
+export type ClientRoiNarrative = {
+  id: string;
+  clientId: string;
+  clientName: string;
+  periodStart: string;
+  periodEnd: string;
+  roiPercent: number;
+  arrImpact: number;
+  highlights: string[];
+  surveyScore?: number | null;
+  sentiment?: "Promoter" | "Passive" | "Detractor" | null;
+  sharedWith: string[];
+  sharedAt?: string | null;
+  generatedAt: string;
+};
+
+export type CreateClientRoiNarrativeInput = {
+  clientId: string;
+  periodStart: string;
+  periodEnd: string;
+  roiPercent: number;
+  arrImpact: number;
+  highlights: string[];
+  surveyScore?: number;
+  sentiment?: "Promoter" | "Passive" | "Detractor";
+  shareTargets?: string[];
+};
+
+export type ClientHealthSnapshot = {
+  clientId: string;
+  clientName: string;
+  snapshotDate: string;
+  health?: number | null;
+  churnRisk?: number | null;
+  trsScore?: number | null;
+  notes?: string | null;
+  sentiment: "Positive" | "Neutral" | "Caution";
+};

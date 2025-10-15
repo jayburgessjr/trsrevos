@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 
 import { AgentsPanel } from '@/components/projects/AgentsPanel'
@@ -9,6 +9,9 @@ import { KpiStrip } from '@/components/projects/KpiStrip'
 import { ProjectBoard } from '@/components/projects/Board'
 import { ProjectTimeline, type TimelineItem } from '@/components/projects/Timeline'
 import { ProjectsTable } from '@/components/projects/ProjectsTable'
+import { HealthDashboard } from '@/components/projects/HealthDashboard'
+import { DeliveryWorkflows } from '@/components/projects/DeliveryWorkflows'
+import { RoiNarratives } from '@/components/projects/RoiNarratives'
 import { PageTemplate } from '@/components/layout/PageTemplate'
 import { PageTabs } from '@/components/layout/PageTabs'
 import { Input } from '@/ui/input'
@@ -19,8 +22,16 @@ import type {
   OwnerRow,
   ProjectRecord,
 } from '@/core/projects/queries'
+import type {
+  ProjectMilestone,
+  ProjectStats,
+  ProjectDeliveryUpdate,
+  ProjectChangeOrder,
+  ClientRoiNarrative,
+  ClientHealthSnapshot,
+} from '@/core/projects/types'
 
-const PAGE_TABS = ["Overview", "Board", "Timeline", "Agents", "Reports"] as const
+const PAGE_TABS = ["Overview", "Health", "Delivery", "Board", "Timeline", "Agents", "Reports"] as const
 
 type Tab = (typeof PAGE_TABS)[number]
 
@@ -35,6 +46,13 @@ type ProjectsPageClientProps = {
   healths: string[]
   kpis: { label: string; value: string }[]
   generatedAt: string
+  projectStats: ProjectStats
+  milestones: ProjectMilestone[]
+  deliveryUpdates: ProjectDeliveryUpdate[]
+  changeOrders: ProjectChangeOrder[]
+  roiNarratives: ClientRoiNarrative[]
+  healthHistory: ClientHealthSnapshot[]
+  invoiceOptions: InvoiceOption[]
 }
 
 type OwnerOption = { id: string; label: string }
@@ -45,6 +63,8 @@ type OpportunitySummary = {
   dueDate: string | null
   stage: string | null
 }
+
+type InvoiceOption = { id: string; label: string }
 
 export default function ProjectsPageClient({
   clients,
@@ -57,10 +77,21 @@ export default function ProjectsPageClient({
   healths,
   kpis,
   generatedAt,
+  projectStats,
+  milestones,
+  deliveryUpdates,
+  changeOrders,
+  roiNarratives,
+  healthHistory,
+  invoiceOptions,
 }: ProjectsPageClientProps) {
   const { filters, setFilters } = useProjectsFilters()
   const searchParams = useSearchParams()
   const pathname = usePathname()
+
+  const [deliveryUpdatesState, setDeliveryUpdatesState] = useState(deliveryUpdates)
+  const [changeOrdersState, setChangeOrdersState] = useState(changeOrders)
+  const [roiNarrativesState, setRoiNarrativesState] = useState(roiNarratives)
 
   const activeTab = useMemo<Tab>(() => {
     const raw = searchParams.get('tab') ?? ''
@@ -90,6 +121,12 @@ export default function ProjectsPageClient({
       }))
       .sort((a, b) => a.label.localeCompare(b.label))
   }, [owners])
+
+  const clientOptions = useMemo(() => {
+    return clients
+      .map((client) => ({ id: client.id, name: client.name }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }, [clients])
 
   const opportunitySummaries = useMemo(() => buildOpportunitySummaries(opportunities), [opportunities])
 
@@ -157,6 +194,41 @@ export default function ProjectsPageClient({
           </div>
         ) : null}
 
+        {activeTab === "Health" ? (
+          <HealthDashboard
+            projects={projects}
+            milestones={milestones}
+            healthHistory={healthHistory}
+            stats={projectStats}
+          />
+        ) : null}
+
+        {activeTab === "Delivery" ? (
+          <DeliveryWorkflows
+            projects={projects}
+            deliveryUpdates={deliveryUpdatesState}
+            changeOrders={changeOrdersState}
+            opportunities={opportunities}
+            invoices={invoiceOptions}
+            onCreateDeliveryUpdate={(update) =>
+              setDeliveryUpdatesState((current) => [update, ...current.filter((item) => item.id !== update.id)])
+            }
+            onUpdateDeliveryApproval={(update) =>
+              setDeliveryUpdatesState((current) =>
+                current.map((item) => (item.id === update.id ? update : item)),
+              )
+            }
+            onCreateChangeOrder={(order) =>
+              setChangeOrdersState((current) => [order, ...current.filter((item) => item.id !== order.id)])
+            }
+            onUpdateChangeOrder={(order) =>
+              setChangeOrdersState((current) =>
+                current.map((item) => (item.id === order.id ? order : item)),
+              )
+            }
+          />
+        ) : null}
+
         {activeTab === "Board" ? <ProjectBoard rows={activeClients} /> : null}
 
         {activeTab === "Timeline" ? <ProjectTimeline items={timelineItems} /> : null}
@@ -164,26 +236,18 @@ export default function ProjectsPageClient({
         {activeTab === "Agents" ? <AgentsPanel /> : null}
 
         {activeTab === "Reports" ? (
-          <div className="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-700">
-            <div className="text-sm font-medium text-black">Reports</div>
-            <p className="mt-1 text-xs text-gray-600">
-              Export project data for stakeholder reviews.
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                className="h-9 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-800 transition hover:bg-gray-100"
-              >
-                Export CSV
-              </button>
-              <button
-                type="button"
-                className="h-9 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-800 transition hover:bg-gray-100"
-              >
-                Export ICS
-              </button>
-            </div>
-          </div>
+          <RoiNarratives
+            narratives={roiNarrativesState}
+            clients={clientOptions}
+            onCreateNarrative={(narrative) =>
+              setRoiNarrativesState((current) => [narrative, ...current.filter((item) => item.id !== narrative.id)])
+            }
+            onShareNarrative={(narrative) =>
+              setRoiNarrativesState((current) =>
+                current.map((item) => (item.id === narrative.id ? narrative : item)),
+              )
+            }
+          />
         ) : null}
       </div>
     </PageTemplate>
