@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 
 import { PageTemplate } from "@/components/layout/PageTemplate";
 import type { PageTemplateBadge } from "@/components/layout/PageTemplate";
@@ -10,13 +10,61 @@ import { ImportProspectsModal } from "@/components/pipeline/ImportProspectsModal
 import { PipelineFilters } from "@/components/pipeline/PipelineFilters";
 import { PipelineKanban } from "@/components/pipeline/PipelineKanban";
 import { markClosedWon } from "@/app/pipeline/actions";
-import type { OpportunityWithNotes } from "@/core/pipeline/actions";
-import { syncPipelineAnalytics } from "@/core/pipeline/actions";
+import type {
+  OpportunityWithNotes,
+  PipelineAutomationState,
+  PipelineSyncJob,
+} from "@/core/pipeline/actions";
+import {
+  schedulePipelineSyncs,
+  syncPipelineAnalytics,
+  triggerPipelineAlerts,
+} from "@/core/pipeline/actions";
+import { buildPipelineAnalytics } from "@/core/pipeline/analytics";
+import type { PipelineAnalytics } from "@/core/pipeline/analytics";
 import { Badge } from "@/ui/badge";
 import { Button } from "@/ui/button";
 import { Card, CardContent } from "@/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/ui/table";
 import { cn } from "@/lib/utils";
 import { TRS_CARD, TRS_SUBTITLE } from "@/lib/style";
+
+const currencyFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 0,
+});
+
+function formatCurrency(value: number) {
+  return currencyFormatter.format(Math.round(value || 0));
+}
+
+function formatVariance(value: number) {
+  const formatted = formatCurrency(Math.abs(value));
+  return value >= 0 ? `+${formatted}` : `-${formatted}`;
+}
+
+function severityVariant(severity: "info" | "warning" | "critical") {
+  if (severity === "critical") return "destructive" as const;
+  if (severity === "warning") return "warning" as const;
+  return "outline" as const;
+}
+
+function formatNextRun(job: PipelineSyncJob) {
+  return new Date(job.nextRun).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 type Props = {
   opportunities: OpportunityWithNotes[];
@@ -28,12 +76,14 @@ type Props = {
     winRate: number;
     avgSalesCycle: number;
   };
+  automation: PipelineAutomationState;
   userId: string;
 };
 
 export default function PipelineClient({
   opportunities,
   metrics,
+  automation,
   userId,
 }: Props) {
   const [activeTab, setActiveTab] = useState("Overview");
@@ -43,6 +93,12 @@ export default function PipelineClient({
     useState<OpportunityWithNotes[]>(opportunities);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [syncPending, startSync] = useTransition();
+  const [automationMessage, setAutomationMessage] = useState<string | null>(null);
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [automationState, setAutomationState] = useState<PipelineAutomationState>(automation);
+  const [selectedScenario, setSelectedScenario] = useState<"commit" | "upside" | "best">("commit");
+  const [automationPending, startAutomation] = useTransition();
+  const [, startAlert] = useTransition();
   const sampleOpportunity = useMemo(
     () => opportunities.find((opp) => opp.stage !== "ClosedWon" && opp.stage !== "ClosedLost"),
     [opportunities],
@@ -58,6 +114,12 @@ export default function PipelineClient({
     [sampleOpportunity],
   );
 
+  const quarterlyTarget = 1_200_000;
+  const analytics = useMemo<PipelineAnalytics>(
+    () => buildPipelineAnalytics(opportunities, { target: quarterlyTarget }),
+    [opportunities, quarterlyTarget],
+  );
+
   const handleSync = () => {
     startSync(async () => {
       const result = await syncPipelineAnalytics();
@@ -68,6 +130,43 @@ export default function PipelineClient({
               .join(", ")}`
           : "Pipeline sync failed",
       );
+    });
+  };
+
+  const weightedCoverage = quarterlyTarget
+    ? (analytics.weightedTotal / quarterlyTarget) * 100
+    : 0;
+  const scenarioKeys: Array<keyof PipelineAnalytics["scenarios"]> = [
+    "commit",
+    "upside",
+    "best",
+  ];
+  const activeScenario = analytics.scenarios[selectedScenario];
+  const activeCoveragePct = activeScenario.coverage * 100;
+  const topScores = useMemo(
+    () => analytics.opportunityScores.slice(0, 8),
+    [analytics.opportunityScores],
+  );
+  const riskAlerts = analytics.alerts;
+  const schedule = automationState.schedule;
+  const alertHistory = automationState.alerts;
+
+  const handleAutomations = () => {
+    startAutomation(async () => {
+      const result = await schedulePipelineSyncs();
+      if (result.ok) {
+        setAutomationState((prev) => ({
+          alerts: prev.alerts,
+          schedule: result.jobs,
+        }));
+        setAutomationMessage(
+          `Scheduled syncs for ${result.jobs
+            .map((job) => `${job.integration} → ${new Date(job.nextRun).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`)
+            .join(", ")}`,
+        );
+      } else {
+        setAutomationMessage("Failed to schedule automations");
+      }
     });
   };
 
@@ -82,6 +181,42 @@ export default function PipelineClient({
   useEffect(() => {
     setFilteredOpportunities(opportunities);
   }, [opportunities]);
+
+  const alertHash = useMemo(
+    () => analytics.alerts.map((alert) => alert.id).join("|"),
+    [analytics.alerts],
+  );
+  const lastAlertHashRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!analytics.alerts.length) {
+      lastAlertHashRef.current = null;
+      setAlertMessage(null);
+      return;
+    }
+
+    if (lastAlertHashRef.current === alertHash) {
+      return;
+    }
+
+    lastAlertHashRef.current = alertHash;
+    startAlert(async () => {
+      const result = await triggerPipelineAlerts({ alerts: analytics.alerts });
+      if (result.ok) {
+        setAlertMessage(
+          result.logged > 0
+            ? `Logged ${result.logged} pipeline risk alert${result.logged === 1 ? "" : "s"}`
+            : null,
+        );
+        setAutomationState((prev) => ({
+          schedule: prev.schedule,
+          alerts: result.alerts,
+        }));
+      } else {
+        setAlertMessage("Failed to notify on pipeline risks");
+      }
+    });
+  }, [alertHash, analytics.alerts, startAlert]);
 
   const opportunitiesByStage = useMemo(() => {
     const stages = [
@@ -102,9 +237,6 @@ export default function PipelineClient({
 
     return grouped;
   }, [filteredOpportunities]);
-
-  const quarterlyTarget = 1_200_000;
-  const coverage = (metrics.totalWeighted / quarterlyTarget) * 100;
 
   const atRiskDeals = useMemo(() => {
     const thirtyDaysAgo = new Date();
@@ -151,11 +283,11 @@ export default function PipelineClient({
         <CardContent className="p-4 space-y-2">
           <div className={TRS_SUBTITLE}>Weighted Pipeline</div>
           <div className="text-2xl font-semibold text-black">
-            ${(metrics.totalWeighted / 1000).toFixed(0)}K
+            {formatCurrency(analytics.weightedTotal)}
           </div>
           <div className="flex items-center gap-2 text-xs text-gray-600">
-            <Badge variant={coverage >= 100 ? "success" : "outline"}>
-              {coverage.toFixed(0)}% of goal
+            <Badge variant={weightedCoverage >= 100 ? "success" : "outline"}>
+              {weightedCoverage.toFixed(0)}% of goal
             </Badge>
           </div>
         </CardContent>
@@ -223,6 +355,14 @@ export default function PipelineClient({
           >
             {syncPending ? "Syncing…" : "Sync analytics"}
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={automationPending}
+            onClick={handleAutomations}
+          >
+            {automationPending ? "Scheduling…" : "Automate syncs"}
+          </Button>
           {sampleClosedWonAction ? (
             <form action={sampleClosedWonAction} className="inline-flex">
               <Button variant="outline" size="sm" type="submit">
@@ -250,6 +390,16 @@ export default function PipelineClient({
       {syncMessage ? (
         <div className="rounded-md border border-sky-200 bg-sky-50 p-3 text-xs text-sky-800">
           {syncMessage}
+        </div>
+      ) : null}
+      {automationMessage ? (
+        <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-700">
+          {automationMessage}
+        </div>
+      ) : null}
+      {alertMessage ? (
+        <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-700">
+          {alertMessage}
         </div>
       ) : null}
 
@@ -399,12 +549,254 @@ export default function PipelineClient({
       )}
 
       {activeTab === "Forecast" && (
-        <Card className={cn(TRS_CARD, "p-6")}>
-          <div className="text-center text-gray-500">
-            <h3 className="mb-2 text-lg font-semibold">Forecast Analysis</h3>
-            <p>Coming soon: AI-powered forecasting and scenario planning</p>
-          </div>
-        </Card>
+        <div className="space-y-4">
+          <Card className={cn(TRS_CARD)}>
+            <CardContent className="space-y-4 p-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-black">Scenario Planning</h3>
+                  <p className="text-sm text-gray-600">
+                    Toggle commit, upside, and best-case projections with variance tracking.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {scenarioKeys.map((key) => {
+                    const projection = analytics.scenarios[key];
+                    const isActive = selectedScenario === key;
+                    return (
+                      <Button
+                        key={key}
+                        variant={isActive ? "primary" : "outline"}
+                        size="sm"
+                        onClick={() => setSelectedScenario(key)}
+                      >
+                        {projection.label} · {formatCurrency(projection.value)}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                <div className="rounded-lg border border-gray-200 bg-white p-3">
+                  <div className="text-xs uppercase text-gray-500">Projection</div>
+                  <div className="text-xl font-semibold text-black">
+                    {formatCurrency(activeScenario.value)}
+                  </div>
+                  <div className="text-xs text-gray-500">{activeScenario.description}</div>
+                </div>
+                <div className="rounded-lg border border-gray-200 bg-white p-3">
+                  <div className="text-xs uppercase text-gray-500">Variance vs Target</div>
+                  <div
+                    className={cn(
+                      "text-xl font-semibold",
+                      activeScenario.variance >= 0 ? "text-emerald-600" : "text-rose-600",
+                    )}
+                  >
+                    {formatVariance(activeScenario.variance)}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Goal {formatCurrency(quarterlyTarget)}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-gray-200 bg-white p-3">
+                  <div className="text-xs uppercase text-gray-500">Coverage</div>
+                  <div className="text-xl font-semibold text-black">
+                    {activeCoveragePct.toFixed(0)}%
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {activeScenario.coverage.toFixed(1)}x multiplier
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
+                Commit {formatCurrency(analytics.scenarios.commit.value)} • Upside {" "}
+                {formatCurrency(analytics.scenarios.upside.value)} • Best Case {" "}
+                {formatCurrency(analytics.scenarios.best.value)} · Weighted coverage {" "}
+                {weightedCoverage.toFixed(0)}% · Pipeline total {formatCurrency(analytics.pipelineTotal)}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className={cn(TRS_CARD)}>
+            <CardContent className="space-y-4 p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-black">Stage-weighted Forecast</h3>
+                <span className="text-xs text-gray-500">
+                  Weighted total {formatCurrency(analytics.weightedTotal)}
+                </span>
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Stage</TableHead>
+                    <TableHead>Deals</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead>Weighted</TableHead>
+                    <TableHead>Avg Prob</TableHead>
+                    <TableHead>Historical Win</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {analytics.stageSummary.map((stage) => (
+                    <TableRow key={stage.stage}>
+                      <TableCell>{stage.stage}</TableCell>
+                      <TableCell>{stage.deals}</TableCell>
+                      <TableCell>{formatCurrency(stage.totalValue)}</TableCell>
+                      <TableCell>{formatCurrency(stage.weightedValue)}</TableCell>
+                      <TableCell>{stage.averageProbability.toFixed(0)}%</TableCell>
+                      <TableCell>{(stage.historicalWinRate * 100).toFixed(0)}%</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          <Card className={cn(TRS_CARD)}>
+            <CardContent className="space-y-4 p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-black">Opportunity Scoring</h3>
+                <span className="text-xs text-gray-500">
+                  Historical win/loss data blended with agent signals
+                </span>
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Opportunity</TableHead>
+                    <TableHead>Stage</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Score</TableHead>
+                    <TableHead>Signals</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {topScores.map((opp) => (
+                    <TableRow key={opp.id}>
+                      <TableCell>
+                        <div className="font-medium text-sm text-black">{opp.name}</div>
+                        <div className="text-xs text-gray-500">
+                          {(opp.clientName || "No client") + " • " + (opp.ownerName || "Unassigned")}
+                        </div>
+                      </TableCell>
+                      <TableCell>{opp.stage}</TableCell>
+                      <TableCell>{formatCurrency(opp.amount)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant={
+                              opp.riskLevel === "low"
+                                ? "success"
+                                : opp.riskLevel === "medium"
+                                  ? "warning"
+                                  : "destructive"
+                            }
+                          >
+                            {opp.score}
+                          </Badge>
+                          <span className="text-xs capitalize text-gray-500">{opp.riskLevel} risk</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-xs text-gray-600">
+                          {opp.signals.join(" • ")}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {!topScores.length && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="py-4 text-center text-sm text-gray-500">
+                        Add pipeline data to activate scoring insights.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          <Card className={cn(TRS_CARD)}>
+            <CardContent className="space-y-4 p-4">
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-black">Risk Alerts</h3>
+                    <Badge variant="outline">{riskAlerts.length} open</Badge>
+                  </div>
+                  <div className="mt-3 space-y-3">
+                    {riskAlerts.length ? (
+                      riskAlerts.slice(0, 5).map((alert) => (
+                        <div
+                          key={alert.id}
+                          className="rounded-lg border border-gray-200 bg-white p-3 text-sm shadow-sm"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium text-black">{alert.summary}</span>
+                            <Badge variant={severityVariant(alert.severity)}>{alert.type}</Badge>
+                          </div>
+                          {alert.detail ? (
+                            <div className="mt-1 text-xs text-gray-500">{alert.detail}</div>
+                          ) : null}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500">All clear. Commit coverage is holding.</p>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-black">Automation Schedule</h3>
+                    <Badge variant="outline">{schedule.length} jobs</Badge>
+                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Integration</TableHead>
+                        <TableHead>Cadence</TableHead>
+                        <TableHead>Next Run</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {schedule.map((job) => (
+                        <TableRow key={job.id}>
+                          <TableCell className="capitalize">{job.integration}</TableCell>
+                          <TableCell>{job.cadence}</TableCell>
+                          <TableCell>{formatNextRun(job)}</TableCell>
+                        </TableRow>
+                      ))}
+                      {!schedule.length && (
+                        <TableRow>
+                          <TableCell colSpan={3} className="py-3 text-center text-sm text-gray-500">
+                            Schedule automations to keep CRM, calendar, and billing in sync.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                  <div className="text-xs text-gray-500">
+                    Recent notifications:
+                    {alertHistory.length ? (
+                      <ul className="mt-1 space-y-1">
+                        {alertHistory.slice(0, 3).map((alert) => (
+                          <li key={`${alert.id}-${alert.loggedAt}`}>
+                            <span className="font-medium text-gray-700">
+                              {new Date(alert.loggedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                            </span>{" "}
+                            • {alert.summary}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <span className="ml-1">Awaiting first alert push.</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {showAddProspect && (
