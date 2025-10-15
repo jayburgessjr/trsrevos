@@ -1,10 +1,12 @@
 import type { Metadata } from 'next'
 
 import { ClientSwitcher } from '@/modules/revenue-clear/components/ClientSwitcher'
+import RevenueClearOnboarding from '@/modules/revenue-clear/components/RevenueClearOnboarding'
 import RevenueClearShell from '@/modules/revenue-clear/components/RevenueClearShell'
 import {
   getRevenueClearSnapshot,
   listRevenueClearClients,
+  listRevenuePipelineOptions,
 } from '@/modules/revenue-clear/lib/queries'
 
 const STAGES = [
@@ -97,16 +99,8 @@ export default async function RevenueClearPage({ searchParams }: RevenueClearPag
   const clients = await listRevenueClearClients()
 
   if (!clients.length) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#0e1018] via-[#121526] to-[#0b0d16] px-6 py-10 text-center text-white">
-        <div className="max-w-xl space-y-4">
-          <h1 className="text-3xl font-semibold">Revenue Clear</h1>
-          <p className="text-sm text-white/70">
-            Add at least one client record in Supabase to activate the guided Revenue Clear workspace.
-          </p>
-        </div>
-      </div>
-    )
+    const pipelineOptions = await listRevenuePipelineOptions()
+    return <RevenueClearOnboarding pipelineOptions={pipelineOptions} />
   }
 
   const requestedClientIdRaw = searchParams?.clientId

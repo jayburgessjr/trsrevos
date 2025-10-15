@@ -15,6 +15,14 @@ import {
   RevboardMetric,
 } from './types'
 
+export type RevenuePipelineOption = {
+  id: string
+  label: string
+  stage: string | null
+  amount: number | null
+  clientId: string | null
+}
+
 function toClient(row: any): RevenueClearClient {
   return {
     id: row.id,
@@ -150,6 +158,30 @@ export async function listRevenueClearClients(): Promise<RevenueClearClient[]> {
   }
 
   return (data ?? []).map(toClient)
+}
+
+export async function listRevenuePipelineOptions(): Promise<RevenuePipelineOption[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('opportunities')
+    .select('id, name, stage, amount, client_id')
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.warn('Failed to load pipeline opportunities for Revenue Clear onboarding', error)
+    return []
+  }
+
+  return (data ?? [])
+    .filter((opportunity: any) => opportunity.stage !== 'ClosedLost')
+    .map((opportunity: any) => ({
+      id: opportunity.id as string,
+      label: opportunity.name as string,
+      stage: (opportunity.stage as string | null) ?? null,
+      amount: typeof opportunity.amount === 'number' ? (opportunity.amount as number) : Number(opportunity.amount ?? 0),
+      clientId: (opportunity.client_id as string | null) ?? null,
+    }))
 }
 
 export async function getRevenueClearSnapshot(clientId: string): Promise<RevenueClearSnapshot> {
