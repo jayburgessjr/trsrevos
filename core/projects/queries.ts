@@ -3,6 +3,17 @@
 import type { PostgrestError } from "@supabase/supabase-js"
 
 import { createClient } from "@/lib/supabase/server"
+import type { ClientHealthSnapshot } from "./types"
+
+type ClientHealthRow = {
+  client_id: string
+  snapshot_date: string
+  health: number | null
+  churn_risk: number | null
+  trs_score: number | null
+  notes: string | null
+  client?: { name: string | null } | { name: string | null }[] | null
+}
 
 const hasSupabaseCredentials = () =>
   Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
@@ -52,6 +63,9 @@ export type ProjectRecord = {
   health: string | null
   start_date: string | null
   end_date: string | null
+  progress?: number | null
+  budget?: number | null
+  spent?: number | null
 }
 
 export type OpportunityRecord = {
@@ -66,6 +80,81 @@ export type OpportunityRecord = {
   close_date: string | null
   owner_id: string | null
 }
+
+const CLIENT_HEALTH_HISTORY_FALLBACK: ClientHealthRow[] = [
+  {
+    client_id: 'acme',
+    snapshot_date: '2025-07-15',
+    health: 68,
+    churn_risk: 16,
+    trs_score: 72,
+    notes: 'Collections automation deployed',
+    client: { name: 'ACME Industries' },
+  },
+  {
+    client_id: 'acme',
+    snapshot_date: '2025-08-20',
+    health: 72,
+    churn_risk: 14,
+    trs_score: 78,
+    notes: 'Executive sponsor engaged',
+    client: { name: 'ACME Industries' },
+  },
+  {
+    client_id: 'acme',
+    snapshot_date: '2025-09-25',
+    health: 76,
+    churn_risk: 12,
+    trs_score: 82,
+    notes: 'Pricing uplift live',
+    client: { name: 'ACME Industries' },
+  },
+  {
+    client_id: 'globex',
+    snapshot_date: '2025-07-01',
+    health: 60,
+    churn_risk: 22,
+    trs_score: 64,
+    notes: 'Integration blockers identified',
+    client: { name: 'Globex Retail' },
+  },
+  {
+    client_id: 'globex',
+    snapshot_date: '2025-08-10',
+    health: 63,
+    churn_risk: 20,
+    trs_score: 66,
+    notes: 'Data contract renewed',
+    client: { name: 'Globex Retail' },
+  },
+  {
+    client_id: 'globex',
+    snapshot_date: '2025-09-22',
+    health: 67,
+    churn_risk: 18,
+    trs_score: 70,
+    notes: 'Pilot conversion trending up',
+    client: { name: 'Globex Retail' },
+  },
+  {
+    client_id: 'northwave',
+    snapshot_date: '2025-07-30',
+    health: 54,
+    churn_risk: 26,
+    trs_score: 58,
+    notes: 'Data trust remediation launched',
+    client: { name: 'Northwave Analytics' },
+  },
+  {
+    client_id: 'northwave',
+    snapshot_date: '2025-09-12',
+    health: 58,
+    churn_risk: 22,
+    trs_score: 60,
+    notes: 'Success plan activated',
+    client: { name: 'Northwave Analytics' },
+  },
+]
 
 async function getClient() {
   const supabase = await createClient()
@@ -128,7 +217,7 @@ export async function fetchProjects() {
   const supabase = await getClient()
   const { data, error } = await supabase
     .from("projects")
-    .select("id,client_id,name,status,health,start_date,end_date")
+    .select("id,client_id,name,status,health,start_date,end_date,progress,budget,spent")
     .order("start_date", { ascending: true })
 
   if (error) {
@@ -168,4 +257,63 @@ export async function fetchOpportunities() {
 
 function isMissingRelationError(error: PostgrestError) {
   return error.code === "42P01"
+}
+
+function deriveHealthSentiment(health: number | null, churnRisk: number | null) {
+  const healthScore = typeof health === "number" ? health : 0
+  const churnScore = typeof churnRisk === "number" ? churnRisk : 0
+
+  if (healthScore >= 70 && churnScore <= 15) {
+    return "Positive" as const
+  }
+  if (healthScore <= 55 || churnScore >= 25) {
+    return "Caution" as const
+  }
+  return "Neutral" as const
+}
+
+function resolveClientName(client: ClientHealthRow["client"]) {
+  if (!client) {
+    return "Unknown Client"
+  }
+  if (Array.isArray(client)) {
+    return client[0]?.name ?? "Unknown Client"
+  }
+  return client.name ?? "Unknown Client"
+}
+
+function mapHealthRow(row: ClientHealthRow): ClientHealthSnapshot {
+  return {
+    clientId: row.client_id,
+    clientName: resolveClientName(row.client),
+    snapshotDate: row.snapshot_date,
+    health: row.health,
+    churnRisk: row.churn_risk,
+    trsScore: row.trs_score,
+    notes: row.notes,
+    sentiment: deriveHealthSentiment(row.health, row.churn_risk),
+  }
+}
+
+export async function fetchClientHealthHistory(): Promise<ClientHealthSnapshot[]> {
+  if (!hasSupabaseCredentials()) {
+    return CLIENT_HEALTH_HISTORY_FALLBACK.map((row) => mapHealthRow(row))
+  }
+
+  const supabase = await getClient()
+  const { data, error } = await supabase
+    .from("client_health_history")
+    .select(
+      `client_id,snapshot_date,health,churn_risk,trs_score,notes,client:clients!client_health_history_client_id_fkey(name)`,
+    )
+    .order("snapshot_date", { ascending: true })
+
+  if (error || !data) {
+    if (error) {
+      console.error("Error fetching client health history", error)
+    }
+    return CLIENT_HEALTH_HISTORY_FALLBACK.map((row) => mapHealthRow(row))
+  }
+
+  return (data as ClientHealthRow[]).map((row) => mapHealthRow(row))
 }
