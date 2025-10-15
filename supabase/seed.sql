@@ -2,6 +2,187 @@
 -- This file populates the database with realistic demo data for the finance module
 
 -- ============================================================================
+-- CORE IDENTITIES & ORGANIZATIONS
+-- ============================================================================
+INSERT INTO organizations (id, name, slug, status, plan)
+VALUES
+  ('11111111-2222-3333-4444-555555555555', 'TRS Revenue OS', 'trs', 'active', 'enterprise')
+ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, plan = EXCLUDED.plan;
+
+INSERT INTO users (id, full_name, email, organization_id, role)
+VALUES
+  ('00000000-0000-0000-0000-000000000001', 'Jay Burgess', 'jay@revenuescientists.com',
+    '11111111-2222-3333-4444-555555555555', 'admin'),
+  ('00000000-0000-0000-0000-000000000002', 'Revenue Assistant', 'agent@trs.dev',
+    '11111111-2222-3333-4444-555555555555', 'member')
+ON CONFLICT (id) DO UPDATE SET organization_id = EXCLUDED.organization_id, role = EXCLUDED.role;
+
+-- ============================================================================
+-- AGENT GOVERNANCE & MEMORY
+-- ============================================================================
+INSERT INTO agent_definitions (
+  id,
+  agent_key,
+  organization_id,
+  version,
+  display_name,
+  description,
+  lifecycle_status,
+  auto_runnable,
+  definition
+)
+VALUES
+  (
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
+    'delivery-orchestrator',
+    '11111111-2222-3333-4444-555555555555',
+    3,
+    'Delivery Orchestrator',
+    'Coordinates RevOS delivery milestones and project accelerants.',
+    'active',
+    true,
+    '{"capabilities":["phase_advancement","action_plans"],"owner":"projects"}'::jsonb
+  ),
+  (
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2',
+    'client-health',
+    '11111111-2222-3333-4444-555555555555',
+    2,
+    'Client Health Analyst',
+    'Analyzes TRS client telemetry to surface risk and guardrails.',
+    'active',
+    false,
+    '{"capabilities":["health_scores","guardrail_check"],"owner":"clients"}'::jsonb
+  )
+ON CONFLICT (id) DO UPDATE SET version = EXCLUDED.version, lifecycle_status = EXCLUDED.lifecycle_status;
+
+INSERT INTO agent_prompts (id, definition_id, name, role, content)
+VALUES
+  (
+    'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1',
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
+    'governance:delivery-system',
+    'system',
+    'You operate with RevOS delivery standards. Never advance a phase without confirming data readiness and stakeholder sign-off.'
+  ),
+  (
+    'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2',
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2',
+    'governance:client-health',
+    'system',
+    'Ensure client recommendations respect guardrails on discounts, runway, and sentiment. Escalate any health score below 60.'
+  )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO agent_guardrails (id, definition_id, rule, severity, remediation)
+VALUES
+  (
+    'cccccccc-cccc-cccc-cccc-ccccccccccc1',
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
+    'Do not commit to a launch date without finance confirming billing cadence.',
+    'high',
+    'Request finance approval and attach billing plan before promising dates.'
+  ),
+  (
+    'cccccccc-cccc-cccc-cccc-ccccccccccc2',
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2',
+    'Escalate when churn risk rises above 25% for two consecutive snapshots.',
+    'medium',
+    'Notify the account owner and schedule a save plan review call.'
+  )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO agent_memories (
+  id,
+  agent_key,
+  organization_id,
+  memory_type,
+  title,
+  content,
+  metadata,
+  tags,
+  salience_score
+)
+VALUES
+  (
+    'dddddddd-dddd-dddd-dddd-ddddddddddd1',
+    'rosie-assistant',
+    '11111111-2222-3333-4444-555555555555',
+    'win',
+    'Acme Q3 Launch Win',
+    'Acme accelerated onboarding by 12 days after Delivery Orchestrator sequenced the kickoff package and finance approved the rolling invoice plan.',
+    '{"client":"Acme Corp","phase":"Data"}'::jsonb,
+    ARRAY['acme','kickoff','finance'],
+    0.92
+  ),
+  (
+    'dddddddd-dddd-dddd-dddd-ddddddddddd2',
+    'rosie-assistant',
+    '11111111-2222-3333-4444-555555555555',
+    'guardrail',
+    'Discount Guardrail Breach',
+    'Northwave requested a 30% discount. Guardrail forced approval routing and agent recommended a value-based bundle instead.',
+    '{"client":"Northwave Analytics","guardrail":"discount"}'::jsonb,
+    ARRAY['discount','pricing','guardrail'],
+    0.88
+  )
+ON CONFLICT (id) DO UPDATE SET salience_score = EXCLUDED.salience_score;
+
+-- ============================================================================
+-- OPERATIONAL AUTOMATIONS
+-- ============================================================================
+INSERT INTO automation_playbooks (
+  id,
+  organization_id,
+  name,
+  description,
+  trigger_event,
+  status,
+  configuration,
+  created_by
+)
+VALUES
+  (
+    'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeee1',
+    '11111111-2222-3333-4444-555555555555',
+    'Closed Won → Delivery & Finance',
+    'When an opportunity closes won, launch delivery kickoff and schedule invoices.',
+    'pipeline.closed_won',
+    'active',
+    '{"sla_hours":4,"notify":["projects","finance"]}'::jsonb,
+    '00000000-0000-0000-0000-000000000001'
+  )
+ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status;
+
+INSERT INTO automation_steps (id, playbook_id, sort_order, workspace, action, config)
+VALUES
+  (
+    'ffffffff-ffff-ffff-ffff-fffffffffff1',
+    'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeee1',
+    1,
+    'sales',
+    'log_closed_won_context',
+    '{"summaryField":"win_notes"}'::jsonb
+  ),
+  (
+    'ffffffff-ffff-ffff-ffff-fffffffffff2',
+    'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeee1',
+    2,
+    'delivery',
+    'create_project_kickoff',
+    '{"phase":"Data","owner_role":"Implementation"}'::jsonb
+  ),
+  (
+    'ffffffff-ffff-ffff-ffff-fffffffffff3',
+    'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeee1',
+    3,
+    'finance',
+    'schedule_invoice_plan',
+    '{"cadence":"monthly","installments":3}'::jsonb
+  )
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
 -- EQUITY HOLDERS
 -- ============================================================================
 INSERT INTO equity_holders (id, name, holder_type, equity_type, shares, percentage, value_at_current, grant_date, vesting_schedule, notes, created_at, updated_at)

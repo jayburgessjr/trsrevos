@@ -6,6 +6,8 @@ import { getClient, listClients } from '@/core/clients/store'
 import { getDashboard } from '@/core/exec/store'
 import { getMediaState } from '@/core/mediaAgent/store'
 import { getProjectsByClient, listProjects } from '@/core/projects/store'
+import { getAuthContext } from '@/lib/server/auth'
+import { searchAgentMemories } from '@/core/memory/trsos'
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -36,11 +38,36 @@ export async function POST(req: NextRequest) {
   const normalizedMessages = Array.isArray(messages) ? messages : []
   const lastUser = [...normalizedMessages].reverse().find((message) => message.role === 'user')
   const detection = detectIntent(lastUser?.content ?? '')
+  const auth = await getAuthContext()
+
+  if (!auth.user || !auth.organizationId) {
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  }
+
+  const memory = await searchAgentMemories(auth.supabase, {
+    query: lastUser?.content ?? '',
+    organizationId: auth.organizationId,
+    agentKey: 'rosie-assistant',
+    limit: 4,
+  })
+
+  const memoryContext = memory.length
+    ? `Historical TRSOS memory:\n${memory
+        .map((item) => {
+          const label = item.title ?? `Memory ${item.createdAt}`
+          const metadata = (item.metadata ?? {}) as Record<string, any>
+          const clientTag = typeof metadata.client === 'string' ? ` • client: ${metadata.client}` : ''
+          return `- ${label}${clientTag}: ${item.content}`
+        })
+        .join('\n')}`
+    : ''
+
   const context = buildContext(detection)
+  const combinedContext = [context, memoryContext].filter(Boolean).join('\n\n')
   const prompt = buildIntentPrompt(detection)
 
   if (!openai) {
-    const offline = buildOfflineResponse(detection, context)
+    const offline = buildOfflineResponse(detection, combinedContext)
     return streamText(offline)
   }
 
@@ -52,8 +79,8 @@ export async function POST(req: NextRequest) {
     { role: 'system' as const, content: prompt },
   ]
 
-  if (context) {
-    payload.push({ role: 'system' as const, content: `Context for reasoning:\n${context}` })
+  if (combinedContext) {
+    payload.push({ role: 'system' as const, content: `Context for reasoning:\n${combinedContext}` })
   }
 
   payload.push(

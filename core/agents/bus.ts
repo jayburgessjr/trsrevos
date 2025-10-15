@@ -3,11 +3,26 @@ import { Agent, AgentKey, AgentRunInput, AgentRunOutput } from './types'
 const REGISTRY = new Map<AgentKey, Agent>()
 type Log = { ts: string; key: AgentKey; input: AgentRunInput; output: AgentRunOutput }
 const LOGS: Log[] = []
-const STATUS = new Map<AgentKey, { enabled: boolean; lastRun?: string; lastSummary?: string; impact$?: number }>()
+const STATUS = new Map<
+  AgentKey,
+  {
+    enabled: boolean
+    lastRun?: string
+    lastSummary?: string
+    impact$?: number
+    lifecycle?: string
+    autoRunnable?: boolean
+  }
+>()
 
 export function register(agent: Agent) {
   REGISTRY.set(agent.meta.key, agent)
-  if (!STATUS.has(agent.meta.key)) STATUS.set(agent.meta.key, { enabled: true })
+  if (!STATUS.has(agent.meta.key))
+    STATUS.set(agent.meta.key, {
+      enabled: true,
+      autoRunnable: agent.meta.autoRunnable ?? false,
+      lifecycle: 'active',
+    })
 }
 
 export function listAgents() {
@@ -43,6 +58,7 @@ export function logsFor(key: AgentKey, limit = 50) {
 export function setEnabled(key: AgentKey, enabled: boolean) {
   const s = STATUS.get(key) ?? { enabled: true }
   s.enabled = enabled
+  s.lifecycle = enabled ? 'active' : 'disabled'
   STATUS.set(key, s)
   return s
 }

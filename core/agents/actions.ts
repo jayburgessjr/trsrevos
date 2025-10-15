@@ -5,11 +5,43 @@ import './registry'
 import { logAnalyticsEvent } from '@/core/analytics/actions'
 import { requireAuth } from '@/lib/server/auth'
 
-import { listAgents, runAgent, logsFor, setEnabled } from './bus'
+import { listAgents, runAgent, logsFor, setEnabled, getAgent } from './bus'
+import { loadAgentGovernance, persistAgentRunRecord } from './governance'
 import { AgentKey } from './types'
 
 export async function actionListAgents() {
-  return listAgents()
+  const context = await requireAuth({ redirectTo: '/login?next=/agents' })
+
+  const agents = listAgents()
+
+  if (!context.organizationId) {
+    return agents
+  }
+
+  const governance = await loadAgentGovernance(
+    context.supabase,
+    context.organizationId,
+    agents.map((agent) => agent.meta.key),
+  )
+
+  return agents.map((agent) => {
+    const record = governance.get(agent.meta.key)
+    const status = { ...agent.status }
+
+    if (record) {
+      const lifecycle = record.lifecycleStatus.toLowerCase()
+      const enabled = lifecycle !== 'disabled' && lifecycle !== 'retired'
+      status.enabled = enabled
+      ;(status as any).lifecycle = record.lifecycleStatus
+      ;(status as any).autoRunnable = record.autoRunnable
+    }
+
+    return {
+      ...agent,
+      status,
+      governance: record,
+    }
+  })
 }
 
 export async function actionRunAgent(key: AgentKey, payload?: any) {
@@ -34,9 +66,31 @@ export async function actionRunAgent(key: AgentKey, payload?: any) {
 
   const local = await runAgent(key, { userId: user.id, orgId: organizationId, payload })
 
+  await persistAgentRunRecord(supabase, {
+    agentKey: key,
+    organizationId,
+    userId: user.id,
+    runInput: payload ?? {},
+    runOutput: {
+      ok: local.ok,
+      summary: local.summary ?? null,
+      data: local.data ?? null,
+      warnings: local.warnings ?? [],
+    },
+    summary: local.summary,
+    guardrailViolations: local.warnings ?? [],
+  })
+
   await logAnalyticsEvent({
     eventKey: 'agent.run.triggered',
-    payload: { agentKey: key, supabaseRunId: (data as any)?.run_id ?? null },
+    payload: {
+      agentKey: key,
+      supabaseRunId: (data as any)?.run_id ?? null,
+      ok: local.ok,
+      warnings: local.warnings ?? [],
+    },
+    entity: 'agent',
+    entityId: key,
   })
 
   return { ...local, supabaseRunId: (data as any)?.run_id ?? null }
@@ -52,6 +106,8 @@ export async function actionToggleAgent(key: AgentKey, enabled: boolean) {
   await logAnalyticsEvent({
     eventKey: 'agent.toggle',
     payload: { agentKey: key, enabled },
+    entity: 'agent',
+    entityId: key,
   })
 
   if (!context.organizationId) {
@@ -62,7 +118,7 @@ export async function actionToggleAgent(key: AgentKey, enabled: boolean) {
   try {
     const { data: existing, error: fetchError } = await context.supabase
       .from('agent_definitions')
-      .select('id, definition, organization_id')
+      .select('id, definition, organization_id, display_name, description')
       .eq('agent_key', key)
       .maybeSingle()
 
@@ -75,6 +131,9 @@ export async function actionToggleAgent(key: AgentKey, enabled: boolean) {
       enabled,
     }
 
+    const lifecycleStatus = enabled ? 'active' : 'disabled'
+    const agent = getAgent(key)
+
     if (existing?.id) {
       const { error: updateError } = await context.supabase
         .from('agent_definitions')
@@ -82,6 +141,9 @@ export async function actionToggleAgent(key: AgentKey, enabled: boolean) {
           definition,
           auto_runnable: enabled,
           organization_id: existing.organization_id ?? context.organizationId,
+          lifecycle_status: lifecycleStatus,
+          display_name: existing.display_name ?? agent.meta.name,
+          description: existing.description ?? agent.meta.description,
           updated_at: new Date().toISOString(),
         })
         .eq('id', existing.id)
@@ -97,7 +159,10 @@ export async function actionToggleAgent(key: AgentKey, enabled: boolean) {
           organization_id: context.organizationId,
           definition,
           auto_runnable: enabled,
-        }, { onConflict: 'agent_key' })
+          lifecycle_status: lifecycleStatus,
+          display_name: agent.meta.name,
+          description: agent.meta.description,
+        })
 
       if (insertError) {
         throw insertError

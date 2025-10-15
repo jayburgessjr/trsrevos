@@ -7,6 +7,8 @@ type LogEventInput = {
   payload?: Record<string, unknown>
   organizationId?: string | null
   userId?: string | null
+  entity?: string
+  entityId?: string
 }
 
 export async function logAnalyticsEvent({
@@ -14,6 +16,8 @@ export async function logAnalyticsEvent({
   payload = {},
   organizationId,
   userId,
+  entity,
+  entityId,
 }: LogEventInput) {
   if (!eventKey) {
     return { ok: false, error: 'missing-event-key' }
@@ -33,6 +37,8 @@ export async function logAnalyticsEvent({
       organization_id: resolvedOrgId,
       user_id: resolvedUserId,
       event_key: eventKey,
+      entity: entity ?? undefined,
+      entity_id: entityId ?? undefined,
       payload: {
         ...payload,
         emitted_at: new Date().toISOString(),

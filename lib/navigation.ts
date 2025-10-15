@@ -26,6 +26,12 @@ export const MAIN_NAV: NavItem[] = [
     roles: ['SuperAdmin', 'Admin', 'Director', 'Member'],
   },
   {
+    label: 'Telemetry',
+    href: '/dashboard/telemetry',
+    icon: 'Activity',
+    roles: ['SuperAdmin', 'Admin', 'Director'],
+  },
+  {
     label: 'Pipeline',
     href: '/pipeline',
     icon: 'TrendingUp',
@@ -60,6 +66,12 @@ export const MAIN_NAV: NavItem[] = [
     href: '/agents',
     icon: 'Bot',
     roles: ['SuperAdmin', 'Admin', 'Director', 'Member'],
+  },
+  {
+    label: 'Playbooks',
+    href: '/ops/playbooks',
+    icon: 'ListChecks',
+    roles: ['SuperAdmin', 'Admin', 'Director'],
   },
   {
     label: 'Finance',

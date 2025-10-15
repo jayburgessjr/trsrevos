@@ -5,6 +5,7 @@ import { requireAuth } from "@/lib/server/auth";
 import { revalidatePath } from "next/cache";
 
 import type { PipelineAlertCandidate } from "./analytics";
+import { triggerClosedWonAutomation } from "@/core/automations/actions";
 
 export type Opportunity = {
   id: string;
@@ -148,6 +149,16 @@ export async function moveOpportunityStage(
 ): Promise<{ success: boolean; error?: string; clientId?: string }> {
   const supabase = await createClient();
 
+  const { data: opportunity, error: loadError } = await supabase
+    .from("opportunities")
+    .select("client_id, amount, name")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (loadError) {
+    console.error("Error loading opportunity before stage move:", loadError);
+  }
+
   // Update probability based on stage
   const stageProbabilities: { [key: string]: number } = {
     Prospect: 10,
@@ -193,6 +204,13 @@ export async function moveOpportunityStage(
       revalidatePath("/clients");
       revalidatePath(`/clients/${clientId}`);
     }
+
+    await triggerClosedWonAutomation({
+      opportunityId: id,
+      clientId: clientId ?? (opportunity?.client_id as string | undefined),
+      amount: opportunity?.amount ?? undefined,
+      name: (opportunity?.name as string | undefined) ?? undefined,
+    });
   }
 
   // Emit analytics event
