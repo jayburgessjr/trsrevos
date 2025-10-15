@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useFormState, useFormStatus } from 'react-dom'
 import { useRouter } from 'next/navigation'
 
@@ -61,6 +61,23 @@ export default function RevenueClearOnboarding({ pipelineOptions }: RevenueClear
     createRevenueClearClientAction,
     INITIAL_ACTION_STATE,
   )
+  const [selectedOpportunityId, setSelectedOpportunityId] = useState<string>(
+    pipelineOptions[0]?.id ?? '',
+  )
+
+  useEffect(() => {
+    setSelectedOpportunityId((current) => {
+      if (pipelineOptions.some((option) => option.id === current)) {
+        return current
+      }
+      return pipelineOptions[0]?.id ?? ''
+    })
+  }, [pipelineOptions])
+
+  const selectedOpportunity = useMemo(() => {
+    if (!selectedOpportunityId) return null
+    return pipelineOptions.find((option) => option.id === selectedOpportunityId) ?? null
+  }, [pipelineOptions, selectedOpportunityId])
 
   useEffect(() => {
     if (convertState.status === 'success' && convertState.redirectUrl) {
@@ -105,7 +122,8 @@ export default function RevenueClearOnboarding({ pipelineOptions }: RevenueClear
               <Select
                 id="opportunityId"
                 name="opportunityId"
-                defaultValue={pipelineOptions.length ? pipelineOptions[0]?.id : ''}
+                value={selectedOpportunityId}
+                onChange={(event) => setSelectedOpportunityId(event.target.value)}
                 disabled={!pipelineOptions.length}
                 className="bg-[#0b1120] text-white"
               >
@@ -126,6 +144,19 @@ export default function RevenueClearOnboarding({ pipelineOptions }: RevenueClear
                   </option>
                 )}
               </Select>
+              <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[11px] text-white/70">
+                {selectedOpportunity ? (
+                  <div className="flex flex-col gap-1">
+                    <span className="font-semibold text-white">{selectedOpportunity.label}</span>
+                    <span>
+                      Stage: {selectedOpportunity.stage ?? 'Not set'} · Deal value:{' '}
+                      {formatCurrency(selectedOpportunity.amount)}
+                    </span>
+                  </div>
+                ) : (
+                  <span>Select a pipeline record to preview its stage and value.</span>
+                )}
+              </div>
             </div>
 
             {convertState.status === 'error' ? (
@@ -134,7 +165,7 @@ export default function RevenueClearOnboarding({ pipelineOptions }: RevenueClear
               </p>
             ) : null}
 
-            <SubmitButton className="mt-auto" disabled={!pipelineOptions.length}>
+            <SubmitButton className="mt-auto" disabled={!pipelineOptions.length || !selectedOpportunityId}>
               {pipelineOptions.length ? 'Load from pipeline' : 'Pipeline empty'}
             </SubmitButton>
           </form>

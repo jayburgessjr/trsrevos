@@ -52,6 +52,7 @@ function useTabs(component: string) {
 export function TabsList({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
+      role="tablist"
       className={cn(
         'inline-flex items-center gap-1 rounded-full border border-[color:var(--color-outline)] bg-[color:var(--color-surface)] p-1',
         className,
@@ -75,6 +76,9 @@ export function TabsTrigger({
   return (
     <button
       type="button"
+      role="tab"
+      aria-selected={active}
+      data-state={active ? 'active' : 'inactive'}
       onClick={() => setValue(value)}
       className={cn(
         'rounded-full px-3 py-1 text-sm font-medium transition',
@@ -100,5 +104,13 @@ export function TabsContent({
 }) {
   const { value: activeValue } = useTabs('TabsContent')
   if (activeValue !== value) return null
-  return <div className={cn('rounded-lg border border-dashed border-[color:var(--color-outline)] p-4', className)}>{children}</div>
+  return (
+    <div
+      role="tabpanel"
+      data-state="active"
+      className={cn('rounded-lg border border-dashed border-[color:var(--color-outline)] p-4', className)}
+    >
+      {children}
+    </div>
+  )
 }
