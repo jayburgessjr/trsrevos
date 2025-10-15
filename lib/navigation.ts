@@ -93,7 +93,7 @@ export const MAIN_NAV: NavItem[] = [
   },
   {
     label: 'Revenue Clear',
-    href: '/resources?tab=Revenue%20Clear',
+    href: '/revenue-clear',
     icon: 'Calculator',
     roles: ['SuperAdmin', 'Admin', 'Director', 'Member', 'Client'],
   },
