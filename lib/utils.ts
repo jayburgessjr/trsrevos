@@ -9,8 +9,10 @@ export function cn(...c: Array<string | false | null | undefined>) {
  */
 export function isActivePath(current: string, href: string) {
   if (!current || !href) return false
-  if (href === '/') {
-    return current === '/'
+  const currentPath = current.split(/[?#]/)[0]
+  const targetPath = href.split(/[?#]/)[0]
+  if (targetPath === '/') {
+    return currentPath === '/'
   }
-  return current === href || current.startsWith(`${href}/`)
+  return currentPath === targetPath || currentPath.startsWith(`${targetPath}/`)
 }
