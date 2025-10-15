@@ -134,6 +134,24 @@ function toNextStep(row: any | null): NextStepPlan | null {
   }
 }
 
+export async function listRevenueClearClients(): Promise<RevenueClearClient[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('clients')
+    .select(
+      `id, name, industry, revenue_model, monthly_recurring_revenue, profit_margin, target_growth, primary_goal`,
+    )
+    .order('name', { ascending: true })
+
+  if (error) {
+    console.error('Failed to load Revenue Clear clients:', error)
+    return []
+  }
+
+  return (data ?? []).map(toClient)
+}
+
 export async function getRevenueClearSnapshot(clientId: string): Promise<RevenueClearSnapshot> {
   const supabase = await createClient()
 

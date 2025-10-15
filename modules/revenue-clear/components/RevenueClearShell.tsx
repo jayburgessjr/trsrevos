@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState, type ReactNode } from 'react'
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/ui/tabs'
 
@@ -99,9 +99,10 @@ function computeTrsScore(audits: AuditLeak[]): number {
 
 type RevenueClearShellProps = {
   snapshot: RevenueClearSnapshot
+  intro?: ReactNode
 }
 
-export default function RevenueClearShell({ snapshot }: RevenueClearShellProps) {
+export default function RevenueClearShell({ snapshot, intro }: RevenueClearShellProps) {
   const supabase = useMemo(() => createClient(), [])
   const [activeTab, setActiveTab] = useState<RevenueClearStageKey>('intake')
 
@@ -656,6 +657,7 @@ export default function RevenueClearShell({ snapshot }: RevenueClearShellProps) 
 
   return (
     <div className="flex min-h-screen flex-col gap-6 bg-gradient-to-b from-[#0e1018] via-[#121526] to-[#0b0d16] px-6 py-10 text-white">
+      {intro}
       <ProgressStepper
         items={stepperItems}
         active={activeTab}
