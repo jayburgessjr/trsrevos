@@ -5,15 +5,33 @@
 
 SET search_path TO public, pg_temp;
 
+-- Enable extensions used by the operational automation + knowledge layers
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE EXTENSION IF NOT EXISTS "vector";
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- =====================================================================
 -- TABLES
 -- =====================================================================
+
+CREATE TABLE IF NOT EXISTS public.organizations (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  slug text UNIQUE,
+  status text DEFAULT 'active',
+  plan text DEFAULT 'growth',
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  updated_at timestamptz DEFAULT timezone('utc', now())
+);
 
 CREATE TABLE IF NOT EXISTS public.users (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   full_name text,
   email text UNIQUE,
-  created_at timestamptz DEFAULT timezone('utc', now())
+  organization_id uuid REFERENCES public.organizations(id) ON DELETE SET NULL,
+  role text DEFAULT 'member',
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  updated_at timestamptz DEFAULT timezone('utc', now())
 );
 
 CREATE TABLE IF NOT EXISTS public.clients (
@@ -63,14 +81,207 @@ CREATE TABLE IF NOT EXISTS public.agents (
   run_metadata jsonb DEFAULT '{}'::jsonb
 );
 
-CREATE TABLE IF NOT EXISTS public.analytics_events (
+CREATE TABLE IF NOT EXISTS public.agent_definitions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  agent_key text NOT NULL,
+  organization_id uuid REFERENCES public.organizations(id) ON DELETE CASCADE,
+  version integer DEFAULT 1,
+  display_name text,
+  description text,
+  lifecycle_status text DEFAULT 'active',
+  auto_runnable boolean DEFAULT false,
+  definition jsonb DEFAULT '{}'::jsonb,
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  updated_at timestamptz DEFAULT timezone('utc', now()),
+  retired_at timestamptz
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS agent_definitions_unique
+  ON public.agent_definitions(organization_id, agent_key, version);
+
+CREATE TABLE IF NOT EXISTS public.agent_prompts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  definition_id uuid REFERENCES public.agent_definitions(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  role text DEFAULT 'system',
+  content text NOT NULL,
+  lifecycle_status text DEFAULT 'active',
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  updated_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE TABLE IF NOT EXISTS public.agent_guardrails (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  definition_id uuid REFERENCES public.agent_definitions(id) ON DELETE CASCADE,
+  rule text NOT NULL,
+  severity text DEFAULT 'medium',
+  remediation text,
+  lifecycle_status text DEFAULT 'active',
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  updated_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE TABLE IF NOT EXISTS public.agent_runs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  agent_key text NOT NULL,
+  organization_id uuid REFERENCES public.organizations(id) ON DELETE CASCADE,
   user_id uuid REFERENCES public.users(id) ON DELETE SET NULL,
-  event_type text,
-  entity text,
-  entity_id text,
+  input jsonb DEFAULT '{}'::jsonb,
+  output jsonb DEFAULT '{}'::jsonb,
+  summary text,
+  guardrail_violations text[] DEFAULT '{}',
   created_at timestamptz DEFAULT timezone('utc', now())
 );
+
+CREATE INDEX IF NOT EXISTS agent_runs_agent_idx
+  ON public.agent_runs(organization_id, agent_key, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS public.agent_memories (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  agent_key text NOT NULL,
+  organization_id uuid REFERENCES public.organizations(id) ON DELETE CASCADE,
+  memory_type text DEFAULT 'observation',
+  title text,
+  content text NOT NULL,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  tags text[] DEFAULT '{}',
+  salience_score numeric(6,2) DEFAULT 0,
+  search_vector tsvector GENERATED ALWAYS AS (
+    setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
+    setweight(to_tsvector('english', coalesce(content, '')), 'B')
+  ) STORED,
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  updated_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS agent_memories_search_idx
+  ON public.agent_memories USING gin(search_vector);
+
+CREATE INDEX IF NOT EXISTS agent_memories_agent_idx
+  ON public.agent_memories(organization_id, agent_key, salience_score DESC);
+
+CREATE TABLE IF NOT EXISTS public.projects (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id uuid REFERENCES public.clients(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  status text DEFAULT 'Active',
+  phase text DEFAULT 'Discovery',
+  health text DEFAULT 'Green',
+  start_date date,
+  end_date date,
+  owner_id uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  progress numeric(5,2) DEFAULT 0,
+  budget numeric(14,2) DEFAULT 0,
+  spent numeric(14,2) DEFAULT 0,
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  updated_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS projects_client_idx
+  ON public.projects(client_id, status);
+
+CREATE TABLE IF NOT EXISTS public.project_kickoffs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id uuid REFERENCES public.projects(id) ON DELETE CASCADE,
+  client_id uuid REFERENCES public.clients(id) ON DELETE CASCADE,
+  kickoff_date date DEFAULT current_date,
+  owner_id uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  agenda jsonb DEFAULT '{}'::jsonb,
+  created_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE TABLE IF NOT EXISTS public.invoice_schedules (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id uuid REFERENCES public.clients(id) ON DELETE CASCADE,
+  project_id uuid REFERENCES public.projects(id) ON DELETE SET NULL,
+  amount numeric(14,2) NOT NULL,
+  due_date date NOT NULL,
+  status text DEFAULT 'scheduled',
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  updated_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS invoice_schedules_client_idx
+  ON public.invoice_schedules(client_id, due_date);
+
+CREATE TABLE IF NOT EXISTS public.automation_playbooks (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid REFERENCES public.organizations(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  description text,
+  trigger_event text NOT NULL,
+  status text DEFAULT 'draft',
+  configuration jsonb DEFAULT '{}'::jsonb,
+  created_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  updated_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS automation_playbooks_trigger_idx
+  ON public.automation_playbooks(organization_id, trigger_event, status);
+
+CREATE TABLE IF NOT EXISTS public.automation_steps (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  playbook_id uuid REFERENCES public.automation_playbooks(id) ON DELETE CASCADE,
+  sort_order integer NOT NULL,
+  workspace text NOT NULL,
+  action text NOT NULL,
+  config jsonb DEFAULT '{}'::jsonb,
+  created_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS automation_steps_playbook_idx
+  ON public.automation_steps(playbook_id, sort_order);
+
+CREATE TABLE IF NOT EXISTS public.automation_runs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  playbook_id uuid REFERENCES public.automation_playbooks(id) ON DELETE CASCADE,
+  organization_id uuid REFERENCES public.organizations(id) ON DELETE CASCADE,
+  triggered_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  context jsonb DEFAULT '{}'::jsonb,
+  status text DEFAULT 'processing',
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  completed_at timestamptz
+);
+
+CREATE INDEX IF NOT EXISTS automation_runs_playbook_idx
+  ON public.automation_runs(playbook_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS public.automation_run_steps (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  run_id uuid REFERENCES public.automation_runs(id) ON DELETE CASCADE,
+  step_id uuid REFERENCES public.automation_steps(id) ON DELETE SET NULL,
+  workspace text,
+  action text,
+  status text DEFAULT 'pending',
+  output jsonb DEFAULT '{}'::jsonb,
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  completed_at timestamptz
+);
+
+CREATE INDEX IF NOT EXISTS automation_run_steps_run_idx
+  ON public.automation_run_steps(run_id, created_at);
+
+CREATE TABLE IF NOT EXISTS public.analytics_events (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid REFERENCES public.organizations(id) ON DELETE CASCADE,
+  user_id uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  event_key text NOT NULL,
+  event_type text,
+  category text,
+  workflow text,
+  entity text,
+  entity_id text,
+  payload jsonb DEFAULT '{}'::jsonb,
+  occurred_at timestamptz DEFAULT timezone('utc', now()),
+  created_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS analytics_events_org_idx
+  ON public.analytics_events(organization_id, occurred_at DESC);
+
+CREATE INDEX IF NOT EXISTS analytics_events_event_key_idx
+  ON public.analytics_events(event_key);
 
 CREATE TABLE IF NOT EXISTS public.client_forms (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -93,6 +304,18 @@ CREATE TABLE IF NOT EXISTS public.client_deliverables (
 -- =====================================================================
 -- AUTOMATION FUNCTIONS
 -- =====================================================================
+
+-- =====================================================================
+-- UTILITY FUNCTIONS
+-- =====================================================================
+
+CREATE OR REPLACE FUNCTION public.touch_updated_at()
+RETURNS trigger AS $$
+BEGIN
+  NEW.updated_at = timezone('utc', now());
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
 -- CLIENT → PIPELINE
 CREATE OR REPLACE FUNCTION public.auto_create_pipeline_on_new_client()
@@ -141,12 +364,88 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- AGENTS → ANALYTICS LOG
 CREATE OR REPLACE FUNCTION public.log_agent_run()
 RETURNS trigger AS $$
+DECLARE
+  org_id uuid;
 BEGIN
-  INSERT INTO public.analytics_events (user_id, event_type, entity, entity_id, created_at)
-  VALUES (NEW.user_id, 'agent_run', 'agents', NEW.id::text, timezone('utc', now()));
+  SELECT organization_id INTO org_id FROM public.users WHERE id = NEW.user_id;
+
+  INSERT INTO public.analytics_events (
+    organization_id,
+    user_id,
+    event_key,
+    event_type,
+    category,
+    entity,
+    entity_id,
+    payload,
+    occurred_at
+  )
+  VALUES (
+    org_id,
+    NEW.user_id,
+    'agent.run.recorded',
+    'agent_run',
+    'agents',
+    'agents',
+    NEW.id::text,
+    COALESCE(NEW.run_metadata, '{}'::jsonb),
+    timezone('utc', now())
+  );
+
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION public.match_agent_memories(
+  p_query text,
+  p_agent_key text,
+  p_organization uuid,
+  p_limit integer DEFAULT 5
+)
+RETURNS TABLE (
+  id uuid,
+  agent_key text,
+  title text,
+  content text,
+  metadata jsonb,
+  salience_score numeric,
+  created_at timestamptz
+) AS $$
+DECLARE
+  search_query tsquery;
+BEGIN
+  IF p_query IS NULL OR trim(p_query) = '' THEN
+    search_query := NULL;
+  ELSE
+    search_query := plainto_tsquery('english', p_query);
+  END IF;
+
+  RETURN QUERY
+  SELECT
+    m.id,
+    m.agent_key,
+    m.title,
+    m.content,
+    m.metadata,
+    m.salience_score,
+    m.created_at
+  FROM public.agent_memories m
+  WHERE m.organization_id = p_organization
+    AND (p_agent_key IS NULL OR m.agent_key = p_agent_key)
+    AND (
+      search_query IS NULL
+      OR m.search_vector @@ search_query
+    )
+  ORDER BY
+    GREATEST(m.salience_score, 0) DESC,
+    CASE
+      WHEN search_query IS NULL THEN 0
+      ELSE ts_rank_cd(m.search_vector, search_query)
+    END DESC,
+    m.created_at DESC
+  LIMIT COALESCE(p_limit, 5);
+END;
+$$ LANGUAGE plpgsql STABLE;
 
 -- =====================================================================
 -- TRIGGERS
@@ -157,6 +456,60 @@ CREATE TRIGGER trg_auto_pipeline
 AFTER INSERT ON public.clients
 FOR EACH ROW
 EXECUTE FUNCTION public.auto_create_pipeline_on_new_client();
+
+DROP TRIGGER IF EXISTS trg_organizations_updated_at ON public.organizations;
+CREATE TRIGGER trg_organizations_updated_at
+BEFORE UPDATE ON public.organizations
+FOR EACH ROW
+EXECUTE FUNCTION public.touch_updated_at();
+
+DROP TRIGGER IF EXISTS trg_users_updated_at ON public.users;
+CREATE TRIGGER trg_users_updated_at
+BEFORE UPDATE ON public.users
+FOR EACH ROW
+EXECUTE FUNCTION public.touch_updated_at();
+
+DROP TRIGGER IF EXISTS trg_agent_definitions_updated ON public.agent_definitions;
+CREATE TRIGGER trg_agent_definitions_updated
+BEFORE UPDATE ON public.agent_definitions
+FOR EACH ROW
+EXECUTE FUNCTION public.touch_updated_at();
+
+DROP TRIGGER IF EXISTS trg_agent_prompts_updated ON public.agent_prompts;
+CREATE TRIGGER trg_agent_prompts_updated
+BEFORE UPDATE ON public.agent_prompts
+FOR EACH ROW
+EXECUTE FUNCTION public.touch_updated_at();
+
+DROP TRIGGER IF EXISTS trg_agent_guardrails_updated ON public.agent_guardrails;
+CREATE TRIGGER trg_agent_guardrails_updated
+BEFORE UPDATE ON public.agent_guardrails
+FOR EACH ROW
+EXECUTE FUNCTION public.touch_updated_at();
+
+DROP TRIGGER IF EXISTS trg_agent_memories_updated ON public.agent_memories;
+CREATE TRIGGER trg_agent_memories_updated
+BEFORE UPDATE ON public.agent_memories
+FOR EACH ROW
+EXECUTE FUNCTION public.touch_updated_at();
+
+DROP TRIGGER IF EXISTS trg_projects_updated ON public.projects;
+CREATE TRIGGER trg_projects_updated
+BEFORE UPDATE ON public.projects
+FOR EACH ROW
+EXECUTE FUNCTION public.touch_updated_at();
+
+DROP TRIGGER IF EXISTS trg_invoice_schedules_updated ON public.invoice_schedules;
+CREATE TRIGGER trg_invoice_schedules_updated
+BEFORE UPDATE ON public.invoice_schedules
+FOR EACH ROW
+EXECUTE FUNCTION public.touch_updated_at();
+
+DROP TRIGGER IF EXISTS trg_automation_playbooks_updated ON public.automation_playbooks;
+CREATE TRIGGER trg_automation_playbooks_updated
+BEFORE UPDATE ON public.automation_playbooks
+FOR EACH ROW
+EXECUTE FUNCTION public.touch_updated_at();
 
 DROP TRIGGER IF EXISTS trg_auto_finance ON public.pipeline;
 CREATE TRIGGER trg_auto_finance

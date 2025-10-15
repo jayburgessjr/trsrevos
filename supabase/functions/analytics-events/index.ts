@@ -5,6 +5,8 @@ type AnalyticsPayload = {
   user_id: string | null;
   event_key: string;
   payload?: Record<string, unknown>;
+  entity?: string;
+  entity_id?: string;
 };
 
 const JSON_HEADERS = {
@@ -75,12 +77,21 @@ Deno.serve(async (req) => {
   const supabase = createSupabaseClient();
   const timestamp = new Date().toISOString();
 
+  const segments = payload.event_key.split(".");
+  const category = segments[0] ?? null;
+  const workflow = segments.length > 1 ? segments.slice(0, 2).join(".") : null;
+
   const { data, error } = await supabase
     .from("analytics_events")
     .insert({
       organization_id: payload.organization_id,
       user_id: payload.user_id,
       event_key: payload.event_key,
+      event_type: payload.event_key,
+      category,
+      workflow,
+      entity: payload.entity ?? null,
+      entity_id: payload.entity_id ?? null,
       payload: {
         ...payload.payload,
         received_at: timestamp,
