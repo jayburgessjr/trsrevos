@@ -1,6 +1,20 @@
 'use client';
 
+import Link from 'next/link';
 import React, { useMemo, useState } from 'react';
+
+import { TRS_CARD } from '@/lib/style';
+import { cn } from '@/lib/utils';
+import { Badge } from '@/ui/badge';
+import { Button } from '@/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/ui/card';
 const money = (n: number) =>
   n.toLocaleString(undefined, {
     style: 'currency',
@@ -12,9 +26,11 @@ const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
 function Sparkline({
   points,
   height = 40,
+  className,
 }: {
   points: number[];
   height?: number;
+  className?: string;
 }) {
   const max = Math.max(...points);
   const min = Math.min(...points);
@@ -29,7 +45,7 @@ function Sparkline({
     })
     .join(' ');
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="h-10 w-full">
+    <svg viewBox={`0 0 ${w} ${h}`} className={cn('h-10 w-full', className)}>
       <path d={d} fill="none" strokeWidth={2} stroke="currentColor" opacity={0.85} />
     </svg>
   );
@@ -55,10 +71,10 @@ function SliderField({
   help?: string;
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <div className="flex items-baseline justify-between">
-        <label className="text-sm font-medium text-neutral-200">{label}</label>
-        <span className="text-xs text-neutral-400">{help}</span>
+        <label className="text-sm font-medium text-gray-700">{label}</label>
+        <span className="text-xs text-gray-400">{help}</span>
       </div>
       <div className="flex items-center gap-3">
         <input
@@ -68,16 +84,16 @@ function SliderField({
           step={step}
           value={value}
           onChange={(e) => setValue(Number(e.target.value))}
-          className="w-full accent-white"
+          className="w-full accent-[color:var(--color-accent)]"
         />
-        <div className="flex w-24 items-center gap-1">
+        <div className="flex w-24 items-center gap-2">
           <input
             type="number"
             value={value}
             onChange={(e) => setValue(Number(e.target.value))}
-            className="w-full rounded border border-neutral-700 bg-neutral-900 px-2 py-1 text-right"
+            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-right text-sm text-gray-900 shadow-sm focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
           />
-          <span className="text-sm text-neutral-400">{suffix}</span>
+          <span className="text-sm text-gray-500">{suffix}</span>
         </div>
       </div>
     </div>
@@ -96,18 +112,18 @@ function MoneyField({
   help?: string;
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <div className="flex items-baseline justify-between">
-        <label className="text-sm font-medium text-neutral-200">{label}</label>
-        <span className="text-xs text-neutral-400">{help}</span>
+        <label className="text-sm font-medium text-gray-700">{label}</label>
+        <span className="text-xs text-gray-400">{help}</span>
       </div>
       <div className="relative">
-        <span className="absolute left-2 top-1.5 text-neutral-500">$</span>
+        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">$</span>
         <input
           type="number"
           value={value}
           onChange={(e) => setValue(Math.max(0, Number(e.target.value)))}
-          className="w-full rounded border border-neutral-700 bg-neutral-900 pl-6 pr-3 py-1.5"
+          className="w-full rounded-md border border-gray-300 bg-white py-2 pl-7 pr-3 text-right text-sm text-gray-900 shadow-sm focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
         />
       </div>
     </div>
@@ -126,19 +142,19 @@ function PercentField({
   help?: string;
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <div className="flex items-baseline justify-between">
-        <label className="text-sm font-medium text-neutral-200">{label}</label>
-        <span className="text-xs text-neutral-400">{help}</span>
+        <label className="text-sm font-medium text-gray-700">{label}</label>
+        <span className="text-xs text-gray-400">{help}</span>
       </div>
       <div className="relative">
         <input
           type="number"
           value={value}
           onChange={(e) => setValue(Math.max(0, Number(e.target.value)))}
-          className="w-full rounded border border-neutral-700 bg-neutral-900 py-1.5 pl-3 pr-6 text-right"
+          className="w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-8 text-right text-sm text-gray-900 shadow-sm focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
         />
-        <span className="absolute right-2 top-1.5 text-neutral-500">%</span>
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">%</span>
       </div>
     </div>
   );
@@ -154,10 +170,10 @@ function Kpi({
   sub?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-neutral-800 bg-neutral-950/60 p-4">
-      <div className="text-xs uppercase tracking-wide text-neutral-400">{label}</div>
-      <div className="mt-1 text-2xl font-semibold text-neutral-100">{value}</div>
-      {sub && <div className="mt-1 text-xs text-neutral-400">{sub}</div>}
+    <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">{label}</div>
+      <div className="mt-2 text-2xl font-semibold text-gray-900">{value}</div>
+      {sub && <div className="mt-1 text-xs text-gray-500">{sub}</div>}
     </div>
   );
 }
@@ -274,8 +290,6 @@ export default function RevenueClearInteractiveModel() {
   const [months, setMonths] = useState(6);
   const [programFee, setProgramFee] = useState(45000);
 
-  const [view, setView] = useState<'model' | 'howto'>('model');
-
   const sim = useMemo(
     () =>
       simulateRevenue({
@@ -307,296 +321,323 @@ export default function RevenueClearInteractiveModel() {
   );
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 text-neutral-100">
-      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold md:text-3xl">
-            Revenue Clear — Interactive Model
-          </h1>
-          <p className="mt-1 max-w-2xl text-neutral-400">
-            Change three levers. See cash fast. This mirrors what TRS installs in
-            30–45 days: price discipline, activation uplift, and churn repair —
-            visualized against your baseline.
-          </p>
-        </div>
-        <div className="min-w-[260px]">
-          <MoneyField
-            label="Program Fee"
-            value={programFee}
-            setValue={setProgramFee}
-            help="Flat fee used for ROI/payback"
-          />
-        </div>
-      </div>
-
-      <div className="mb-4 flex items-center gap-2">
-        <button
-          onClick={() => setView('model')}
-          className={`rounded-full border bg-neutral-950/60 px-3 py-1.5 ${
-            view === 'model'
-              ? 'border-white text-white'
-              : 'border-neutral-700 text-neutral-400'
-          }`}
-        >
-          Model
-        </button>
-        <button
-          onClick={() => setView('howto')}
-          className={`rounded-full border bg-neutral-950/60 px-3 py-1.5 ${
-            view === 'howto'
-              ? 'border-white text-white'
-              : 'border-neutral-700 text-neutral-400'
-          }`}
-        >
-          How to use
-        </button>
-      </div>
-
-      {view === 'model' && (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="space-y-6 lg:col-span-1">
-            <div className="rounded-2xl border border-neutral-800 bg-neutral-950/60 p-4">
-              <div className="text-sm font-semibold">Baseline</div>
-              <div className="mt-3 space-y-3">
-                <MoneyField
-                  label="Current MRR"
-                  value={currentMRR}
-                  setValue={setCurrentMRR}
-                  help="Your current monthly recurring revenue"
-                />
-                <MoneyField
-                  label="Baseline New MRR / mo"
-                  value={baselineNewMRR}
-                  setValue={setBaselineNewMRR}
-                  help="New sales inflow per month"
-                />
-                <PercentField
-                  label="Monthly Churn %"
-                  value={churnPct}
-                  setValue={setChurnPct}
-                  help="e.g., 3–6% typical"
-                />
-                <PercentField
-                  label="Monthly Expansion % of MRR"
-                  value={expansionPct}
-                  setValue={setExpansionPct}
-                  help="e.g., 0.5–2% typical"
-                />
-                <PercentField
-                  label="Gross Margin %"
-                  value={grossMarginPct}
-                  setValue={setGrossMarginPct}
-                  help="For ROI math"
-                />
-              </div>
+    <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
+      <Card className={cn(TRS_CARD, 'overflow-hidden')}>
+        <CardHeader className="gap-4 border-gray-200">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="outline">Revenue Clear</Badge>
+            <Badge variant="success">Interactive model</Badge>
+            <Badge variant="default">Board-ready</Badge>
+          </div>
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div className="space-y-3">
+              <CardTitle className="text-2xl text-black md:text-3xl">Revenue Clear scenario model</CardTitle>
+              <CardDescription className="max-w-2xl text-sm text-gray-600">
+                Change the four core levers that Revenue Clear tightens to show ROI in minutes. Bring it to prospect calls or
+                executive reviews before opening the full workspace.
+              </CardDescription>
             </div>
-
-            <div className="rounded-2xl border border-neutral-800 bg-neutral-950/60 p-4">
-              <div className="text-sm font-semibold">TRS Interventions</div>
-              <div className="mt-3 space-y-4">
-                <SliderField
-                  label="Pricing Uplift"
-                  value={pricingUpliftPct}
-                  setValue={setPricingUpliftPct}
-                  min={0}
-                  max={40}
-                  step={1}
-                  help="ARPU step-up"
-                />
-                <SliderField
-                  label="Activation Lift"
-                  value={activationLiftPct}
-                  setValue={setActivationLiftPct}
-                  min={0}
-                  max={200}
-                  step={5}
-                  help="More new MRR"
-                />
-                <SliderField
-                  label="Churn Reduction"
-                  value={churnReductionPct}
-                  setValue={setChurnReductionPct}
-                  min={0}
-                  max={80}
-                  step={5}
-                  help="Lower cancel rate"
-                />
-                <SliderField
-                  label="Expansion Lift"
-                  value={expansionLiftPct}
-                  setValue={setExpansionLiftPct}
-                  min={0}
-                  max={200}
-                  step={5}
-                  help="Higher expansion %"
-                />
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-neutral-800 bg-neutral-950/60 p-4">
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold">Horizon</div>
-                <div className="text-xs text-neutral-400">
-                  {months} month{months !== 1 ? 's' : ''}
-                </div>
-              </div>
-              <input
-                type="range"
-                min={1}
-                max={12}
-                value={months}
-                onChange={(e) => setMonths(Number(e.target.value))}
-                className="mt-2 w-full accent-white"
-              />
+            <div className="flex w-full max-w-sm flex-col gap-2 rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">
+                Launch the module
+              </span>
+              <Button asChild size="md" className="w-full">
+                <Link href="/revenue-clear">Open Revenue Clear workspace</Link>
+              </Button>
+              <p className="text-xs text-gray-500">
+                Guided intake, autosave, AI summaries, and board-ready exports live inside RevOS.
+              </p>
             </div>
           </div>
+        </CardHeader>
+        <CardFooter className="flex flex-wrap items-center justify-start gap-2 border-gray-200 text-xs text-gray-600">
+          {['Pricing discipline', 'Activation lift', 'Churn repair', 'Expansion growth'].map((item) => (
+            <span key={item} className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1">
+              {item}
+            </span>
+          ))}
+        </CardFooter>
+      </Card>
 
-          <div className="space-y-6 lg:col-span-2">
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              <Kpi label="Added Net MRR (end of horizon)" value={money(sim.totals.totalAddedMRR)} />
-              <Kpi
-                label="Cumulative Added Gross Profit"
-                value={money(sim.totals.cumulativeAddedGrossProfit)}
+      <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
+        <div className="space-y-6">
+          <Card className={TRS_CARD}>
+            <CardHeader className="border-gray-200">
+              <CardTitle className="text-lg text-black">Baseline inputs</CardTitle>
+              <CardDescription className="text-sm text-gray-500">
+                Anchor the model with current revenue run rate and retention.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <MoneyField
+                label="Current MRR"
+                value={currentMRR}
+                setValue={setCurrentMRR}
+                help="Monthly recurring revenue today"
               />
-              <Kpi label="ROI (gross profit / fee)" value={pct(sim.totals.roi)} sub="Excludes overhead" />
-              <Kpi
-                label="Payback"
-                value={sim.totals.paybackMonth ? `${sim.totals.paybackMonth} mo` : '> horizon'}
+              <MoneyField
+                label="Baseline new MRR / mo"
+                value={baselineNewMRR}
+                setValue={setBaselineNewMRR}
+                help="Inbound sales added each month"
               />
-            </div>
+              <PercentField
+                label="Monthly churn %"
+                value={churnPct}
+                setValue={setChurnPct}
+                help="Logo or revenue churn rate"
+              />
+              <PercentField
+                label="Monthly expansion % of MRR"
+                value={expansionPct}
+                setValue={setExpansionPct}
+                help="Existing customers growing each month"
+              />
+              <PercentField
+                label="Gross margin %"
+                value={grossMarginPct}
+                setValue={setGrossMarginPct}
+                help="Needed for ROI math"
+              />
+            </CardContent>
+          </Card>
 
-            <div className="rounded-2xl border border-neutral-800 bg-neutral-950/60 p-5">
-              <div className="flex items-end justify-between gap-4">
-                <div>
-                  <div className="text-sm font-semibold">Projected MRR with TRS vs Baseline</div>
-                  <div className="text-xs text-neutral-400">
-                    End: {money(sim.totals.endMRRWithTRS)} vs {money(sim.totals.endMRRNoTRS)}
-                  </div>
-                </div>
-                <div className="text-right text-xs text-neutral-400">Live preview</div>
-              </div>
-              <div className="mt-2 grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="rounded-xl border border-neutral-800 p-3">
-                  <div className="mb-1 text-xs text-neutral-400">With TRS</div>
-                  <Sparkline points={sim.baseSeries} />
-                </div>
-                <div className="rounded-xl border border-neutral-800 p-3 opacity-80">
-                  <div className="mb-1 text-xs text-neutral-400">Baseline</div>
-                  <Sparkline points={sim.cfSeries} />
-                </div>
-              </div>
-            </div>
+          <Card className={TRS_CARD}>
+            <CardHeader className="border-gray-200">
+              <CardTitle className="text-lg text-black">Revenue Clear levers</CardTitle>
+              <CardDescription className="text-sm text-gray-500">
+                Dial in the lifts that the program drives during the first 30–45 days.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <SliderField
+                label="Pricing uplift"
+                value={pricingUpliftPct}
+                setValue={setPricingUpliftPct}
+                min={0}
+                max={40}
+                step={1}
+                help="ARPU step-up"
+              />
+              <SliderField
+                label="Activation lift"
+                value={activationLiftPct}
+                setValue={setActivationLiftPct}
+                min={0}
+                max={200}
+                step={5}
+                help="More new MRR"
+              />
+              <SliderField
+                label="Churn reduction"
+                value={churnReductionPct}
+                setValue={setChurnReductionPct}
+                min={0}
+                max={80}
+                step={5}
+                help="Lower cancel rate"
+              />
+              <SliderField
+                label="Expansion lift"
+                value={expansionLiftPct}
+                setValue={setExpansionLiftPct}
+                min={0}
+                max={200}
+                step={5}
+                help="Higher expansion %"
+              />
+            </CardContent>
+          </Card>
 
-            <div className="overflow-hidden rounded-2xl border border-neutral-800">
-              <div className="bg-neutral-950/60 px-4 py-3 text-sm font-semibold">Month-by-Month Impact</div>
+          <Card className={TRS_CARD}>
+            <CardHeader className="border-gray-200">
+              <CardTitle className="text-lg text-black">Program economics</CardTitle>
+              <CardDescription className="text-sm text-gray-500">
+                Set the engagement fee and time horizon that you want to pressure test.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <MoneyField
+                label="Program fee"
+                value={programFee}
+                setValue={setProgramFee}
+                help="Used for ROI and payback"
+              />
+              <SliderField
+                label="Model horizon"
+                value={months}
+                setValue={setMonths}
+                min={1}
+                max={12}
+                step={1}
+                suffix="mo"
+                help="1–12 month window"
+              />
+              <p className="text-xs text-gray-500">
+                Outputs refresh automatically as you adjust the horizon or fee assumptions.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-6">
+          <Card className={TRS_CARD}>
+            <CardHeader className="border-gray-200">
+              <CardTitle className="text-lg text-black">Revenue Clear impact</CardTitle>
+              <CardDescription className="text-sm text-gray-500">
+                Results update instantly so you can narrate ROI live with your prospect.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                <Kpi label="Added net MRR" value={money(sim.totals.totalAddedMRR)} sub="End of horizon" />
+                <Kpi
+                  label="Added gross profit"
+                  value={money(sim.totals.cumulativeAddedGrossProfit)}
+                  sub="Cumulative"
+                />
+                <Kpi label="ROI" value={pct(sim.totals.roi)} sub="Gross profit / fee" />
+                <Kpi
+                  label="Payback"
+                  value={sim.totals.paybackMonth ? `${sim.totals.paybackMonth} mo` : 'Beyond horizon'}
+                />
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="rounded-lg border border-gray-200 bg-white p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">With TRS</p>
+                  <Sparkline points={sim.baseSeries} className="text-sky-500" />
+                </div>
+                <div className="rounded-lg border border-gray-200 bg-white p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">Baseline</p>
+                  <Sparkline points={sim.cfSeries} className="text-gray-400" />
+                </div>
+              </div>
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
+                <p className="font-semibold text-gray-900">End of horizon comparison</p>
+                <p className="mt-1">
+                  With Revenue Clear: {money(sim.totals.endMRRWithTRS)} · Baseline: {money(sim.totals.endMRRNoTRS)}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className={TRS_CARD}>
+            <CardHeader className="border-gray-200">
+              <CardTitle className="text-lg text-black">Month-by-month impact</CardTitle>
+              <CardDescription className="text-sm text-gray-500">
+                Export this table or screenshot it for follow-up notes and board decks.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-0 pb-0">
               <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr className="bg-neutral-950/60 text-neutral-300">
-                      <th className="px-4 py-2 text-left">Month</th>
-                      <th className="px-4 py-2 text-right">MRR (Baseline)</th>
-                      <th className="px-4 py-2 text-right">MRR (With TRS)</th>
-                      <th className="px-4 py-2 text-right">Added MRR</th>
-                      <th className="px-4 py-2 text-right">Added Gross Profit</th>
-                      <th className="px-4 py-2 text-right">Cumulative GP</th>
+                <table className="min-w-full divide-y divide-gray-200 text-sm text-gray-700">
+                  <thead className="bg-gray-50 text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
+                    <tr>
+                      <th className="px-5 py-3 text-left">Month</th>
+                      <th className="px-5 py-3 text-right">MRR (baseline)</th>
+                      <th className="px-5 py-3 text-right">MRR (with TRS)</th>
+                      <th className="px-5 py-3 text-right">Added MRR</th>
+                      <th className="px-5 py-3 text-right">Added gross profit</th>
+                      <th className="px-5 py-3 text-right">Cumulative GP</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-gray-100">
                     {sim.monthRows.map((r) => (
-                      <tr key={r.month} className="odd:bg-neutral-950/40 even:bg-neutral-950/20">
-                        <td className="px-4 py-2">{r.month}</td>
-                        <td className="px-4 py-2 text-right">{money(r.cfMRR)}</td>
-                        <td className="px-4 py-2 text-right">{money(r.baseMRR)}</td>
-                        <td className="px-4 py-2 text-right">{money(r.addedMRR)}</td>
-                        <td className="px-4 py-2 text-right">{money(r.addedGrossProfit)}</td>
-                        <td className="px-4 py-2 text-right">{money(r.cumulativeAddedGrossProfit)}</td>
+                      <tr key={r.month} className="odd:bg-white even:bg-gray-50">
+                        <td className="px-5 py-3 text-left">{r.month}</td>
+                        <td className="px-5 py-3 text-right">{money(r.cfMRR)}</td>
+                        <td className="px-5 py-3 text-right">{money(r.baseMRR)}</td>
+                        <td className="px-5 py-3 text-right">{money(r.addedMRR)}</td>
+                        <td className="px-5 py-3 text-right">{money(r.addedGrossProfit)}</td>
+                        <td className="px-5 py-3 text-right">{money(r.cumulativeAddedGrossProfit)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            <div className="space-y-3 rounded-2xl border border-neutral-800 bg-neutral-950/60 p-4">
-              <div className="text-sm font-semibold">Model Notes</div>
-              <ul className="list-disc space-y-2 pl-5 text-sm text-neutral-300">
-                <li>Pricing uplift applies immediately to the base and to new inflows.</li>
-                <li>
-                  Activation lift boosts new MRR inflow. Churn reduction and expansion lift modify monthly rates.
-                </li>
-                <li>ROI uses added gross profit only and the Program Fee above. Taxes/overhead excluded.</li>
-                <li>Use this for directional decisions. We calibrate exact rates during the Clarity Audit.</li>
+          <Card className={TRS_CARD}>
+            <CardHeader className="border-gray-200">
+              <CardTitle className="text-lg text-black">Model notes</CardTitle>
+              <CardDescription className="text-sm text-gray-500">
+                Keep these assumptions in mind when you share the numbers.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="list-disc space-y-2 pl-5 text-sm text-gray-600">
+                <li>Pricing uplift applies immediately to baseline revenue and to new inflows.</li>
+                <li>Activation lift boosts new MRR inflow. Churn reduction and expansion lift modify monthly rates.</li>
+                <li>ROI uses added gross profit only and the program fee you set above.</li>
+                <li>Use this for directional alignment. We calibrate exact rates during the Clarity Audit.</li>
               </ul>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
-      )}
+      </div>
 
-      {view === 'howto' && (
-        <div className="mx-auto max-w-3xl space-y-4 rounded-2xl border border-neutral-800 bg-neutral-950/60 p-6">
-          <h2 className="text-xl font-semibold">How to use</h2>
-          <div className="space-y-3 text-sm text-neutral-300">
-            <div>
-              <div className="font-medium text-neutral-100">What it is</div>
-              <p>
-                It’s a money calculator for your business. You move a few sliders, and it shows how much more money you can make
-                if TRS fixes pricing, sign-ups, and churn.
-              </p>
-            </div>
-            <div>
-              <div className="font-medium text-neutral-100">What you tell it</div>
-              <ul className="list-disc space-y-1 pl-5">
-                <li>How much you make each month now</li>
-                <li>How many new dollars you add each month</li>
-                <li>How many customers leave each month (churn)</li>
-                <li>How much customers usually grow each month (expansion)</li>
-                <li>Your profit margin and the TRS fee</li>
-              </ul>
-            </div>
-            <div>
-              <div className="font-medium text-neutral-100">What the sliders do (the TRS fixes)</div>
-              <ul className="list-disc space-y-1 pl-5">
-                <li>Pricing uplift: raise average price a bit</li>
-                <li>Activation lift: get more new customers buying</li>
-                <li>Churn reduction: fewer customers leaving</li>
-                <li>Expansion lift: existing customers buy a little more</li>
-              </ul>
-            </div>
-            <div>
-              <div className="font-medium text-neutral-100">What it shows you</div>
-              <ul className="list-disc space-y-1 pl-5">
-                <li>Extra monthly money versus doing nothing</li>
-                <li>Total profit added over time</li>
-                <li>ROI compared to the fee</li>
-                <li>When the fee pays back in months</li>
-                <li>A simple chart and a month-by-month table so you can see the change</li>
-              </ul>
-            </div>
-            <div>
-              <div className="font-medium text-neutral-100">Why this matters</div>
-              <p>
-                You use it live with a prospect. In two minutes they see, in dollars, why “Revenue Clear” is worth it and when it
-                pays for itself. No fluff—targets, cash, timing.
-              </p>
-            </div>
-            <div>
-              <div className="font-medium text-neutral-100">How to use it in a call</div>
-              <ol className="list-decimal space-y-1 pl-5">
-                <li>Enter their current numbers on the left</li>
-                <li>Nudge the four TRS sliders to realistic lifts (not crazy)</li>
-                <li>Point to payback month and ROI on the right</li>
-                <li>Save the screenshot and send it with your proposal</li>
-              </ol>
-            </div>
-            <div>
-              <div className="font-medium text-neutral-100">One-line summary</div>
-              <p>
-                It’s a live demo that turns TRS’s work into simple dollars and a payback clock.
-              </p>
-            </div>
+      <Card className={TRS_CARD}>
+        <CardHeader className="border-gray-200">
+          <CardTitle className="text-lg text-black">How to run this in a call</CardTitle>
+          <CardDescription className="text-sm text-gray-500">
+            A simple script so prospects see cash impact, timing, and next steps.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4 text-sm text-gray-600">
+          <div>
+            <p className="font-semibold text-gray-900">What it is</p>
+            <p className="mt-1">
+              A money calculator for your business. Move a few sliders and it shows how much more revenue and profit unlock when
+              TRS fixes pricing, activation, churn, and expansion.
+            </p>
           </div>
-        </div>
-      )}
+          <div>
+            <p className="font-semibold text-gray-900">What you enter</p>
+            <ul className="mt-1 list-disc space-y-1 pl-5">
+              <li>Current monthly recurring revenue</li>
+              <li>New dollars landing each month</li>
+              <li>Monthly churn rate</li>
+              <li>Monthly expansion rate</li>
+              <li>Gross margin and the TRS fee</li>
+            </ul>
+          </div>
+          <div>
+            <p className="font-semibold text-gray-900">What the sliders represent</p>
+            <ul className="mt-1 list-disc space-y-1 pl-5">
+              <li>Pricing uplift: raising average deal value</li>
+              <li>Activation lift: more new customers converting</li>
+              <li>Churn reduction: fewer accounts leaving</li>
+              <li>Expansion lift: customers buying more each month</li>
+            </ul>
+          </div>
+          <div>
+            <p className="font-semibold text-gray-900">What to point out</p>
+            <ul className="mt-1 list-disc space-y-1 pl-5">
+              <li>Incremental monthly revenue versus status quo</li>
+              <li>Total gross profit added</li>
+              <li>ROI compared to the program fee</li>
+              <li>Payback month across the horizon</li>
+              <li>The line chart and table that visualize the shift</li>
+            </ul>
+          </div>
+          <div>
+            <p className="font-semibold text-gray-900">Live call flow</p>
+            <ol className="mt-1 list-decimal space-y-1 pl-5">
+              <li>Enter their current numbers on the left.</li>
+              <li>Set realistic lifts on the four Revenue Clear sliders.</li>
+              <li>Highlight payback and ROI on the right-hand side.</li>
+              <li>Screenshot the output and include it with your proposal.</li>
+            </ol>
+          </div>
+          <div>
+            <p className="font-semibold text-gray-900">One-line summary</p>
+            <p className="mt-1">
+              It’s a live demo that turns the Revenue Clear workflow into simple dollars and a payback clock.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
