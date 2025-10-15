@@ -86,6 +86,12 @@ export const MAIN_NAV: NavItem[] = [
     roles: ['SuperAdmin', 'Admin', 'Director', 'Member', 'Client'],
   },
   {
+    label: 'Revenue Clear',
+    href: '/resources?tab=Revenue%20Clear',
+    icon: 'Calculator',
+    roles: ['SuperAdmin', 'Admin', 'Director', 'Member', 'Client'],
+  },
+  {
     label: 'Settings',
     href: '/settings',
     icon: 'Settings',

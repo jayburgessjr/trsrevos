@@ -3,16 +3,18 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { MAIN_NAV, type NavItem } from '@/lib/navigation'
+import { isActivePath } from '@/lib/utils'
 import { canSee, Role, FLAGS } from '@/core/flags/flags'
 
 export default function Sidebar({ role = 'SuperAdmin' as Role }) {
   const pathname = usePathname()
+  const currentPath = pathname ?? ''
 
   const Item = ({ label, href, flag, roles }: NavItem) => {
     if (!canSee(role, roles)) return null
     if (flag && !FLAGS[flag]) return null
 
-    const active = pathname === href || (href !== '/' && pathname.startsWith(href))
+    const active = isActivePath(currentPath, href)
 
     return (
       <Link
