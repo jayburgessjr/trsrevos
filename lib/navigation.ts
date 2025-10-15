@@ -62,6 +62,12 @@ export const MAIN_NAV: NavItem[] = [
     roles: ['SuperAdmin', 'Admin', 'Director', 'Member'],
   },
   {
+    label: 'Documents',
+    href: '/documents',
+    icon: 'Files',
+    roles: ['SuperAdmin', 'Admin', 'Director', 'Member', 'Client'],
+  },
+  {
     label: 'Agents',
     href: '/agents',
     icon: 'Bot',
