@@ -1,10 +1,14 @@
 import { notFound } from "next/navigation"
 
 import PartnerDetailView from "./PartnerDetailView"
-import { getPartner } from "@/core/partners/store"
+import { getPartner } from "@/core/partners/actions"
 
-export default function PartnerPage({ params }: { params: { id: string } }) {
-  const partner = getPartner(params.id)
+export default async function PartnerPage({
+  params,
+}: {
+  params: { id: string }
+}) {
+  const partner = await getPartner(params.id)
 
   if (!partner) {
     notFound()

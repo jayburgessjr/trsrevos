@@ -16,6 +16,15 @@ import type {
 
 const PARTNERS_PATH = "/partners"
 
+const toNumber = (value: number | string | null | undefined) => {
+  if (value === null || value === undefined) {
+    return 0
+  }
+
+  const numeric = typeof value === "number" ? value : Number(value)
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
 // ============================================================================
 // Partners CRUD
 // ============================================================================
@@ -55,10 +64,10 @@ export async function getPartners(): Promise<Partner[]> {
           stage: partner.stage as PartnerStage,
           owner: partner.owner || "",
           model: partner.model as PartnerModel,
-          potentialValue: partner.potential_value || 0,
-          warmIntroductions: partner.warm_introductions || 0,
-          mutualClients: partner.mutual_clients || 0,
-          readinessScore: partner.readiness_score || 0,
+          potentialValue: toNumber(partner.potential_value),
+          warmIntroductions: toNumber(partner.warm_introductions),
+          mutualClients: toNumber(partner.mutual_clients),
+          readinessScore: toNumber(partner.readiness_score),
           notes: partner.notes || [],
           website: partner.website || undefined,
           lastInteraction: partner.last_interaction || "",
@@ -115,10 +124,10 @@ export async function getPartner(id: string): Promise<Partner | null> {
       stage: partner.stage as PartnerStage,
       owner: partner.owner || "",
       model: partner.model as PartnerModel,
-      potentialValue: partner.potential_value || 0,
-      warmIntroductions: partner.warm_introductions || 0,
-      mutualClients: partner.mutual_clients || 0,
-      readinessScore: partner.readiness_score || 0,
+      potentialValue: toNumber(partner.potential_value),
+      warmIntroductions: toNumber(partner.warm_introductions),
+      mutualClients: toNumber(partner.mutual_clients),
+      readinessScore: toNumber(partner.readiness_score),
       notes: partner.notes || [],
       website: partner.website || undefined,
       lastInteraction: partner.last_interaction || "",
@@ -466,7 +475,7 @@ export async function getPartnerOpportunities(
       id: opp.id,
       name: opp.name,
       type: opp.type as "Referral" | "Joint Project" | "Event",
-      value: opp.value || 0,
+      value: toNumber(opp.value),
       status: opp.status as
         | "Sourcing"
         | "Introduced"
