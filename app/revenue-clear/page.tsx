@@ -8,6 +8,9 @@ import {
   listRevenueClearClients,
   listRevenuePipelineOptions,
 } from '@/modules/revenue-clear/lib/queries'
+import { PageTemplate } from '@/components/layout/PageTemplate'
+import { Badge } from '@/ui/badge'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card'
 
 const STAGES = [
   {
@@ -114,133 +117,138 @@ export default async function RevenueClearPage({ searchParams }: RevenueClearPag
   const snapshot = await getRevenueClearSnapshot(activeClientId)
   const activeClient = snapshot.client
 
-  const intro = (
-    <div className="space-y-6 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_0_60px_-25px_rgba(59,130,246,0.75)] backdrop-blur">
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-        <div className="space-y-3">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-200/80">System Overview</span>
-          <h1 className="text-3xl font-semibold text-white">Revenue Clear Command Center</h1>
-          <p className="max-w-2xl text-sm leading-relaxed text-white/70">
-            Build the Revenue Clear module inside TRS RevOS, a guided, data-driven workflow that automates the full Revenue
-            Clarity Audit — from intake through results and next-step engagement.
-          </p>
-        </div>
-        <ClientSwitcher clients={clients} activeClientId={activeClientId} />
-      </div>
+  const workflowCards = [
+    {
+      title: 'Guided workflow',
+      content: (
+        <ol className="space-y-2 text-sm text-[color:var(--color-text-muted)]">
+          {STAGES.map((stage, index) => (
+            <li key={stage.title} className="flex gap-2">
+              <span className="font-semibold text-[color:var(--color-text)]">{index + 1}.</span>
+              <span>{stage.title} — {stage.description}</span>
+            </li>
+          ))}
+        </ol>
+      ),
+    },
+    {
+      title: 'Automation layer',
+      content: (
+        <ul className="space-y-2 text-sm text-[color:var(--color-text-muted)]">
+          {AUTOMATIONS.map((automation) => (
+            <li key={automation.trigger}>
+              <span className="font-medium text-[color:var(--color-text)]">{automation.trigger}</span>
+              <span>{` · ${automation.agent} → ${automation.outcome}`}</span>
+            </li>
+          ))}
+        </ul>
+      ),
+    },
+    {
+      title: 'Deliverables',
+      content: (
+        <ul className="space-y-2 text-sm text-[color:var(--color-text-muted)]">
+          {DELIVERABLES.map((deliverable) => (
+            <li key={deliverable.stage} className="flex flex-col">
+              <span className="font-medium text-[color:var(--color-text)]">{deliverable.stage}</span>
+              <span>{`${deliverable.deliverable} · ${deliverable.format}`}</span>
+            </li>
+          ))}
+        </ul>
+      ),
+    },
+  ]
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <section className="space-y-3 rounded-2xl border border-white/10 bg-[#101225]/70 p-4">
-          <header className="space-y-1">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-white/70">Guided Workflow</h2>
-            <p className="text-xs text-white/60">Tabs in order:</p>
-          </header>
-          <ol className="space-y-3">
-            {STAGES.map((stage, index) => (
-              <li key={stage.title} className="flex items-start gap-3">
-                <span className="mt-0.5 text-xs font-semibold text-sky-200">{index + 1}.</span>
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-white">{stage.title}</p>
-                  <p className="text-xs text-white/60">{stage.description}</p>
-                </div>
-              </li>
+  const clientFacts = [
+    { label: 'Client', value: activeClient.name },
+    { label: 'Industry', value: activeClient.industry ?? 'Not set' },
+    { label: 'Revenue Model', value: activeClient.revenueModel ?? 'Not set' },
+    { label: 'Monthly Revenue', value: formatCurrency(activeClient.monthlyRevenue) },
+    { label: 'Profit Margin', value: formatPercent(activeClient.profitMargin) },
+    { label: 'Target Growth', value: formatPercent(activeClient.targetGrowth) },
+    {
+      label: 'Primary Goal',
+      value: activeClient.primaryGoal ?? 'Define growth objectives',
+      span: 'md:col-span-2 lg:col-span-1 xl:col-span-2',
+    },
+  ]
+
+  return (
+    <PageTemplate
+      title="Revenue Clear"
+      description="Guide revenue clarity engagements with autosave, Supabase persistence, and AI co-pilots."
+      actions={<ClientSwitcher clients={clients} activeClientId={activeClientId} />}
+      badges={[{ label: 'Supabase workflow' }, { label: 'AI automations' }]}
+      stats={
+        <div className="space-y-4">
+          <div className="grid gap-4 lg:grid-cols-3">
+            {workflowCards.map((card) => (
+              <Card key={card.title}>
+                <CardHeader>
+                  <CardTitle>{card.title}</CardTitle>
+                  <CardDescription>
+                    {card.title === 'Guided workflow'
+                      ? 'Stages from intake through next steps.'
+                      : card.title === 'Automation layer'
+                      ? 'Edge functions trigger Supabase writes and agents.'
+                      : 'Client-facing assets produced across the engagement.'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>{card.content}</CardContent>
+              </Card>
             ))}
-          </ol>
-        </section>
-
-        <section className="space-y-3 rounded-2xl border border-white/10 bg-[#101225]/70 p-4">
-          <header className="space-y-1">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-white/70">Automation Layer</h2>
-            <p className="text-xs text-white/60">Edge functions trigger Supabase writes + AI agents.</p>
-          </header>
-          <ul className="space-y-3 text-sm text-white/80">
-            {AUTOMATIONS.map((automation) => (
-              <li key={automation.trigger} className="space-y-1">
-                <p className="font-semibold text-white">{automation.trigger}</p>
-                <p className="text-xs text-white/60">
-                  {automation.agent} → {automation.outcome}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="space-y-3 rounded-2xl border border-white/10 bg-[#101225]/70 p-4">
-          <header className="space-y-1">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-white/70">Output Deliverables</h2>
-            <p className="text-xs text-white/60">Every stage ships a client-facing asset.</p>
-          </header>
-          <ul className="space-y-2 text-sm text-white/80">
-            {DELIVERABLES.map((deliverable) => (
-              <li key={deliverable.stage} className="flex flex-col">
-                <span className="font-semibold text-white">{deliverable.stage}</span>
-                <span className="text-xs text-white/60">
-                  {deliverable.deliverable} · {deliverable.format}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {[
-          { label: 'Client', value: activeClient.name },
-          { label: 'Industry', value: activeClient.industry ?? 'Not set' },
-          { label: 'Revenue Model', value: activeClient.revenueModel ?? 'Not set' },
-          { label: 'Monthly Revenue', value: formatCurrency(activeClient.monthlyRevenue) },
-          { label: 'Profit Margin', value: formatPercent(activeClient.profitMargin) },
-          { label: 'Target Growth', value: formatPercent(activeClient.targetGrowth) },
-          { label: 'Primary Goal', value: activeClient.primaryGoal ?? 'Define growth objectives', span: 'md:col-span-2 lg:col-span-1 xl:col-span-2' },
-        ].map((fact) => (
-          <div
-            key={fact.label}
-            className={`rounded-2xl border border-white/10 bg-white/5 p-4 text-left shadow-inner shadow-black/20 ${fact.span ?? ''}`}
-          >
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">{fact.label}</p>
-            <p className="mt-1 text-base font-semibold text-white">{fact.value}</p>
           </div>
-        ))}
-      </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-2xl border border-white/10 bg-[#101225]/70 p-4">
-          <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Database Schema</h3>
-          <ul className="mt-2 grid grid-cols-2 gap-2 text-xs text-white/70">
-            {SCHEMA_MODELS.map((model) => (
-              <li key={model} className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-center">
-                {model}
-              </li>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Database models</CardTitle>
+                <CardDescription>Supabase tables backing the workflow.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2 text-sm text-[color:var(--color-text-muted)]">
+                  {SCHEMA_MODELS.map((model) => (
+                    <Badge key={model} variant="outline">
+                      {model}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Environment</CardTitle>
+                <CardDescription>Required variables for Supabase + AI orchestration.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm text-[color:var(--color-text-muted)]">
+                  {ENV_VARS.map((env) => (
+                    <li key={env} className="flex items-center justify-between rounded-md border border-[color:var(--color-border)] bg-white px-3 py-2">
+                      <span>{env}</span>
+                      <span className="text-xs uppercase tracking-[0.18em] text-[color:var(--color-text-muted)]">Required</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {clientFacts.map((fact) => (
+              <Card key={fact.label} className={fact.span}>
+                <CardContent className="space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--color-text-muted)]">
+                    {fact.label}
+                  </p>
+                  <p className="text-base font-semibold text-[color:var(--color-text)]">{fact.value}</p>
+                </CardContent>
+              </Card>
             ))}
-          </ul>
+          </div>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-[#101225]/70 p-4">
-          <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Environment</h3>
-          <ul className="mt-2 space-y-2 text-xs text-white/70">
-            {ENV_VARS.map((env) => (
-              <li key={env} className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                <span>{env}</span>
-                <span className="text-[10px] uppercase tracking-widest text-sky-200/80">Required</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="rounded-2xl border border-white/10 bg-[#101225]/70 p-4">
-          <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Automation Stack</h3>
-          <p className="mt-2 text-xs text-white/70">
-            Supabase Edge Functions invoke OpenAI agents with structured JSON prompts. Results persist back into the matching
-            tables and expose downloadable assets for each stage.
-          </p>
-        </div>
-        <div className="rounded-2xl border border-white/10 bg-[#101225]/70 p-4">
-          <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Navigation Tips</h3>
-          <p className="mt-2 text-xs text-white/70">
-            Progress stays pinned with autosave indicators. The RevBoard tab mirrors live TRS Score updates, while Results and
-            Next Steps export PDF packages for client delivery.
-          </p>
-        </div>
-      </div>
-    </div>
+      }
+    >
+      <RevenueClearShell snapshot={snapshot} />
+    </PageTemplate>
   )
-
-  return <RevenueClearShell snapshot={snapshot} intro={intro} />
 }

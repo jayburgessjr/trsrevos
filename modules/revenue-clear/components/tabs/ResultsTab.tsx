@@ -59,53 +59,57 @@ export default function ResultsTab({ value, status, onChange, onGenerateReport }
     <div className="space-y-6">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h3 className="text-xl font-semibold">Results & ROI</h3>
-          <p className="text-sm text-white/60">Finalize the impact narrative with before/after analytics and ROI calculations.</p>
+          <h3 className="text-xl font-semibold text-[color:var(--color-text)]">Results & ROI</h3>
+          <p className="text-sm text-[color:var(--color-text-muted)]">
+            Finalize the impact narrative with before/after analytics and ROI calculations.
+          </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-right">
-            <p className="text-xs uppercase tracking-wide text-white/60">ROI Lift</p>
-            <p className="text-lg font-semibold text-white">{roiPercent}%</p>
-            <p className="text-xs text-white/50">Payback {value.paybackPeriod} months</p>
+          <div className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-4 py-3 text-right">
+            <p className="text-xs uppercase tracking-wide text-[color:var(--color-text-muted)]">ROI Lift</p>
+            <p className="text-lg font-semibold text-[color:var(--color-text)]">{roiPercent}%</p>
+            <p className="text-xs text-[color:var(--color-text-muted)]">Payback {value.paybackPeriod} months</p>
           </div>
-          <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/70">{statusLabel}</span>
+          <span className="rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 py-1 text-xs text-[color:var(--color-text-muted)]">
+            {statusLabel}
+          </span>
           <Button onClick={onGenerateReport} disabled={status === 'running'}>
             Generate Report
           </Button>
         </div>
       </header>
 
-      <section className="rounded-xl border border-white/10 bg-white/5 p-5">
+      <section className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-5">
         <div className="h-64 w-full">
           <ResponsiveContainer>
             <BarChart data={chartData} margin={{ left: -10 }}>
-              <CartesianGrid stroke="rgba(255,255,255,0.08)" strokeDasharray="3 3" />
-              <XAxis dataKey="name" stroke="#A3A7C9" tick={{ fontSize: 12 }} />
-              <YAxis stroke="#A3A7C9" tick={{ fontSize: 12 }} />
+              <CartesianGrid stroke="rgba(148,163,184,0.2)" strokeDasharray="3 3" />
+              <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12, fill: '#475569' }} />
+              <YAxis stroke="#94a3b8" tick={{ fontSize: 12, fill: '#475569' }} />
               <Tooltip
-                contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }}
-                labelStyle={{ color: '#fff' }}
+                contentStyle={{ background: '#ffffff', border: '1px solid rgba(148,163,184,0.4)', borderRadius: 12 }}
+                labelStyle={{ color: '#0f172a' }}
               />
               <Legend />
               <Bar dataKey="before" name="Before" fill="#94a3b8" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="after" name="After" fill="#34d399" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="after" name="After" fill="#10b981" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-xl border border-white/10 bg-white/5">
+      <section className="overflow-hidden rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)]">
         <Table>
           <TableHeader>
-            <TableRow className="border-white/10 bg-white/10 text-left text-xs uppercase tracking-wide text-white/60">
-              <TableHead className="text-white/70">Metric</TableHead>
-              <TableHead className="text-white/70">Before</TableHead>
-              <TableHead className="text-white/70">After</TableHead>
+            <TableRow className="border-b border-[color:var(--color-border)] bg-white text-left text-xs uppercase tracking-wide text-[color:var(--color-text-muted)]">
+              <TableHead className="text-[color:var(--color-text)]">Metric</TableHead>
+              <TableHead className="text-[color:var(--color-text)]">Before</TableHead>
+              <TableHead className="text-[color:var(--color-text)]">After</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            <TableRow>
-              <TableCell>Monthly Recurring Revenue</TableCell>
+            <TableRow className="border-b border-[color:var(--color-border)] last:border-b-0">
+              <TableCell className="text-[color:var(--color-text-muted)]">Monthly Recurring Revenue</TableCell>
               <TableCell>
                 <Input
                   type="number"
@@ -121,8 +125,8 @@ export default function ResultsTab({ value, status, onChange, onGenerateReport }
                 />
               </TableCell>
             </TableRow>
-            <TableRow>
-              <TableCell>Monthly Profit</TableCell>
+            <TableRow className="border-b border-[color:var(--color-border)] last:border-b-0">
+              <TableCell className="text-[color:var(--color-text-muted)]">Monthly Profit</TableCell>
               <TableCell>
                 <Input
                   type="number"
@@ -138,8 +142,8 @@ export default function ResultsTab({ value, status, onChange, onGenerateReport }
                 />
               </TableCell>
             </TableRow>
-            <TableRow>
-              <TableCell>Total Gain</TableCell>
+            <TableRow className="border-b border-[color:var(--color-border)] last:border-b-0">
+              <TableCell className="text-[color:var(--color-text-muted)]">Total Gain</TableCell>
               <TableCell colSpan={2}>
                 <Input
                   type="number"
@@ -149,7 +153,7 @@ export default function ResultsTab({ value, status, onChange, onGenerateReport }
               </TableCell>
             </TableRow>
             <TableRow>
-              <TableCell>Payback Period (months)</TableCell>
+              <TableCell className="text-[color:var(--color-text-muted)]">Payback Period (months)</TableCell>
               <TableCell colSpan={2}>
                 <Input
                   type="number"
@@ -163,8 +167,11 @@ export default function ResultsTab({ value, status, onChange, onGenerateReport }
       </section>
 
       {value.reportUrl ? (
-        <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-5 py-4 text-sm text-emerald-200">
-          Report ready: <a href={value.reportUrl} className="underline" target="_blank" rel="noreferrer">Download ROI Report</a>
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-700">
+          Report ready:{' '}
+          <a href={value.reportUrl} className="font-medium underline" target="_blank" rel="noreferrer">
+            Download ROI Report
+          </a>
         </div>
       ) : null}
     </div>

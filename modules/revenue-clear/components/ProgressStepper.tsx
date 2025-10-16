@@ -5,11 +5,11 @@ import { cn } from '@/lib/utils'
 import { RevenueClearStageKey, StageStatus } from '../lib/types'
 
 const STATUS_COLORS: Record<StageStatus, string> = {
-  idle: 'bg-[color:var(--color-surface-muted)] text-[color:var(--color-text-muted)] border-[color:var(--color-outline)]',
-  saving: 'bg-amber-500/20 text-amber-200 border-amber-400/60',
-  saved: 'bg-emerald-500/20 text-emerald-200 border-emerald-400/60',
-  running: 'bg-sky-500/20 text-sky-200 border-sky-400/60',
-  error: 'bg-rose-500/20 text-rose-200 border-rose-400/60',
+  idle: 'bg-[color:var(--color-surface-muted)] text-[color:var(--color-text-muted)] border-[color:var(--color-border)]',
+  saving: 'border-amber-200 bg-amber-50 text-amber-700',
+  saved: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  running: 'border-sky-200 bg-sky-50 text-sky-700',
+  error: 'border-rose-200 bg-rose-50 text-rose-700',
 }
 
 type StepperItem = {
@@ -27,8 +27,8 @@ type ProgressStepperProps = {
 
 export function ProgressStepper({ items, active, onSelect }: ProgressStepperProps) {
   return (
-    <nav className="sticky top-0 z-10 -mx-6 mb-6 flex flex-col gap-3 border-b border-[color:var(--color-outline)] bg-[color:var(--color-surface)]/90 px-6 py-4 backdrop-blur">
-      <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[color:var(--color-text-muted)]">
+    <nav className="flex flex-col gap-3 rounded-lg border border-[color:var(--color-border)] bg-white p-4 shadow-sm">
+      <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--color-text-muted)]">
         Revenue Clear Workflow
       </h2>
       <div className="grid gap-3 md:grid-cols-7">
@@ -40,13 +40,19 @@ export function ProgressStepper({ items, active, onSelect }: ProgressStepperProp
               type="button"
               onClick={() => onSelect?.(item.key)}
               className={cn(
-                'flex flex-col items-start gap-1 rounded-xl border px-3 py-2 text-left transition',
+                'flex flex-col items-start gap-1 rounded-lg border px-3 py-2 text-left transition',
                 STATUS_COLORS[item.status],
-                isActive ? 'ring-2 ring-[color:var(--color-accent)] ring-offset-2 ring-offset-[color:var(--color-surface)]' : '',
+                isActive
+                  ? 'ring-2 ring-[color:var(--color-accent)] ring-offset-2 ring-offset-white'
+                  : 'hover:border-[color:var(--color-accent)]/40 hover:bg-[color:var(--color-surface-muted)]',
               )}
             >
-              <span className="text-xs font-semibold uppercase tracking-wide">{item.label}</span>
-              <span className="line-clamp-2 text-[11px] text-white/80">{item.description}</span>
+              <span className="text-xs font-semibold uppercase tracking-wide text-[color:var(--color-text)]">
+                {item.label}
+              </span>
+              <span className="line-clamp-2 text-[11px] text-[color:var(--color-text-muted)]">
+                {item.description}
+              </span>
             </button>
           )
         })}

@@ -91,26 +91,28 @@ export default function RevboardTab({ metrics, status, trsScore, interventions, 
     <div className="space-y-6">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h3 className="text-xl font-semibold">RevBoard Metrics</h3>
-          <p className="text-sm text-white/60">
+          <h3 className="text-xl font-semibold text-[color:var(--color-text)]">RevBoard Metrics</h3>
+          <p className="text-sm text-[color:var(--color-text-muted)]">
             Track KPI performance against baseline and surface the TRS Score across the operating rhythm.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-center">
-            <p className="text-xs uppercase tracking-wide text-white/60">TRS Score</p>
-            <p className="text-2xl font-semibold text-white">{trsScore}</p>
+          <div className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-4 py-3 text-center">
+            <p className="text-xs uppercase tracking-wide text-[color:var(--color-text-muted)]">TRS Score</p>
+            <p className="text-2xl font-semibold text-[color:var(--color-text)]">{trsScore}</p>
           </div>
-          <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/70">{statusLabel}</span>
+          <span className="rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 py-1 text-xs text-[color:var(--color-text-muted)]">
+            {statusLabel}
+          </span>
         </div>
       </header>
 
       <section className="grid gap-3 md:grid-cols-4">
         {metricCards.map((metric) => (
-          <div key={metric.name} className="space-y-1 rounded-xl border border-white/10 bg-white/5 p-4">
-            <p className="text-xs uppercase tracking-wide text-white/60">{metric.name}</p>
-            <p className="text-lg font-semibold text-white">{formatCurrency(metric.current)}</p>
-            <p className="text-xs text-white/50">
+          <div key={metric.name} className="space-y-1 rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-4">
+            <p className="text-xs uppercase tracking-wide text-[color:var(--color-text-muted)]">{metric.name}</p>
+            <p className="text-lg font-semibold text-[color:var(--color-text)]">{formatCurrency(metric.current)}</p>
+            <p className="text-xs text-[color:var(--color-text-muted)]">
               Baseline {formatCurrency(metric.baseline)} • Δ {metric.delta >= 0 ? '+' : ''}
               {metric.delta.toFixed(2)}
             </p>
@@ -119,61 +121,61 @@ export default function RevboardTab({ metrics, status, trsScore, interventions, 
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-          <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-white/60">Momentum vs Baseline</h4>
+        <div className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-4">
+          <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-[color:var(--color-text-muted)]">Momentum vs Baseline</h4>
           <div className="h-60 w-full">
             <ResponsiveContainer>
               <LineChart data={timelineData} margin={{ left: -10 }}>
-                <CartesianGrid stroke="rgba(255,255,255,0.08)" strokeDasharray="3 3" />
-                <XAxis dataKey="date" stroke="#A3A7C9" tick={{ fontSize: 12 }} />
-                <YAxis stroke="#A3A7C9" tick={{ fontSize: 12 }} />
+                <CartesianGrid stroke="rgba(148,163,184,0.2)" strokeDasharray="3 3" />
+                <XAxis dataKey="date" stroke="#94a3b8" tick={{ fontSize: 12, fill: '#475569' }} />
+                <YAxis stroke="#94a3b8" tick={{ fontSize: 12, fill: '#475569' }} />
                 <Tooltip
-                  contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }}
-                  labelStyle={{ color: '#fff' }}
+                  contentStyle={{ background: '#ffffff', border: '1px solid rgba(148,163,184,0.4)', borderRadius: 12 }}
+                  labelStyle={{ color: '#0f172a' }}
                 />
                 <Legend />
                 <Line type="monotone" dataKey="baseline" stroke="#94a3b8" strokeWidth={2} dot={false} name="Baseline" />
-                <Line type="monotone" dataKey="current" stroke="#38bdf8" strokeWidth={3} dot name="Current" />
+                <Line type="monotone" dataKey="current" stroke="#2563eb" strokeWidth={3} dot name="Current" />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
-        <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-          <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-white/60">Baseline vs Current by KPI</h4>
+        <div className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-4">
+          <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-[color:var(--color-text-muted)]">Baseline vs Current by KPI</h4>
           <div className="h-60 w-full">
             <ResponsiveContainer>
               <BarChart data={barData} margin={{ left: -10 }}>
-                <CartesianGrid stroke="rgba(255,255,255,0.08)" strokeDasharray="3 3" />
-                <XAxis dataKey="name" stroke="#A3A7C9" tick={{ fontSize: 12 }} />
-                <YAxis stroke="#A3A7C9" tick={{ fontSize: 12 }} />
+                <CartesianGrid stroke="rgba(148,163,184,0.2)" strokeDasharray="3 3" />
+                <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12, fill: '#475569' }} />
+                <YAxis stroke="#94a3b8" tick={{ fontSize: 12, fill: '#475569' }} />
                 <Tooltip
-                  contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }}
-                  labelStyle={{ color: '#fff' }}
+                  contentStyle={{ background: '#ffffff', border: '1px solid rgba(148,163,184,0.4)', borderRadius: 12 }}
+                  labelStyle={{ color: '#0f172a' }}
                 />
                 <Legend />
                 <Bar dataKey="baseline" fill="#94a3b8" name="Baseline" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="current" fill="#22d3ee" name="Current" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="current" fill="#2563eb" name="Current" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-xl border border-white/10 bg-white/5">
+      <section className="overflow-hidden rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)]">
         <Table>
           <TableHeader>
-            <TableRow className="border-white/10 bg-white/10 text-left text-xs uppercase tracking-wide text-white/60">
-              <TableHead className="text-white/70">KPI</TableHead>
-              <TableHead className="text-white/70">Baseline</TableHead>
-              <TableHead className="text-white/70">Current</TableHead>
-              <TableHead className="text-white/70">Delta</TableHead>
-              <TableHead className="text-white/70">Intervention</TableHead>
-              <TableHead className="text-white/70">Date</TableHead>
+            <TableRow className="border-b border-[color:var(--color-border)] bg-white text-left text-xs uppercase tracking-wide text-[color:var(--color-text-muted)]">
+              <TableHead className="text-[color:var(--color-text)]">KPI</TableHead>
+              <TableHead className="text-[color:var(--color-text)]">Baseline</TableHead>
+              <TableHead className="text-[color:var(--color-text)]">Current</TableHead>
+              <TableHead className="text-[color:var(--color-text)]">Delta</TableHead>
+              <TableHead className="text-[color:var(--color-text)]">Intervention</TableHead>
+              <TableHead className="text-[color:var(--color-text)]">Date</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {metrics.map((metric) => (
-              <TableRow key={metric.id ?? `${metric.kpiName}-${metric.date}`}> 
+              <TableRow key={metric.id ?? `${metric.kpiName}-${metric.date}`} className="border-b border-[color:var(--color-border)] last:border-b-0">
                 <TableCell>
                   <Input
                     value={metric.kpiName}
@@ -201,7 +203,9 @@ export default function RevboardTab({ metrics, status, trsScore, interventions, 
                     onChange={(event) => handleMetricChange(metric.id, 'delta', Number(event.target.value))}
                   />
                 </TableCell>
-                <TableCell>{interventions.find((item) => item.id === metric.interventionId)?.interventionName ?? '—'}</TableCell>
+                <TableCell className="text-[color:var(--color-text-muted)]">
+                  {interventions.find((item) => item.id === metric.interventionId)?.interventionName ?? '—'}
+                </TableCell>
                 <TableCell>
                   <Input
                     value={metric.date?.slice(0, 10)}

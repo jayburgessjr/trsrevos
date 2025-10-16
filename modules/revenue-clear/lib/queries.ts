@@ -92,7 +92,7 @@ function toMetric(row: any): RevboardMetric {
     currentValue: Number(row.current_value ?? row.currentValue ?? 0),
     delta: Number(row.delta ?? 0),
     interventionId: row.intervention_id ?? row.interventionId ?? null,
-    date: row.date ?? new Date().toISOString(),
+    date: row.recorded_on ?? row.date ?? new Date().toISOString(),
   }
 }
 
@@ -208,18 +208,31 @@ export async function getRevenueClearSnapshot(clientId: string): Promise<Revenue
 
   const [intakeRes, auditsRes, interventionsRes, metricsRes, tasksRes, weeklyRes, resultsRes, nextStepsRes] =
     await Promise.all([
-      supabase.from('intakes').select('*').eq('client_id', clientId).maybeSingle(),
-      supabase.from('audits').select('*').eq('client_id', clientId),
-      supabase.from('interventions').select('*').eq('client_id', clientId).order('roi_index', { ascending: false }),
+      supabase.from('revenue_clear_intakes').select('*').eq('client_id', clientId).maybeSingle(),
+      supabase.from('revenue_clear_audits').select('*').eq('client_id', clientId),
       supabase
-        .from('revboard_metrics')
+        .from('revenue_clear_interventions')
         .select('*')
         .eq('client_id', clientId)
-        .order('date', { ascending: true }),
-      supabase.from('tasks').select('*').eq('client_id', clientId).order('start_date', { ascending: true }),
-      supabase.from('execution_weekly_reports').select('*').eq('client_id', clientId).order('created_at', { ascending: false }).maybeSingle(),
-      supabase.from('results').select('*').eq('client_id', clientId).maybeSingle(),
-      supabase.from('next_steps').select('*').eq('client_id', clientId).maybeSingle(),
+        .order('roi_index', { ascending: false }),
+      supabase
+        .from('revenue_clear_metrics')
+        .select('*')
+        .eq('client_id', clientId)
+        .order('recorded_on', { ascending: true }),
+      supabase
+        .from('revenue_clear_tasks')
+        .select('*')
+        .eq('client_id', clientId)
+        .order('start_date', { ascending: true }),
+      supabase
+        .from('revenue_clear_weekly_summaries')
+        .select('*')
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false })
+        .maybeSingle(),
+      supabase.from('revenue_clear_results').select('*').eq('client_id', clientId).maybeSingle(),
+      supabase.from('revenue_clear_next_steps').select('*').eq('client_id', clientId).maybeSingle(),
     ])
 
   if (intakeRes.error) {

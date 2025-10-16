@@ -38,10 +38,19 @@ CREATE TABLE IF NOT EXISTS public.clients (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
   user_id uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  owner_id uuid REFERENCES public.users(id) ON DELETE SET NULL,
   type text DEFAULT 'standard',
   industry text,
+  revenue_model text,
+  monthly_recurring_revenue numeric(14,2) DEFAULT 0,
+  profit_margin numeric(5,2) DEFAULT 0,
+  target_growth numeric(5,2) DEFAULT 0,
+  primary_goal text,
+  phase text DEFAULT 'Discovery',
+  status text DEFAULT 'active',
   mrr numeric,
-  created_at timestamptz DEFAULT timezone('utc', now())
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  updated_at timestamptz DEFAULT timezone('utc', now())
 );
 
 CREATE TABLE IF NOT EXISTS public.pipeline (
@@ -54,6 +63,22 @@ CREATE TABLE IF NOT EXISTS public.pipeline (
   created_at timestamptz DEFAULT timezone('utc', now()),
   updated_at timestamptz DEFAULT timezone('utc', now())
 );
+
+CREATE TABLE IF NOT EXISTS public.opportunities (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id uuid REFERENCES public.clients(id) ON DELETE SET NULL,
+  name text NOT NULL,
+  stage text DEFAULT 'Prospect',
+  amount numeric(14,2) DEFAULT 0,
+  probability numeric(5,2) DEFAULT 0,
+  owner_id uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  next_step text,
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  updated_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS opportunities_client_idx
+  ON public.opportunities(client_id, created_at DESC);
 
 CREATE TABLE IF NOT EXISTS public.finance (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -200,6 +225,125 @@ CREATE TABLE IF NOT EXISTS public.invoice_schedules (
   created_at timestamptz DEFAULT timezone('utc', now()),
   updated_at timestamptz DEFAULT timezone('utc', now())
 );
+
+CREATE TABLE IF NOT EXISTS public.revenue_clear_intakes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id uuid NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  company_profile jsonb NOT NULL DEFAULT '{}'::jsonb,
+  financials jsonb NOT NULL DEFAULT '{}'::jsonb,
+  goals jsonb NOT NULL DEFAULT '{}'::jsonb,
+  clarity_summary_url text,
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  updated_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS revenue_clear_intakes_client_idx
+  ON public.revenue_clear_intakes(client_id);
+
+CREATE TABLE IF NOT EXISTS public.revenue_clear_audits (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id uuid NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  pillar text NOT NULL,
+  leak_severity numeric(4,1) DEFAULT 0,
+  leak_description text,
+  estimated_loss numeric(14,2) DEFAULT 0,
+  score numeric(5,2) DEFAULT 0,
+  leak_map_url text,
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  updated_at timestamptz DEFAULT timezone('utc', now()),
+  CONSTRAINT revenue_clear_audits_unique_pillar UNIQUE (client_id, pillar)
+);
+
+CREATE TABLE IF NOT EXISTS public.revenue_clear_interventions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id uuid NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  intervention_name text NOT NULL,
+  diagnosis text,
+  fix text,
+  projected_lift numeric(5,2) DEFAULT 0,
+  effort_score numeric(5,2) DEFAULT 0,
+  roi_index numeric(6,2) DEFAULT 0,
+  blueprint_url text,
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  updated_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS revenue_clear_interventions_client_roi_idx
+  ON public.revenue_clear_interventions(client_id, roi_index DESC);
+
+CREATE TABLE IF NOT EXISTS public.revenue_clear_metrics (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id uuid NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  kpi_name text NOT NULL,
+  baseline_value numeric(14,2) DEFAULT 0,
+  current_value numeric(14,2) DEFAULT 0,
+  delta numeric(14,2) DEFAULT 0,
+  intervention_id uuid REFERENCES public.revenue_clear_interventions(id) ON DELETE SET NULL,
+  recorded_on date DEFAULT current_date,
+  created_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS revenue_clear_metrics_client_idx
+  ON public.revenue_clear_metrics(client_id, recorded_on);
+
+CREATE TABLE IF NOT EXISTS public.revenue_clear_tasks (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id uuid NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  task_name text NOT NULL,
+  status text DEFAULT 'todo',
+  assigned_to text,
+  start_date date DEFAULT current_date,
+  end_date date,
+  progress_notes text,
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  updated_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS revenue_clear_tasks_client_idx
+  ON public.revenue_clear_tasks(client_id, start_date);
+
+CREATE TABLE IF NOT EXISTS public.revenue_clear_weekly_summaries (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id uuid NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  notes text,
+  advisor_summary text,
+  created_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS revenue_clear_weekly_summaries_client_idx
+  ON public.revenue_clear_weekly_summaries(client_id);
+
+CREATE TABLE IF NOT EXISTS public.revenue_clear_results (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id uuid NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  before_mrr numeric(14,2) DEFAULT 0,
+  after_mrr numeric(14,2) DEFAULT 0,
+  before_profit numeric(14,2) DEFAULT 0,
+  after_profit numeric(14,2) DEFAULT 0,
+  total_gain numeric(14,2) DEFAULT 0,
+  payback_period numeric(6,2) DEFAULT 0,
+  report_url text,
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  updated_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS revenue_clear_results_client_idx
+  ON public.revenue_clear_results(client_id);
+
+CREATE TABLE IF NOT EXISTS public.revenue_clear_next_steps (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id uuid NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  next_offer text DEFAULT 'Advisory',
+  rationale text,
+  projected_outcome numeric(14,2) DEFAULT 0,
+  proposal_doc text,
+  proposal_url text,
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  updated_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS revenue_clear_next_steps_client_idx
+  ON public.revenue_clear_next_steps(client_id);
 
 CREATE INDEX IF NOT EXISTS invoice_schedules_client_idx
   ON public.invoice_schedules(client_id, due_date);

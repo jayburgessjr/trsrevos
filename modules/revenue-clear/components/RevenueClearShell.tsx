@@ -138,7 +138,7 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
   } = useAutosave<RevenueClearIntake>(
     async (value) => {
       const { data, error } = await supabase
-        .from('intakes')
+        .from('revenue_clear_intakes')
         .upsert(
           {
             id: value.id,
@@ -158,11 +158,11 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
       }
 
       if (data) {
-        setIntake((current) => ({
-          ...current,
+        setIntake({
+          ...value,
           id: data.id,
-          claritySummaryUrl: data.clarity_summary_url ?? current.claritySummaryUrl ?? null,
-        }))
+          claritySummaryUrl: data.clarity_summary_url ?? value.claritySummaryUrl ?? null,
+        })
       }
     },
   )
@@ -185,14 +185,17 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
         leak_map_url: audit.leakMapUrl ?? null,
       }))
 
-      const { data, error } = await supabase.from('audits').upsert(payload, { onConflict: 'client_id,pillar' }).select()
+      const { data, error } = await supabase
+        .from('revenue_clear_audits')
+        .upsert(payload, { onConflict: 'client_id,pillar' })
+        .select()
       if (error) {
         throw error
       }
 
       if (data) {
-        setAudits((current) =>
-          current.map((audit) => {
+        setAudits(
+          value.map((audit) => {
             const updated = data.find((row) => row.pillar === audit.pillar)
             if (!updated) return audit
             return {
@@ -225,7 +228,7 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
       }))
 
       const { data, error } = await supabase
-        .from('interventions')
+        .from('revenue_clear_interventions')
         .upsert(payload, { onConflict: 'id' })
         .select()
 
@@ -234,8 +237,8 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
       }
 
       if (data) {
-        setInterventions((current) =>
-          current.map((intervention) => {
+        setInterventions(
+          value.map((intervention) => {
             const updated = data.find((row) => row.intervention_name === intervention.interventionName)
             if (!updated) return intervention
             return {
@@ -263,10 +266,10 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
         current_value: metric.currentValue,
         delta: metric.delta,
         intervention_id: metric.interventionId ?? null,
-        date: metric.date,
+        recorded_on: metric.date,
       }))
       const { data, error } = await supabase
-        .from('revboard_metrics')
+        .from('revenue_clear_metrics')
         .upsert(payload, { onConflict: 'id' })
         .select()
 
@@ -275,16 +278,16 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
       }
 
       if (data) {
-        setMetrics((current) =>
-          current.map((metric) => {
-            const updated = data.find((row) => row.id === metric.id)
-            return updated
-              ? {
-                  ...metric,
-                  id: updated.id,
-                  delta: updated.delta ?? metric.delta,
-                }
-              : metric
+        setMetrics(
+          value.map((metric) => {
+            const updated = data.find((row) => row.id === metric.id || row.kpi_name === metric.kpiName)
+            if (!updated) return metric
+            return {
+              ...metric,
+              id: updated.id,
+              delta: Number(updated.delta ?? metric.delta ?? 0),
+              date: updated.recorded_on ?? metric.date,
+            }
           }),
         )
       }
@@ -311,15 +314,18 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
       progress_notes: task.progressNotes,
     }))
 
-    const { data: taskData, error: taskError } = await supabase.from('tasks').upsert(taskPayload, { onConflict: 'id' }).select()
+    const { data: taskData, error: taskError } = await supabase
+      .from('revenue_clear_tasks')
+      .upsert(taskPayload, { onConflict: 'id' })
+      .select()
 
     if (taskError) {
       throw taskError
     }
 
     if (taskData) {
-      setTasks((current) =>
-        current.map((task) => {
+      setTasks(
+        value.tasks.map((task) => {
           const updated = taskData.find((row) => row.task_name === task.taskName && row.assigned_to === task.assignedTo)
           if (!updated) return task
           return {
@@ -332,7 +338,7 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
 
     if (value.weekly) {
       const { data: weeklyData, error: weeklyError } = await supabase
-        .from('execution_weekly_reports')
+        .from('revenue_clear_weekly_summaries')
         .upsert(
           {
             client_id: snapshot.client.id,
@@ -365,7 +371,7 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
   } = useAutosave<RevenueClearResult>(
     async (value) => {
       const { data, error } = await supabase
-        .from('results')
+        .from('revenue_clear_results')
         .upsert(
           {
             id: value.id,
@@ -405,7 +411,7 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
   } = useAutosave<NextStepPlan>(
     async (value) => {
       const { data, error } = await supabase
-        .from('next_steps')
+        .from('revenue_clear_next_steps')
         .upsert(
           {
             id: value.id,
@@ -656,7 +662,7 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
   }))
 
   return (
-    <div className="flex min-h-screen flex-col gap-6 bg-gradient-to-b from-[#0e1018] via-[#121526] to-[#0b0d16] px-6 py-10 text-white">
+    <div className="space-y-6">
       {intro}
       <ProgressStepper
         items={stepperItems}
@@ -664,16 +670,20 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
         onSelect={(key) => setActiveTab(key)}
       />
 
-      <Tabs defaultValue="intake" value={activeTab} onValueChange={(value) => setActiveTab(value as RevenueClearStageKey)}>
-        <TabsList className="bg-white/5">
+      <Tabs
+        defaultValue="intake"
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as RevenueClearStageKey)}
+      >
+        <TabsList className="flex-wrap border-[color:var(--color-border)] bg-white">
           {TAB_CONFIG.map((tab) => (
-            <TabsTrigger key={tab.key} value={tab.key} className="data-[state=active]:bg-white/20">
+            <TabsTrigger key={tab.key} value={tab.key}>
               {tab.label}
             </TabsTrigger>
           ))}
         </TabsList>
 
-        <TabsContent value="intake" className="bg-white/5">
+        <TabsContent value="intake" className="border border-solid border-[color:var(--color-border)] bg-white shadow-sm">
           <IntakeTab
             client={snapshot.client}
             value={intake}
@@ -683,7 +693,7 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
           />
         </TabsContent>
 
-        <TabsContent value="audit" className="bg-white/5">
+        <TabsContent value="audit" className="border border-solid border-[color:var(--color-border)] bg-white shadow-sm">
           <AuditTab
             audits={audits}
             trsScore={trsScore}
@@ -693,7 +703,7 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
           />
         </TabsContent>
 
-        <TabsContent value="blueprint" className="bg-white/5">
+        <TabsContent value="blueprint" className="border border-solid border-[color:var(--color-border)] bg-white shadow-sm">
           <BlueprintTab
             interventions={interventions}
             status={blueprintStatus}
@@ -703,7 +713,7 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
           />
         </TabsContent>
 
-        <TabsContent value="revboard" className="bg-white/5">
+        <TabsContent value="revboard" className="border border-solid border-[color:var(--color-border)] bg-white shadow-sm">
           <RevboardTab
             metrics={metrics}
             status={metricStatus}
@@ -713,7 +723,7 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
           />
         </TabsContent>
 
-        <TabsContent value="execution" className="bg-white/5">
+        <TabsContent value="execution" className="border border-solid border-[color:var(--color-border)] bg-white shadow-sm">
           <ExecutionTab
             tasks={tasks}
             status={executionStatus}
@@ -724,7 +734,7 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
           />
         </TabsContent>
 
-        <TabsContent value="results" className="bg-white/5">
+        <TabsContent value="results" className="border border-solid border-[color:var(--color-border)] bg-white shadow-sm">
           <ResultsTab
             value={results}
             status={resultsStatus}
@@ -733,7 +743,7 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
           />
         </TabsContent>
 
-        <TabsContent value="nextSteps" className="bg-white/5">
+        <TabsContent value="nextSteps" className="border border-solid border-[color:var(--color-border)] bg-white shadow-sm">
           <NextStepsTab
             value={nextStep}
             status={nextStepsStatus}
