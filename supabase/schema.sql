@@ -198,12 +198,204 @@ CREATE TABLE IF NOT EXISTS public.projects (
   progress numeric(5,2) DEFAULT 0,
   budget numeric(14,2) DEFAULT 0,
   spent numeric(14,2) DEFAULT 0,
+  project_type text DEFAULT 'Advisory',
+  hubspot_deal_id text,
+  quickbooks_invoice_url text,
+  quickbooks_invoice_id text,
+  kickoff_notes text,
+  completed_at timestamptz,
+  archived_at timestamptz,
   created_at timestamptz DEFAULT timezone('utc', now()),
   updated_at timestamptz DEFAULT timezone('utc', now())
 );
 
 CREATE INDEX IF NOT EXISTS projects_client_idx
   ON public.projects(client_id, status);
+
+ALTER TABLE public.projects
+  ADD COLUMN IF NOT EXISTS project_type text DEFAULT 'Advisory';
+
+ALTER TABLE public.projects
+  ADD COLUMN IF NOT EXISTS hubspot_deal_id text;
+
+ALTER TABLE public.projects
+  ADD COLUMN IF NOT EXISTS quickbooks_invoice_url text;
+
+ALTER TABLE public.projects
+  ADD COLUMN IF NOT EXISTS quickbooks_invoice_id text;
+
+ALTER TABLE public.projects
+  ADD COLUMN IF NOT EXISTS kickoff_notes text;
+
+ALTER TABLE public.projects
+  ADD COLUMN IF NOT EXISTS completed_at timestamptz;
+
+ALTER TABLE public.projects
+  ADD COLUMN IF NOT EXISTS archived_at timestamptz;
+
+CREATE TABLE IF NOT EXISTS public.project_members (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id uuid NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  role text DEFAULT 'contributor',
+  allocation numeric(5,2) DEFAULT 1.0,
+  joined_at timestamptz DEFAULT timezone('utc', now()),
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  updated_at timestamptz DEFAULT timezone('utc', now()),
+  UNIQUE(project_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.project_links (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id uuid NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
+  link_type text NOT NULL,
+  label text,
+  url text NOT NULL,
+  created_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  created_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE TABLE IF NOT EXISTS public.resources (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  description text,
+  resource_type text DEFAULT 'file',
+  file_path text,
+  external_url text,
+  tags text[] DEFAULT '{}',
+  created_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  updated_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS resources_tags_idx
+  ON public.resources USING gin(tags);
+
+CREATE TABLE IF NOT EXISTS public.documents (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id uuid REFERENCES public.projects(id) ON DELETE SET NULL,
+  title text NOT NULL,
+  description text,
+  document_type text,
+  status text DEFAULT 'draft',
+  tags text[] DEFAULT '{}',
+  current_version_id uuid,
+  created_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  updated_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS documents_project_idx
+  ON public.documents(project_id, document_type);
+
+CREATE TABLE IF NOT EXISTS public.document_versions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  document_id uuid NOT NULL REFERENCES public.documents(id) ON DELETE CASCADE,
+  version integer NOT NULL DEFAULT 1,
+  file_path text NOT NULL,
+  file_checksum text,
+  file_size bigint,
+  mime_type text,
+  ai_summary text,
+  ai_embedding vector(1536),
+  metadata jsonb DEFAULT '{}'::jsonb,
+  created_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  created_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS document_versions_unique
+  ON public.document_versions(document_id, version);
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'documents_current_version_fk'
+  ) THEN
+    ALTER TABLE public.documents
+      ADD CONSTRAINT documents_current_version_fk
+      FOREIGN KEY (current_version_id)
+      REFERENCES public.document_versions(id)
+      ON DELETE SET NULL;
+  END IF;
+END $$;
+
+CREATE TABLE IF NOT EXISTS public.document_tags (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  document_id uuid REFERENCES public.documents(id) ON DELETE CASCADE,
+  tag text NOT NULL,
+  created_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS document_tags_idx
+  ON public.document_tags(tag, document_id);
+
+CREATE TABLE IF NOT EXISTS public.content_items (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id uuid REFERENCES public.projects(id) ON DELETE SET NULL,
+  source_document_id uuid REFERENCES public.documents(id) ON DELETE SET NULL,
+  title text NOT NULL,
+  content_type text NOT NULL,
+  draft_text text,
+  final_text text,
+  status text DEFAULT 'Draft',
+  generated_by_agent text,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  created_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  updated_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS content_items_project_idx
+  ON public.content_items(project_id, content_type, status);
+
+CREATE TABLE IF NOT EXISTS public.project_resources (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id uuid NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
+  resource_id uuid NOT NULL REFERENCES public.resources(id) ON DELETE CASCADE,
+  linked_at timestamptz DEFAULT timezone('utc', now()),
+  created_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  UNIQUE(project_id, resource_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.document_resources (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  document_id uuid NOT NULL REFERENCES public.documents(id) ON DELETE CASCADE,
+  resource_id uuid NOT NULL REFERENCES public.resources(id) ON DELETE CASCADE,
+  linked_at timestamptz DEFAULT timezone('utc', now()),
+  created_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  UNIQUE(document_id, resource_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.project_agent_runs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id uuid REFERENCES public.projects(id) ON DELETE CASCADE,
+  agent_key text NOT NULL,
+  definition_id uuid REFERENCES public.agent_definitions(id) ON DELETE SET NULL,
+  run_id uuid REFERENCES public.agent_runs(id) ON DELETE SET NULL,
+  input_payload jsonb DEFAULT '{}'::jsonb,
+  output_document_id uuid REFERENCES public.documents(id) ON DELETE SET NULL,
+  created_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  created_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS project_agent_runs_project_idx
+  ON public.project_agent_runs(project_id, agent_key, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS public.automation_events (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id uuid REFERENCES public.projects(id) ON DELETE SET NULL,
+  source_system text NOT NULL,
+  event_key text NOT NULL,
+  status text DEFAULT 'pending',
+  payload jsonb DEFAULT '{}'::jsonb,
+  occurred_at timestamptz DEFAULT timezone('utc', now()),
+  created_at timestamptz DEFAULT timezone('utc', now())
+);
+
+CREATE INDEX IF NOT EXISTS automation_events_project_idx
+  ON public.automation_events(project_id, occurred_at DESC);
 
 CREATE TABLE IF NOT EXISTS public.project_kickoffs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
