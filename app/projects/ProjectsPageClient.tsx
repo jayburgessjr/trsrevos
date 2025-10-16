@@ -1,313 +1,340 @@
-"use client"
+'use client'
 
-import { useCallback, useMemo, useState } from 'react'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { useMemo, useState } from 'react'
+import Link from 'next/link'
 
-import { AgentsPanel } from '@/components/projects/AgentsPanel'
-import { FiltersBar, useProjectsFilters } from '@/components/projects/Filters'
-import { KpiStrip } from '@/components/projects/KpiStrip'
-import { ProjectBoard } from '@/components/projects/Board'
-import { ProjectTimeline, type TimelineItem } from '@/components/projects/Timeline'
-import { ProjectsTable } from '@/components/projects/ProjectsTable'
-import { HealthDashboard } from '@/components/projects/HealthDashboard'
-import { DeliveryWorkflows } from '@/components/projects/DeliveryWorkflows'
-import { RoiNarratives } from '@/components/projects/RoiNarratives'
-import { PageTemplate } from '@/components/layout/PageTemplate'
-import { PageTabs } from '@/components/layout/PageTabs'
+import { useRevosData } from '@/app/providers/RevosDataProvider'
+import { Badge } from '@/ui/badge'
+import { Button } from '@/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card'
 import { Input } from '@/ui/input'
-import type {
-  ClientOverview,
-  ClientRow,
-  OpportunityRecord,
-  OwnerRow,
-  ProjectRecord,
-} from '@/core/projects/queries'
-import type {
-  ProjectMilestone,
-  ProjectStats,
-  ProjectDeliveryUpdate,
-  ProjectChangeOrder,
-  ClientRoiNarrative,
-  ClientHealthSnapshot,
-} from '@/core/projects/types'
+import { Select } from '@/ui/select'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table'
 
-const PAGE_TABS = ["Overview", "Health", "Delivery", "Board", "Timeline", "Agents", "Reports"] as const
+const projectTypes = ['Audit', 'Blueprint', 'Advisory', 'Internal'] as const
+const projectStatuses = ['Pending', 'Active', 'Delivered', 'Closed'] as const
 
-type Tab = (typeof PAGE_TABS)[number]
-
-type ProjectsPageClientProps = {
-  clients: ClientRow[]
-  activeClients: ClientRow[]
-  overview: ClientOverview[]
-  owners: OwnerRow[]
-  projects: ProjectRecord[]
-  opportunities: OpportunityRecord[]
-  stages: string[]
-  healths: string[]
-  kpis: { label: string; value: string }[]
-  generatedAt: string
-  projectStats: ProjectStats
-  milestones: ProjectMilestone[]
-  deliveryUpdates: ProjectDeliveryUpdate[]
-  changeOrders: ProjectChangeOrder[]
-  roiNarratives: ClientRoiNarrative[]
-  healthHistory: ClientHealthSnapshot[]
-  invoiceOptions: InvoiceOption[]
+type FormState = {
+  name: string
+  client: string
+  type: (typeof projectTypes)[number]
+  status: (typeof projectStatuses)[number]
+  startDate: string
+  endDate: string
+  quickbooksInvoiceUrl: string
+  team: string
+  revenueTarget: number
 }
 
-type OwnerOption = { id: string; label: string }
-
-type OpportunitySummary = {
-  clientId: string
-  nextStep: string | null
-  dueDate: string | null
-  stage: string | null
+const initialFormState: FormState = {
+  name: '',
+  client: '',
+  type: 'Audit',
+  status: 'Pending',
+  startDate: '',
+  endDate: '',
+  quickbooksInvoiceUrl: '',
+  team: '',
+  revenueTarget: 25000,
 }
 
-type InvoiceOption = { id: string; label: string }
+export default function ProjectsPageClient() {
+  const { projects, resources, invoices, createProject, updateProjectStatus } = useRevosData()
+  const [form, setForm] = useState<FormState>(initialFormState)
 
-export default function ProjectsPageClient({
-  clients,
-  activeClients,
-  overview,
-  owners,
-  projects,
-  opportunities,
-  stages,
-  healths,
-  kpis,
-  generatedAt,
-  projectStats,
-  milestones,
-  deliveryUpdates,
-  changeOrders,
-  roiNarratives,
-  healthHistory,
-  invoiceOptions,
-}: ProjectsPageClientProps) {
-  const { filters, setFilters } = useProjectsFilters()
-  const searchParams = useSearchParams()
-  const pathname = usePathname()
+  const sortedProjects = useMemo(() => {
+    return [...projects].sort((a, b) => (a.startDate > b.startDate ? -1 : 1))
+  }, [projects])
 
-  const [deliveryUpdatesState, setDeliveryUpdatesState] = useState(deliveryUpdates)
-  const [changeOrdersState, setChangeOrdersState] = useState(changeOrders)
-  const [roiNarrativesState, setRoiNarrativesState] = useState(roiNarratives)
+  const stats = useMemo(() => {
+    const totalsByStatus = projects.reduce<Record<string, number>>((acc, project) => {
+      acc[project.status] = (acc[project.status] ?? 0) + 1
+      return acc
+    }, {})
 
-  const activeTab = useMemo<Tab>(() => {
-    const raw = searchParams.get('tab') ?? ''
-    const match = PAGE_TABS.find((tab) => tab.toLowerCase() === raw.toLowerCase())
-    return (match ?? 'Overview') as Tab
-  }, [searchParams])
+    return {
+      totalsByStatus,
+      totalRevenue: projects.reduce((total, project) => total + project.revenueTarget, 0),
+      linkedResources: projects.reduce((total, project) => total + project.resources.length, 0),
+    }
+  }, [projects])
 
-  const buildTabHref = useCallback(
-    (tab: string) => {
-      const params = new URLSearchParams(searchParams.toString())
-      if (tab === 'Overview') {
-        params.delete('tab')
-      } else {
-        params.set('tab', tab)
-      }
-      const query = params.toString()
-      return query ? `${pathname}?${query}` : pathname
-    },
-    [pathname, searchParams],
-  )
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!form.name.trim() || !form.client.trim()) return
+    createProject({
+      name: form.name.trim(),
+      client: form.client.trim(),
+      type: form.type,
+      status: form.status,
+      startDate: form.startDate || new Date().toISOString(),
+      endDate: form.endDate || undefined,
+      quickbooksInvoiceUrl: form.quickbooksInvoiceUrl || undefined,
+      team: form.team
+        .split(',')
+        .map((member) => member.trim())
+        .filter(Boolean),
+      revenueTarget: Number.isNaN(Number(form.revenueTarget)) ? 0 : Number(form.revenueTarget),
+      documents: [],
+      agents: [],
+      resources: [],
+    })
+    setForm(initialFormState)
+  }
 
-  const ownerOptions = useMemo<OwnerOption[]>(() => {
-    return owners
-      .map((owner) => ({
-        id: owner.id,
-        label: owner.full_name || owner.email || owner.id,
-      }))
-      .sort((a, b) => a.label.localeCompare(b.label))
-  }, [owners])
-
-  const clientOptions = useMemo(() => {
-    return clients
-      .map((client) => ({ id: client.id, name: client.name }))
-      .sort((a, b) => a.name.localeCompare(b.name))
-  }, [clients])
-
-  const opportunitySummaries = useMemo(() => buildOpportunitySummaries(opportunities), [opportunities])
-
-  const timelineItems = useMemo<TimelineItem[]>(() => {
-    const clientNameMap = new Map(clients.map((client) => [client.id, client.name]))
-    return projects.map((project) => ({
-      id: project.id,
-      projectName: project.name,
-      clientName: clientNameMap.get(project.client_id) ?? null,
-      startDate: project.start_date,
-      endDate: project.end_date,
-    }))
-  }, [clients, projects])
-
-  const generatedLabel = useMemo(() => {
-    const parsed = new Date(generatedAt)
-    if (Number.isNaN(parsed.getTime())) return ""
-    return parsed.toLocaleString()
-  }, [generatedAt])
+  const handleStatusChange = (projectId: string, status: string) => {
+    if (!projectStatuses.includes(status as (typeof projectStatuses)[number])) return
+    updateProjectStatus({ id: projectId, status: status as (typeof projectStatuses)[number] })
+  }
 
   return (
-    <PageTemplate
-      title="Projects"
-      description="Project Management Hub for live client delivery."
-      toolbar={
-        <div className="flex w-full flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div className="w-full md:max-w-md">
-            <Input
-              placeholder="Search clients or next steps"
-              value={filters.q}
-              onChange={(event) =>
-                setFilters((current) => ({ ...current, q: event.target.value }))
-              }
-            />
-          </div>
-          {generatedLabel ? (
-            <span className="text-xs text-gray-500 md:text-sm">Updated {generatedLabel}</span>
-          ) : null}
-        </div>
-      }
-      stats={<KpiStrip items={kpis} />}
-      statsWrapperClassName="grid gap-3"
-      contentClassName="space-y-4"
-    >
-      <div className="space-y-4">
-        <PageTabs tabs={[...PAGE_TABS]} activeTab={activeTab} hrefForTab={buildTabHref} />
+    <div className="space-y-8">
+      <section className="grid gap-4 lg:grid-cols-3">
+        <Card className="border-slate-200 lg:col-span-2">
+          <CardHeader className="border-b border-slate-200/60 pb-4">
+            <CardTitle className="text-lg font-semibold">Create Project</CardTitle>
+            <CardDescription>Launch a new client engagement or internal initiative.</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <form className="grid grid-cols-1 gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Project Name</label>
+                <Input
+                  value={form.name}
+                  onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                  placeholder="Clarity Audit – Client"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Client</label>
+                <Input
+                  value={form.client}
+                  onChange={(event) => setForm((current) => ({ ...current, client: event.target.value }))}
+                  placeholder="Client name"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Type</label>
+                <Select
+                  value={form.type}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, type: event.target.value as FormState['type'] }))
+                  }
+                >
+                  {projectTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</label>
+                <Select
+                  value={form.status}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, status: event.target.value as FormState['status'] }))
+                  }
+                >
+                  {projectStatuses.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Start Date</label>
+                <Input
+                  type="date"
+                  value={form.startDate}
+                  onChange={(event) => setForm((current) => ({ ...current, startDate: event.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">End Date</label>
+                <Input
+                  type="date"
+                  value={form.endDate}
+                  onChange={(event) => setForm((current) => ({ ...current, endDate: event.target.value }))}
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Assigned Team</label>
+                <Input
+                  value={form.team}
+                  onChange={(event) => setForm((current) => ({ ...current, team: event.target.value }))}
+                  placeholder="Comma separated names"
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  QuickBooks Invoice URL
+                </label>
+                <Input
+                  type="url"
+                  value={form.quickbooksInvoiceUrl}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, quickbooksInvoiceUrl: event.target.value }))
+                  }
+                  placeholder="https://..."
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Revenue Target (USD)</label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={form.revenueTarget}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, revenueTarget: Number(event.target.value) }))
+                  }
+                />
+              </div>
+              <div className="md:col-span-2">
+                <Button type="submit" className="w-full md:w-auto">
+                  Create Project
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+        <Card className="border-slate-200">
+          <CardHeader className="border-b border-slate-200/60 pb-4">
+            <CardTitle className="text-lg font-semibold">Portfolio Snapshot</CardTitle>
+            <CardDescription>Track load and linked knowledge.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 pt-4 text-sm text-slate-600">
+            <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
+              <p className="text-xs uppercase tracking-widest text-slate-500">Total Revenue Target</p>
+              <p className="mt-1 text-2xl font-semibold text-slate-900">
+                ${stats.totalRevenue.toLocaleString()}
+              </p>
+            </div>
+            <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
+              <p className="text-xs uppercase tracking-widest text-slate-500">Resources Linked</p>
+              <p className="mt-1 text-2xl font-semibold text-slate-900">{stats.linkedResources}</p>
+            </div>
+            <div className="space-y-2">
+              {projectStatuses.map((status) => (
+                <div key={status} className="flex items-center justify-between rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
+                  <span className="text-sm font-medium text-slate-600">{status}</span>
+                  <Badge variant="outline" className="border-slate-300 text-slate-600">
+                    {stats.totalsByStatus[status] ?? 0}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </section>
 
-        {activeTab === "Overview" ? (
-          <div className="space-y-4">
-            <FiltersBar
-              stagesAvailable={stages}
-              healthAvailable={healths}
-              owners={ownerOptions}
-              value={filters}
-              onChange={setFilters}
-              showSearch={false}
-            />
-            <ProjectsTable
-              rows={activeClients}
-              overview={overview}
-              owners={ownerOptions}
-              filters={filters}
-              opportunities={opportunitySummaries}
-            />
-          </div>
-        ) : null}
+      <Card className="border-slate-200">
+        <CardHeader className="border-b border-slate-200/60 pb-4">
+          <CardTitle className="text-lg font-semibold">Projects</CardTitle>
+          <CardDescription>Central record across delivery, automation, and resources.</CardDescription>
+        </CardHeader>
+        <CardContent className="px-0">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="px-6">Project</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Client</TableHead>
+                <TableHead>Team</TableHead>
+                <TableHead>Documents</TableHead>
+                <TableHead>Resources</TableHead>
+                <TableHead>Invoice</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedProjects.map((project) => (
+                <TableRow key={project.id} className="hover:bg-slate-50/60">
+                  <TableCell className="px-6">
+                    <div className="font-medium text-slate-900">{project.name}</div>
+                    <div className="text-xs text-slate-500">{project.id}</div>
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={project.status}
+                      onChange={(event) => handleStatusChange(project.id, event.target.value)}
+                    >
+                      {projectStatuses.map((status) => (
+                        <option key={status} value={status}>
+                          {status}
+                        </option>
+                      ))}
+                    </Select>
+                  </TableCell>
+                  <TableCell>{project.client}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {project.team.length === 0 ? (
+                        <span className="text-xs text-slate-500">Unassigned</span>
+                      ) : (
+                        project.team.map((member) => (
+                          <Badge key={member} variant="secondary" className="bg-slate-100 text-slate-700">
+                            {member}
+                          </Badge>
+                        ))
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Link href="/documents" className="text-sm text-emerald-600 underline">
+                      {project.documents.length} linked
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <Link href="/resources" className="text-sm text-emerald-600 underline">
+                      {project.resources.length} linked
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    {project.quickbooksInvoiceUrl ? (
+                      <Link href={project.quickbooksInvoiceUrl} className="text-sm text-orange-600 underline">
+                        View invoice
+                      </Link>
+                    ) : (
+                      <span className="text-xs text-slate-500">Not linked</span>
+                    )}
+                    <div className="text-xs text-slate-500">
+                      {invoices.find((invoice) => invoice.projectId === project.id)?.status ?? 'Draft'}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
-        {activeTab === "Health" ? (
-          <HealthDashboard
-            projects={projects}
-            milestones={milestones}
-            healthHistory={healthHistory}
-            stats={projectStats}
-          />
-        ) : null}
-
-        {activeTab === "Delivery" ? (
-          <DeliveryWorkflows
-            projects={projects}
-            deliveryUpdates={deliveryUpdatesState}
-            changeOrders={changeOrdersState}
-            opportunities={opportunities}
-            invoices={invoiceOptions}
-            onCreateDeliveryUpdate={(update) =>
-              setDeliveryUpdatesState((current) => [update, ...current.filter((item) => item.id !== update.id)])
-            }
-            onUpdateDeliveryApproval={(update) =>
-              setDeliveryUpdatesState((current) =>
-                current.map((item) => (item.id === update.id ? update : item)),
-              )
-            }
-            onCreateChangeOrder={(order) =>
-              setChangeOrdersState((current) => [order, ...current.filter((item) => item.id !== order.id)])
-            }
-            onUpdateChangeOrder={(order) =>
-              setChangeOrdersState((current) =>
-                current.map((item) => (item.id === order.id ? order : item)),
-              )
-            }
-          />
-        ) : null}
-
-        {activeTab === "Board" ? <ProjectBoard rows={activeClients} /> : null}
-
-        {activeTab === "Timeline" ? <ProjectTimeline items={timelineItems} /> : null}
-
-        {activeTab === "Agents" ? <AgentsPanel /> : null}
-
-        {activeTab === "Reports" ? (
-          <RoiNarratives
-            narratives={roiNarrativesState}
-            clients={clientOptions}
-            onCreateNarrative={(narrative) =>
-              setRoiNarrativesState((current) => [narrative, ...current.filter((item) => item.id !== narrative.id)])
-            }
-            onShareNarrative={(narrative) =>
-              setRoiNarrativesState((current) =>
-                current.map((item) => (item.id === narrative.id ? narrative : item)),
-              )
-            }
-          />
-        ) : null}
-      </div>
-    </PageTemplate>
+      <Card className="border-slate-200">
+        <CardHeader className="border-b border-slate-200/60 pb-4">
+          <CardTitle className="text-lg font-semibold">Resources & Assets</CardTitle>
+          <CardDescription>Quick reference of linked frameworks and knowledge.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {resources.map((resource) => (
+            <div key={resource.id} className="rounded-lg border border-slate-200/80 bg-white p-4 text-sm shadow-sm">
+              <p className="text-sm font-semibold text-slate-900">{resource.name}</p>
+              <p className="mt-1 text-slate-600">{resource.description}</p>
+              <div className="mt-2 flex flex-wrap gap-1">
+                {resource.tags.map((tag) => (
+                  <Badge key={tag} variant="secondary" className="bg-slate-100 text-slate-700">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+              <div className="mt-2 text-xs text-slate-500">
+                Linked Projects: {resource.relatedProjectIds.length}
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </div>
   )
-}
-
-function buildOpportunitySummaries(opportunities: OpportunityRecord[]): OpportunitySummary[] {
-  const byClient = new Map<string, OpportunitySummary>()
-
-  opportunities.forEach((opportunity) => {
-    if (!opportunity.client_id) {
-      return
-    }
-    const candidate: OpportunitySummary = {
-      clientId: opportunity.client_id,
-      nextStep: opportunity.next_step,
-      dueDate: opportunity.next_step_date ?? opportunity.close_date ?? null,
-      stage: normalizeOpportunityStage(opportunity.stage),
-    }
-    const existing = byClient.get(opportunity.client_id)
-    if (!existing) {
-      byClient.set(opportunity.client_id, candidate)
-      return
-    }
-    const chosen = chooseBetterOpportunity(existing, candidate)
-    byClient.set(opportunity.client_id, chosen)
-  })
-
-  return Array.from(byClient.values())
-}
-
-const OPPORTUNITY_STAGE_LABELS: Record<string, string> = {
-  Prospect: "Discovery",
-  Qualify: "Qualification",
-  Proposal: "Proposal",
-  Negotiation: "Negotiation",
-  ClosedWon: "Closed Won",
-  ClosedLost: "Closed Lost",
-}
-
-function normalizeOpportunityStage(stage: string | null) {
-  if (!stage) return null
-  return OPPORTUNITY_STAGE_LABELS[stage] ?? stage
-}
-
-function chooseBetterOpportunity(current: OpportunitySummary, candidate: OpportunitySummary): OpportunitySummary {
-  const currentDue = current.dueDate ? new Date(current.dueDate).getTime() : null
-  const candidateDue = candidate.dueDate ? new Date(candidate.dueDate).getTime() : null
-
-  if (candidateDue != null && currentDue != null) {
-    return candidateDue < currentDue ? candidate : current
-  }
-  if (candidateDue != null && currentDue == null) {
-    return candidate
-  }
-  if (candidateDue == null && currentDue != null) {
-    return current
-  }
-  if (!current.nextStep && candidate.nextStep) {
-    return candidate
-  }
-  return current
 }
