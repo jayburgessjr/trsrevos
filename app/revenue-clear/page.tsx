@@ -1,14 +1,16 @@
 import type { Metadata } from 'next'
 
+import Link from 'next/link'
+
 import { ClientSwitcher } from '@/modules/revenue-clear/components/ClientSwitcher'
-import RevenueClearOnboarding from '@/modules/revenue-clear/components/RevenueClearOnboarding'
 import RevenueClearShell from '@/modules/revenue-clear/components/RevenueClearShell'
 import {
   getRevenueClearSnapshot,
+  createRevenueClearDemoClient,
   listRevenueClearClients,
-  listRevenuePipelineOptions,
 } from '@/modules/revenue-clear/lib/queries'
 import { PageTemplate } from '@/components/layout/PageTemplate'
+import { Button } from '@/ui/button'
 import { Badge } from '@/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card'
 
@@ -99,11 +101,45 @@ function formatPercent(value: number | null | undefined) {
 }
 
 export default async function RevenueClearPage({ searchParams }: RevenueClearPageProps) {
-  const clients = await listRevenueClearClients()
+  let clients = await listRevenueClearClients()
 
   if (!clients.length) {
-    const pipelineOptions = await listRevenuePipelineOptions()
-    return <RevenueClearOnboarding pipelineOptions={pipelineOptions} />
+    const demoClient = await createRevenueClearDemoClient()
+
+    if (demoClient) {
+      clients = [demoClient]
+    } else {
+      clients = await listRevenueClearClients()
+    }
+  }
+
+  if (!clients.length) {
+    return (
+      <PageTemplate
+        title="Revenue Clear"
+        description="Guide revenue clarity engagements with autosave, Supabase persistence, and AI co-pilots."
+        actions={
+          <Button asChild variant="outline">
+            <Link href="/revenue-clear/new-client">+ New client</Link>
+          </Button>
+        }
+        badges={[{ label: 'Supabase workflow' }, { label: 'AI automations' }]}
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle>Set up your first client</CardTitle>
+            <CardDescription>
+              We couldn’t create the demo client automatically. Use the new client flow to get started.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-[color:var(--color-text-muted)]">
+              Launch the workflow by adding a client. You can return here anytime to manage Revenue Clear engagements.
+            </p>
+          </CardContent>
+        </Card>
+      </PageTemplate>
+    )
   }
 
   const requestedClientIdRaw = searchParams?.clientId
