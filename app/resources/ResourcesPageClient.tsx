@@ -225,7 +225,7 @@ export default function ResourcesPageClient() {
                 </a>
                 <div className="mt-3 flex flex-wrap gap-1 text-xs">
                   {resource.tags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="bg-slate-100 text-slate-700">
+                    <Badge key={tag} variant="outline" className="bg-slate-100 text-slate-700">
                       {tag}
                     </Badge>
                   ))}

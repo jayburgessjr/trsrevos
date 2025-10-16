@@ -275,7 +275,7 @@ export default function ProjectsPageClient() {
                         <span className="text-xs text-slate-500">Unassigned</span>
                       ) : (
                         project.team.map((member) => (
-                          <Badge key={member} variant="secondary" className="bg-slate-100 text-slate-700">
+                          <Badge key={member} variant="outline" className="bg-slate-100 text-slate-700">
                             {member}
                           </Badge>
                         ))
@@ -323,7 +323,7 @@ export default function ProjectsPageClient() {
               <p className="mt-1 text-slate-600">{resource.description}</p>
               <div className="mt-2 flex flex-wrap gap-1">
                 {resource.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="bg-slate-100 text-slate-700">
+                  <Badge key={tag} variant="outline" className="bg-slate-100 text-slate-700">
                     {tag}
                   </Badge>
                 ))}

@@ -186,7 +186,7 @@ export default function DashboardScreen() {
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2 pt-4">
             {Object.entries(metrics.documentCountByType).map(([type, count]) => (
-              <Badge key={type} variant="secondary" className="bg-slate-100 text-slate-700">
+              <Badge key={type} variant="outline" className="bg-slate-100 text-slate-700">
                 {type} • {count}
               </Badge>
             ))}
