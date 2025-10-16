@@ -28,11 +28,7 @@ export default function GlobalSidebar() {
                   <Icon size={14} />
                 </span>
                 <span>{item.label}</span>
-                {item.flag ? (
-                  <span className="ml-auto text-[10px] rounded-full border border-gray-300 px-2 py-[2px] text-gray-600">
-                    {item.flag}
-                  </span>
-                ) : null}
+                <span className="ml-auto" />
               </Link>
             )
           })}

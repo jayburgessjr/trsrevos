@@ -1,13 +1,7 @@
-import { actionListAgents } from '@/core/agents/actions'
+import AgentsPageClient from './AgentsPageClient'
 
-import AgentsDirectory from './AgentsDirectory'
+export const dynamic = 'force-static'
 
-export default async function AgentsHubPage() {
-  const agents = await actionListAgents()
-
-  return (
-    <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
-      <AgentsDirectory agents={agents} />
-    </div>
-  )
+export default function AgentsPage() {
+  return <AgentsPageClient />
 }

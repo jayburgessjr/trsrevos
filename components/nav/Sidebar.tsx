@@ -2,49 +2,33 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { MAIN_NAV, type NavItem } from '@/lib/navigation'
-import { isActivePath } from '@/lib/utils'
-import { canSee, Role, FLAGS } from '@/core/flags/flags'
 
-export default function Sidebar({ role = 'SuperAdmin' as Role }) {
+import { MAIN_NAV } from '@/lib/navigation'
+import { isActivePath } from '@/lib/utils'
+
+export default function Sidebar() {
   const pathname = usePathname()
   const currentPath = pathname ?? ''
 
-  const Item = ({ label, href, flag, roles }: NavItem) => {
-    if (!canSee(role, roles)) return null
-    if (flag && !FLAGS[flag]) return null
-
-    const active = isActivePath(currentPath, href)
-
-    return (
-      <Link
-        href={href}
-        className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm ${
-          active
-            ? 'bg-gray-100 text-gray-900'
-            : 'text-gray-700 hover:bg-gray-50'
-        }`}
-      >
-        <span className="inline-block h-1.5 w-1.5 rounded-full bg-gray-300" />
-        <span>{label}</span>
-      </Link>
-    )
-  }
-
   return (
-    <aside className="hidden md:block w-72 border-r border-gray-200">
-      <div className="p-3">
-        <div className="mb-2">
-          <input
-            className="w-full rounded-md border px-3 py-2 text-sm placeholder:text-gray-400 border-gray-200"
-            placeholder="Search accounts, deals…"
-          />
-        </div>
-
-        <nav className="space-y-1">
-          {MAIN_NAV.map((i: NavItem) => (
-            <Item key={i.href} {...i} />
-          ))}
+    <aside className="hidden w-72 border-r border-slate-200 md:block">
+      <div className="p-4">
+        <nav className="space-y-1 text-sm">
+          {MAIN_NAV.map((item) => {
+            const active = isActivePath(currentPath, item.href)
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-2 rounded-md px-3 py-2 ${
+                  active ? 'bg-slate-100 text-slate-900' : 'text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-slate-300" />
+                <span>{item.label}</span>
+              </Link>
+            )
+          })}
         </nav>
       </div>
     </aside>

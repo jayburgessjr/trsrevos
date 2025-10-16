@@ -1,121 +1,114 @@
-"use client"
+'use client'
 
-import type { ReactNode } from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import * as Icons from 'lucide-react'
 
-import Header from '@/components/nav/Header'
-import HamburgerDrawer from '@/components/nav/HamburgerDrawer'
-import MobileBottomNav from '@/components/nav/MobileBottomNav'
-import SearchOverlay from '@/components/nav/SearchOverlay'
-import { MAIN_NAV, type NavItem } from '@/lib/navigation'
-import { cn, isActivePath } from '@/lib/utils'
-import { ToastViewport } from '@/ui/toast'
+import { useRevosData } from '@/app/providers/RevosDataProvider'
+import { MAIN_NAV } from '@/lib/navigation'
+import { cn } from '@/lib/utils'
+import { Badge } from '@/ui/badge'
+import { Button } from '@/ui/button'
 
-const FULL_SHELL_EXCLUSIONS = new Set(['/login'])
+export default function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname() ?? '/'
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const { projects, documents, automationLogs } = useRevosData()
 
-type AppShellProps = {
-  children: ReactNode
-}
+  const kpis = useMemo(() => {
+    const activeProjects = projects.filter((project) => project.status === 'Active').length
+    const deliverablesInProgress = documents.filter((doc) => doc.status !== 'Final').length
+    const automationHours = (automationLogs.length * 1.5).toFixed(1)
 
-/**
- * AppShell owns the global layout chrome for the mobile-first experience.
- * It renders a sticky header, optional hamburger drawer, a desktop sidebar,
- * and a fixed bottom navigation bar on handheld devices. The shell keeps
- * spacing fluid (no fixed widths) so content can adapt to any breakpoint.
- */
-export default function AppShell({ children }: AppShellProps) {
-  const pathname = usePathname()
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [searchOpen, setSearchOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-
-  useEffect(() => {
-    // Close the drawer after a successful navigation to keep UX tight on mobile.
-    setDrawerOpen(false)
-    setSearchOpen(false)
-  }, [pathname])
-
-  useEffect(() => {
-    if (!searchOpen) {
-      setSearchQuery('')
+    return {
+      activeProjects,
+      deliverablesInProgress,
+      automationHours,
     }
-  }, [searchOpen])
-
-  const shouldBypassShell = useMemo(() => {
-    if (!pathname) return false
-    if (pathname.startsWith('/share')) return true
-    return Array.from(FULL_SHELL_EXCLUSIONS).some(
-      (excluded) => pathname === excluded || pathname.startsWith(`${excluded}/`)
-    )
-  }, [pathname])
-
-  if (shouldBypassShell) {
-    return <>{children}</>
-  }
+  }, [projects, documents, automationLogs])
 
   return (
-    <div className="flex min-h-screen flex-col bg-white text-black">
-      <Header
-        onMenuToggle={() => setDrawerOpen(true)}
-        onSearch={(term) => {
-          setSearchOpen(true)
-          setSearchQuery(term)
-        }}
-        onSearchOpen={() => setSearchOpen(true)}
-        searchValue={searchQuery}
-      />
-      <HamburgerDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
-      <SearchOverlay
-        open={searchOpen}
-        query={searchQuery}
-        onQueryChange={setSearchQuery}
-        onClose={() => setSearchOpen(false)}
-      />
-      <div className="flex flex-1">
-        <aside className="sticky top-0 hidden h-[calc(100vh-3.5rem)] w-64 shrink-0 border-r border-gray-200 bg-white lg:block">
-          <nav className="flex h-full flex-col gap-4 overflow-y-auto px-5 py-6 text-sm">
-            <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Main</div>
-            <ul className="space-y-1">
-              {MAIN_NAV.map((item) => (
-                <SidebarLink key={item.href} item={item} currentPath={pathname ?? ''} />
-              ))}
-            </ul>
-          </nav>
-        </aside>
-        <main className="flex-1 overflow-x-hidden pb-24 lg:pb-8">
-          {children}
-        </main>
-      </div>
-      <MobileBottomNav currentPath={pathname ?? ''} className="lg:hidden" />
-      <ToastViewport />
-    </div>
-  )
-}
-
-type SidebarLinkProps = {
-  item: NavItem
-  currentPath: string
-}
-
-function SidebarLink({ item, currentPath }: SidebarLinkProps) {
-  const active = isActivePath(currentPath, item.href)
-  const Icon = (Icons[item.icon as keyof typeof Icons] ?? Icons.Circle) as Icons.LucideIcon
-
-  return (
-    <li>
-      <Link
-        href={item.href}
+    <div className="flex min-h-screen bg-[#f6f7f5] text-slate-900">
+      <aside
         className={cn(
-          'flex items-center gap-3 rounded-full px-4 py-2 text-sm transition-colors',
-          active ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100'
+          'fixed inset-y-0 z-40 w-64 border-r border-slate-200 bg-white px-4 py-6 shadow-sm transition-transform duration-200 ease-in-out md:static md:translate-x-0',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
         )}
       >
-        <Icon className="h-4 w-4" aria-hidden="true" />
-        <span className="font-medium">{item.label}</span>
-      </Link>
-    </li>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">TRS</p>
+            <p className="text-lg font-semibold text-slate-900">RevOS</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            aria-label="Close navigation"
+            onClick={() => setMobileOpen(false)}
+          >
+            <Icons.X className="h-5 w-5" />
+          </Button>
+        </div>
+        <nav className="mt-6 space-y-1 text-sm">
+          {MAIN_NAV.map((item) => {
+            const Icon = (Icons[item.icon as keyof typeof Icons] ?? Icons.Circle) as Icons.LucideIcon
+            const active = pathname === item.href
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  'flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-slate-600 transition-colors',
+                  active ? 'bg-slate-900 text-white shadow-sm' : 'hover:bg-slate-100',
+                )}
+                onClick={() => setMobileOpen(false)}
+              >
+                <Icon className="h-4 w-4" aria-hidden="true" />
+                <span>{item.label}</span>
+              </Link>
+            )
+          })}
+        </nav>
+        <div className="mt-8 rounded-lg bg-slate-50 p-4 text-xs text-slate-600">
+          <p className="font-semibold text-slate-900">Automation Pulse</p>
+          <p className="mt-1 leading-relaxed">
+            {automationLogs.length} agent runs logged. {kpis.automationHours} hours saved.
+          </p>
+        </div>
+      </aside>
+      <div className="flex w-full flex-1 flex-col md:pl-64">
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/90 px-6 py-4 backdrop-blur">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              aria-label="Open navigation"
+              onClick={() => setMobileOpen((value) => !value)}
+            >
+              <Icons.Menu className="h-5 w-5" />
+            </Button>
+            <div>
+              <p className="text-xs uppercase tracking-widest text-slate-500">Execution Layer</p>
+              <p className="font-semibold text-slate-900">TRS-RevOS</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 text-xs">
+            <Badge variant="outline" className="border-emerald-500 text-emerald-700">
+              Active Projects • {kpis.activeProjects}
+            </Badge>
+            <Badge variant="outline" className="border-orange-500 text-orange-600">
+              Deliverables • {kpis.deliverablesInProgress}
+            </Badge>
+            <Badge variant="outline" className="border-slate-400 text-slate-600">
+              Automation Hours • {kpis.automationHours}
+            </Badge>
+          </div>
+        </header>
+        <main className="flex-1 px-6 pb-16 pt-8 md:pb-8">{children}</main>
+      </div>
+    </div>
   )
 }
