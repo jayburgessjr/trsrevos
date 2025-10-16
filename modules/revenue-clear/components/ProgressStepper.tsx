@@ -23,11 +23,17 @@ type ProgressStepperProps = {
   items: StepperItem[]
   active: RevenueClearStageKey
   onSelect?: (key: RevenueClearStageKey) => void
+  className?: string
 }
 
-export function ProgressStepper({ items, active, onSelect }: ProgressStepperProps) {
+export function ProgressStepper({ items, active, onSelect, className }: ProgressStepperProps) {
   return (
-    <nav className="flex flex-col gap-3 rounded-lg border border-[color:var(--color-border)] bg-white p-4 shadow-sm">
+    <nav
+      className={cn(
+        'flex flex-col gap-3 rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/95 p-4 shadow-sm supports-[backdrop-filter]:bg-[color:var(--color-surface)]/80',
+        className,
+      )}
+    >
       <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--color-text-muted)]">
         Revenue Clear Workflow
       </h2>

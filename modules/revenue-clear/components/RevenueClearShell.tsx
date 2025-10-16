@@ -80,6 +80,56 @@ const DEFAULT_NEXT_STEPS: NextStepPlan = {
   proposalDoc: '',
 }
 
+const BLUEPRINT_PLACEHOLDER_COUNT = 3
+
+function padBlueprintInterventions(list: BlueprintIntervention[]): BlueprintIntervention[] {
+  const normalized = list.slice(0, BLUEPRINT_PLACEHOLDER_COUNT).map((item) => ({
+    ...item,
+    interventionName: item.interventionName?.trim() ?? '',
+    diagnosis: item.diagnosis?.trim() ?? '',
+    fix: item.fix?.trim() ?? '',
+    projectedLift: Number.isFinite(item.projectedLift) ? item.projectedLift : 0,
+    effortScore: Number.isFinite(item.effortScore) ? item.effortScore : 0,
+    roiIndex: Number.isFinite(item.roiIndex) ? item.roiIndex : 0,
+    blueprintUrl: item.blueprintUrl ?? null,
+  }))
+
+  const padded = [...normalized]
+  for (let index = padded.length; index < BLUEPRINT_PLACEHOLDER_COUNT; index += 1) {
+    padded.push({
+      interventionName: '',
+      diagnosis: '',
+      fix: '',
+      projectedLift: 0,
+      effortScore: 0,
+      roiIndex: 0,
+      blueprintUrl: null,
+    })
+  }
+
+  return padded
+}
+
+const DEFAULT_REVBOARD_KPIS: string[] = ['MRR', 'Churn', 'ARPU', 'CAC']
+
+function ensureMetricRows(metrics: RevboardMetric[], client: RevenueClearSnapshot['client']): RevboardMetric[] {
+  if (metrics.length) {
+    return metrics
+  }
+
+  const now = new Date().toISOString()
+  const baselineRevenue = client.monthlyRevenue ?? 0
+
+  return DEFAULT_REVBOARD_KPIS.map((kpi) => ({
+    kpiName: kpi,
+    baselineValue: kpi === 'MRR' ? baselineRevenue : 0,
+    currentValue: kpi === 'MRR' ? baselineRevenue : 0,
+    delta: 0,
+    interventionId: null,
+    date: now,
+  }))
+}
+
 function computeTrsScore(audits: AuditLeak[]): number {
   const weights: Record<AuditLeak['pillar'], number> = {
     pricing: 0.3,
@@ -123,8 +173,12 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
           score: 0,
         })),
   )
-  const [interventions, setInterventions] = useState<BlueprintIntervention[]>(snapshot.interventions.slice(0, 3))
-  const [metrics, setMetrics] = useState<RevboardMetric[]>(snapshot.metrics)
+  const [interventions, setInterventions] = useState<BlueprintIntervention[]>(() =>
+    padBlueprintInterventions(snapshot.interventions),
+  )
+  const [metrics, setMetrics] = useState<RevboardMetric[]>(() =>
+    ensureMetricRows(snapshot.metrics, snapshot.client),
+  )
   const [tasks, setTasks] = useState<ExecutionTask[]>(snapshot.tasks)
   const [weeklySummary, setWeeklySummary] = useState<ExecutionWeeklySummary | null>(snapshot.weeklySummary)
   const [results, setResults] = useState<RevenueClearResult>(snapshot.results ?? DEFAULT_RESULT)
@@ -215,7 +269,34 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
     status: blueprintStatus,
     setStatus: setBlueprintStatus,
   } = useAutosave<BlueprintIntervention[]>(async (value) => {
-      const payload = value.map((item) => ({
+      const sanitized = value
+        .map((item) => ({
+          ...item,
+          interventionName: item.interventionName?.trim() ?? '',
+          diagnosis: item.diagnosis?.trim() ?? '',
+          fix: item.fix?.trim() ?? '',
+          projectedLift: Number.isFinite(item.projectedLift) ? item.projectedLift : 0,
+          effortScore: Number.isFinite(item.effortScore) ? item.effortScore : 0,
+          roiIndex: Number.isFinite(item.roiIndex) ? item.roiIndex : 0,
+          blueprintUrl: item.blueprintUrl ?? null,
+        }))
+        .filter(
+          (item) =>
+            item.interventionName ||
+            item.diagnosis ||
+            item.fix ||
+            item.projectedLift ||
+            item.effortScore ||
+            item.roiIndex ||
+            item.blueprintUrl,
+        )
+
+      if (!sanitized.length) {
+        setInterventions(padBlueprintInterventions([]))
+        return
+      }
+
+      const payload = sanitized.map((item) => ({
         id: item.id,
         client_id: snapshot.client.id,
         intervention_name: item.interventionName,
@@ -236,19 +317,18 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
         throw error
       }
 
-      if (data) {
-        setInterventions(
-          value.map((intervention) => {
-            const updated = data.find((row) => row.intervention_name === intervention.interventionName)
-            if (!updated) return intervention
-            return {
-              ...intervention,
-              id: updated.id,
-              blueprintUrl: updated.blueprint_url ?? intervention.blueprintUrl ?? null,
-            }
-          }),
+      const persisted = sanitized.map((intervention) => {
+        const updated = data?.find(
+          (row) => row.id === intervention.id || row.intervention_name === intervention.interventionName,
         )
-      }
+        return {
+          ...intervention,
+          id: updated?.id ?? intervention.id,
+          blueprintUrl: updated?.blueprint_url ?? intervention.blueprintUrl ?? null,
+        }
+      })
+
+      setInterventions(padBlueprintInterventions(persisted))
     })
 
   const {
@@ -258,7 +338,36 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
     setStatus: setMetricStatus,
   } = useAutosave<RevboardMetric[]>(
     async (value) => {
-      const payload = value.map((metric) => ({
+      const sanitized = value
+        .map((metric) => {
+          const baselineValue = Number.isFinite(Number(metric.baselineValue))
+            ? Number(metric.baselineValue)
+            : 0
+          const currentValue = Number.isFinite(Number(metric.currentValue))
+            ? Number(metric.currentValue)
+            : 0
+          const computedDelta = Number.isFinite(Number(metric.delta))
+            ? Number(metric.delta)
+            : Number((currentValue - baselineValue).toFixed(2))
+
+          return {
+            ...metric,
+            kpiName: metric.kpiName?.trim() ?? '',
+            baselineValue,
+            currentValue,
+            delta: computedDelta,
+            interventionId: metric.interventionId ?? null,
+            date: metric.date ?? new Date().toISOString(),
+          }
+        })
+        .filter((metric) => metric.kpiName)
+
+      if (!sanitized.length) {
+        setMetrics(ensureMetricRows([], snapshot.client))
+        return
+      }
+
+      const payload = sanitized.map((metric) => ({
         id: metric.id,
         client_id: snapshot.client.id,
         kpi_name: metric.kpiName,
@@ -277,20 +386,30 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
         throw error
       }
 
-      if (data) {
-        setMetrics(
-          value.map((metric) => {
-            const updated = data.find((row) => row.id === metric.id || row.kpi_name === metric.kpiName)
-            if (!updated) return metric
-            return {
-              ...metric,
-              id: updated.id,
-              delta: Number(updated.delta ?? metric.delta ?? 0),
-              date: updated.recorded_on ?? metric.date,
-            }
-          }),
-        )
-      }
+      const persisted = sanitized.map((metric) => {
+        const updated = data?.find((row) => row.id === metric.id || row.kpi_name === metric.kpiName)
+        const baselineValue = Number.isFinite(Number(updated?.baseline_value))
+          ? Number(updated?.baseline_value)
+          : metric.baselineValue
+        const currentValue = Number.isFinite(Number(updated?.current_value))
+          ? Number(updated?.current_value)
+          : metric.currentValue
+        const delta = Number.isFinite(Number(updated?.delta))
+          ? Number(updated?.delta)
+          : Number((currentValue - baselineValue).toFixed(2))
+
+        return {
+          ...metric,
+          id: updated?.id ?? metric.id,
+          baselineValue,
+          currentValue,
+          delta,
+          interventionId: updated?.intervention_id ?? metric.interventionId ?? null,
+          date: updated?.recorded_on ?? metric.date ?? new Date().toISOString(),
+        }
+      })
+
+      setMetrics(ensureMetricRows(persisted, snapshot.client))
     },
   )
 
@@ -459,18 +578,20 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
 
   const handleBlueprintChange = useCallback(
     (value: BlueprintIntervention[]) => {
-      setInterventions(value)
-      scheduleBlueprintSave(value)
+      const next = padBlueprintInterventions(value)
+      setInterventions(next)
+      scheduleBlueprintSave(next)
     },
     [scheduleBlueprintSave],
   )
 
   const handleMetricChange = useCallback(
     (value: RevboardMetric[]) => {
-      setMetrics(value)
-      scheduleMetricSave(value)
+      const next = ensureMetricRows(value, snapshot.client)
+      setMetrics(next)
+      scheduleMetricSave(next)
     },
-    [scheduleMetricSave],
+    [scheduleMetricSave, snapshot.client],
   )
 
   const handleTaskChange = useCallback(
@@ -561,6 +682,7 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
         projectedLift: Number(item.projected_lift ?? 0),
         effortScore: Number(item.effort_score ?? 0),
         roiIndex: Number(item.roi_index ?? 0),
+        blueprintUrl: item.blueprint_url ?? item.blueprintUrl ?? null,
       }))
     }
 
@@ -571,8 +693,9 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
       }))
     }
 
-    setInterventions(nextBlueprints)
-    await saveBlueprintNow(nextBlueprints)
+    const paddedBlueprints = padBlueprintInterventions(nextBlueprints)
+    setInterventions(paddedBlueprints)
+    await saveBlueprintNow(paddedBlueprints)
     setBlueprintStatus(response.data ? 'saved' : 'error')
   }, [audits, intake, interventions, saveBlueprintNow, setBlueprintStatus, snapshot.client.id])
 
@@ -664,26 +787,30 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
   return (
     <div className="space-y-6">
       {intro}
-      <ProgressStepper
-        items={stepperItems}
-        active={activeTab}
-        onSelect={(key) => setActiveTab(key)}
-      />
-
       <Tabs
         defaultValue="intake"
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as RevenueClearStageKey)}
       >
-        <TabsList className="flex-wrap border-[color:var(--color-border)] bg-white">
-          {TAB_CONFIG.map((tab) => (
-            <TabsTrigger key={tab.key} value={tab.key}>
-              {tab.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <div className="sticky top-14 z-30 space-y-3 pb-3 supports-[backdrop-filter]:backdrop-blur">
+          <ProgressStepper
+            items={stepperItems}
+            active={activeTab}
+            onSelect={(key) => setActiveTab(key)}
+          />
+          <TabsList className="flex w-full flex-wrap gap-2 border-[color:var(--color-border)] bg-[color:var(--color-surface)]/95 p-1.5 shadow-sm supports-[backdrop-filter]:bg-[color:var(--color-surface)]/80">
+            {TAB_CONFIG.map((tab) => (
+              <TabsTrigger key={tab.key} value={tab.key}>
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
 
-        <TabsContent value="intake" className="border border-solid border-[color:var(--color-border)] bg-white shadow-sm">
+        <TabsContent
+          value="intake"
+          className="border border-solid border-[color:var(--color-border)] bg-[color:var(--color-surface)] shadow-sm"
+        >
           <IntakeTab
             client={snapshot.client}
             value={intake}
@@ -693,7 +820,10 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
           />
         </TabsContent>
 
-        <TabsContent value="audit" className="border border-solid border-[color:var(--color-border)] bg-white shadow-sm">
+        <TabsContent
+          value="audit"
+          className="border border-solid border-[color:var(--color-border)] bg-[color:var(--color-surface)] shadow-sm"
+        >
           <AuditTab
             audits={audits}
             trsScore={trsScore}
@@ -703,7 +833,10 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
           />
         </TabsContent>
 
-        <TabsContent value="blueprint" className="border border-solid border-[color:var(--color-border)] bg-white shadow-sm">
+        <TabsContent
+          value="blueprint"
+          className="border border-solid border-[color:var(--color-border)] bg-[color:var(--color-surface)] shadow-sm"
+        >
           <BlueprintTab
             interventions={interventions}
             status={blueprintStatus}
@@ -713,7 +846,10 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
           />
         </TabsContent>
 
-        <TabsContent value="revboard" className="border border-solid border-[color:var(--color-border)] bg-white shadow-sm">
+        <TabsContent
+          value="revboard"
+          className="border border-solid border-[color:var(--color-border)] bg-[color:var(--color-surface)] shadow-sm"
+        >
           <RevboardTab
             metrics={metrics}
             status={metricStatus}
@@ -723,7 +859,10 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
           />
         </TabsContent>
 
-        <TabsContent value="execution" className="border border-solid border-[color:var(--color-border)] bg-white shadow-sm">
+        <TabsContent
+          value="execution"
+          className="border border-solid border-[color:var(--color-border)] bg-[color:var(--color-surface)] shadow-sm"
+        >
           <ExecutionTab
             tasks={tasks}
             status={executionStatus}
@@ -734,7 +873,10 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
           />
         </TabsContent>
 
-        <TabsContent value="results" className="border border-solid border-[color:var(--color-border)] bg-white shadow-sm">
+        <TabsContent
+          value="results"
+          className="border border-solid border-[color:var(--color-border)] bg-[color:var(--color-surface)] shadow-sm"
+        >
           <ResultsTab
             value={results}
             status={resultsStatus}
@@ -743,7 +885,10 @@ export default function RevenueClearShell({ snapshot, intro }: RevenueClearShell
           />
         </TabsContent>
 
-        <TabsContent value="nextSteps" className="border border-solid border-[color:var(--color-border)] bg-white shadow-sm">
+        <TabsContent
+          value="nextSteps"
+          className="border border-solid border-[color:var(--color-border)] bg-[color:var(--color-surface)] shadow-sm"
+        >
           <NextStepsTab
             value={nextStep}
             status={nextStepsStatus}
