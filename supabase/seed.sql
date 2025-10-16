@@ -129,6 +129,613 @@ VALUES
 ON CONFLICT (id) DO UPDATE SET salience_score = EXCLUDED.salience_score;
 
 -- ============================================================================
+-- TRS-RevOS CORE MODULES (Projects, Documents, Content, Resources)
+-- ============================================================================
+
+INSERT INTO clients (
+  id,
+  name,
+  user_id,
+  owner_id,
+  type,
+  industry,
+  revenue_model,
+  monthly_recurring_revenue,
+  profit_margin,
+  target_growth,
+  primary_goal,
+  phase,
+  status,
+  created_at,
+  updated_at
+)
+VALUES
+  (
+    '20000000-0000-0000-0000-000000000001',
+    'Acme Robotics',
+    '00000000-0000-0000-0000-000000000001',
+    '00000000-0000-0000-0000-000000000001',
+    'Enterprise',
+    'Manufacturing',
+    'Subscription + Advisory',
+    48000,
+    32.5,
+    18.4,
+    'Scale recurring implementation playbooks',
+    'Onboarding',
+    'active',
+    NOW(),
+    NOW()
+  ),
+  (
+    '20000000-0000-0000-0000-000000000002',
+    'Northwave Analytics',
+    '00000000-0000-0000-0000-000000000002',
+    '00000000-0000-0000-0000-000000000001',
+    'Scale-Up',
+    'SaaS',
+    'Usage Based',
+    26000,
+    24.1,
+    22.0,
+    'Stabilize expansion revenue leak',
+    'Discovery',
+    'active',
+    NOW(),
+    NOW()
+  ),
+  (
+    '20000000-0000-0000-0000-000000000003',
+    'Atlas Freight',
+    '00000000-0000-0000-0000-000000000001',
+    '00000000-0000-0000-0000-000000000001',
+    'Enterprise',
+    'Logistics',
+    'Retainer',
+    38000,
+    18.7,
+    14.0,
+    'Implement predictive revenue diagnostics',
+    'Data',
+    'active',
+    NOW(),
+    NOW()
+  )
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  status = EXCLUDED.status,
+  updated_at = NOW();
+
+INSERT INTO projects (
+  id,
+  client_id,
+  name,
+  status,
+  phase,
+  health,
+  start_date,
+  end_date,
+  owner_id,
+  progress,
+  budget,
+  spent,
+  project_type,
+  hubspot_deal_id,
+  quickbooks_invoice_url,
+  quickbooks_invoice_id,
+  kickoff_notes,
+  completed_at,
+  created_at,
+  updated_at
+)
+VALUES
+  (
+    '30000000-0000-0000-0000-000000000001',
+    '20000000-0000-0000-0000-000000000001',
+    'Clarity Audit – Robotics Expansion',
+    'Active',
+    'Data',
+    'Green',
+    '2024-08-01',
+    '2024-11-15',
+    '00000000-0000-0000-0000-000000000001',
+    0.45,
+    120000,
+    42000,
+    'Audit',
+    'HS-9001',
+    'https://quickbooks.intuit.com/invoice/INV-1001',
+    'INV-1001',
+    'Kickoff held with ops + finance. Pending integration credentials for production warehouse.',
+    NULL,
+    NOW(),
+    NOW()
+  ),
+  (
+    '30000000-0000-0000-0000-000000000002',
+    '20000000-0000-0000-0000-000000000002',
+    'Blueprint: Expansion Revenue Recovery',
+    'Pending',
+    'Discovery',
+    'Yellow',
+    '2024-09-05',
+    '2024-12-20',
+    '00000000-0000-0000-0000-000000000002',
+    0.22,
+    85000,
+    12000,
+    'Blueprint',
+    'HS-9045',
+    NULL,
+    NULL,
+    'Awaiting QuickBooks invoice sync once SOW signed.',
+    NULL,
+    NOW(),
+    NOW()
+  ),
+  (
+    '30000000-0000-0000-0000-000000000003',
+    '20000000-0000-0000-0000-000000000003',
+    'Advisory Pod – Predictive Diagnostics',
+    'Delivered',
+    'Deliverables',
+    'Green',
+    '2024-05-10',
+    '2024-09-01',
+    '00000000-0000-0000-0000-000000000001',
+    1.0,
+    64000,
+    64000,
+    'Advisory',
+    'HS-8777',
+    'https://quickbooks.intuit.com/invoice/INV-0951',
+    'INV-0951',
+    'Delivered predictive diagnostics playbook, awaiting HubSpot status sync.',
+    '2024-09-02T18:30:00Z',
+    NOW(),
+    NOW()
+  )
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  status = EXCLUDED.status,
+  project_type = EXCLUDED.project_type,
+  updated_at = NOW();
+
+INSERT INTO project_members (id, project_id, user_id, role, allocation, joined_at, created_at, updated_at)
+VALUES
+  (
+    '31000000-0000-0000-0000-000000000001',
+    '30000000-0000-0000-0000-000000000001',
+    '00000000-0000-0000-0000-000000000001',
+    'Engagement Lead',
+    1.0,
+    NOW(),
+    NOW(),
+    NOW()
+  ),
+  (
+    '31000000-0000-0000-0000-000000000002',
+    '30000000-0000-0000-0000-000000000001',
+    '00000000-0000-0000-0000-000000000002',
+    'Automation Architect',
+    0.5,
+    NOW(),
+    NOW(),
+    NOW()
+  ),
+  (
+    '31000000-0000-0000-0000-000000000003',
+    '30000000-0000-0000-0000-000000000002',
+    '00000000-0000-0000-0000-000000000002',
+    'Blueprint Owner',
+    1.0,
+    NOW(),
+    NOW(),
+    NOW()
+  )
+ON CONFLICT (id) DO UPDATE SET
+  role = EXCLUDED.role,
+  allocation = EXCLUDED.allocation,
+  updated_at = NOW();
+
+INSERT INTO project_links (id, project_id, link_type, label, url, created_by, created_at)
+VALUES
+  (
+    '32000000-0000-0000-0000-000000000001',
+    '30000000-0000-0000-0000-000000000001',
+    'HubSpot Deal',
+    'Closed Won Deal',
+    'https://app.hubspot.com/deals/HS-9001',
+    '00000000-0000-0000-0000-000000000001',
+    NOW()
+  ),
+  (
+    '32000000-0000-0000-0000-000000000002',
+    '30000000-0000-0000-0000-000000000001',
+    'Kickoff Doc',
+    'Workshop Agenda',
+    'https://docs.google.com/document/d/clarity-agenda',
+    '00000000-0000-0000-0000-000000000002',
+    NOW()
+  ),
+  (
+    '32000000-0000-0000-0000-000000000003',
+    '30000000-0000-0000-0000-000000000002',
+    'HubSpot Deal',
+    'Discovery Intake',
+    'https://app.hubspot.com/deals/HS-9045',
+    '00000000-0000-0000-0000-000000000002',
+    NOW()
+  )
+ON CONFLICT (id) DO UPDATE SET
+  url = EXCLUDED.url;
+
+INSERT INTO resources (
+  id,
+  name,
+  description,
+  resource_type,
+  file_path,
+  external_url,
+  tags,
+  created_by,
+  created_at,
+  updated_at
+)
+VALUES
+  (
+    '40000000-0000-0000-0000-000000000001',
+    'TRS Gap Map Template',
+    'Baseline template for intervention gap mapping sessions.',
+    'file',
+    'resources/templates/gap-map-template.pdf',
+    NULL,
+    ARRAY['gap-map','template','qra'],
+    '00000000-0000-0000-0000-000000000001',
+    NOW(),
+    NOW()
+  ),
+  (
+    '40000000-0000-0000-0000-000000000002',
+    'Revenue Calculator',
+    'Spreadsheet to estimate ARR lift scenarios.',
+    'file',
+    'resources/calculators/revenue-lift.xlsx',
+    NULL,
+    ARRAY['calculator','finance'],
+    '00000000-0000-0000-0000-000000000002',
+    NOW(),
+    NOW()
+  ),
+  (
+    '40000000-0000-0000-0000-000000000003',
+    'HubSpot Playbook – Closed Won Handoff',
+    'Operational checklist for sales to services handoff.',
+    'link',
+    NULL,
+    'https://trs-revos.notion.site/closed-won-handoff',
+    ARRAY['hubspot','handoff'],
+    '00000000-0000-0000-0000-000000000001',
+    NOW(),
+    NOW()
+  )
+ON CONFLICT (id) DO UPDATE SET
+  description = EXCLUDED.description,
+  tags = EXCLUDED.tags,
+  updated_at = NOW();
+
+INSERT INTO project_resources (id, project_id, resource_id, linked_at, created_by)
+VALUES
+  (
+    '41000000-0000-0000-0000-000000000001',
+    '30000000-0000-0000-0000-000000000001',
+    '40000000-0000-0000-0000-000000000001',
+    NOW(),
+    '00000000-0000-0000-0000-000000000001'
+  ),
+  (
+    '41000000-0000-0000-0000-000000000002',
+    '30000000-0000-0000-0000-000000000001',
+    '40000000-0000-0000-0000-000000000002',
+    NOW(),
+    '00000000-0000-0000-0000-000000000002'
+  ),
+  (
+    '41000000-0000-0000-0000-000000000003',
+    '30000000-0000-0000-0000-000000000003',
+    '40000000-0000-0000-0000-000000000003',
+    NOW(),
+    '00000000-0000-0000-0000-000000000001'
+  )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO documents (
+  id,
+  project_id,
+  title,
+  description,
+  document_type,
+  status,
+  tags,
+  current_version_id,
+  created_by,
+  created_at,
+  updated_at
+)
+VALUES
+  (
+    '50000000-0000-0000-0000-000000000001',
+    '30000000-0000-0000-0000-000000000001',
+    'Clarity Audit Summary',
+    'Executive-ready summary of audit findings.',
+    'Audit Report',
+    'final',
+    ARRAY['audit','summary','executive'],
+    NULL,
+    '00000000-0000-0000-0000-000000000001',
+    NOW(),
+    NOW()
+  ),
+  (
+    '50000000-0000-0000-0000-000000000002',
+    '30000000-0000-0000-0000-000000000002',
+    'Revenue Blueprint Draft',
+    'Working draft for expansion revenue recovery plan.',
+    'Intervention Blueprint',
+    'draft',
+    ARRAY['blueprint','draft'],
+    NULL,
+    '00000000-0000-0000-0000-000000000002',
+    NOW(),
+    NOW()
+  ),
+  (
+    '50000000-0000-0000-0000-000000000003',
+    '30000000-0000-0000-0000-000000000003',
+    'Case Study Package',
+    'Final package delivered back to HubSpot.',
+    'Case Study',
+    'final',
+    ARRAY['case-study','delivered'],
+    NULL,
+    '00000000-0000-0000-0000-000000000001',
+    NOW(),
+    NOW()
+  )
+ON CONFLICT (id) DO UPDATE SET
+  status = EXCLUDED.status,
+  updated_at = NOW();
+
+INSERT INTO document_versions (
+  id,
+  document_id,
+  version,
+  file_path,
+  file_checksum,
+  file_size,
+  mime_type,
+  ai_summary,
+  metadata,
+  created_by,
+  created_at
+)
+VALUES
+  (
+    '51000000-0000-0000-0000-000000000001',
+    '50000000-0000-0000-0000-000000000001',
+    1,
+    'documents/clarity-audit-summary-v1.pdf',
+    'sha256:clarityv1',
+    2457600,
+    'application/pdf',
+    'Robotics revenue pipeline stabilized with prioritized backlog and automation wins.',
+    '{"language":"en","pages":18}'::jsonb,
+    '00000000-0000-0000-0000-000000000001',
+    NOW()
+  ),
+  (
+    '51000000-0000-0000-0000-000000000002',
+    '50000000-0000-0000-0000-000000000002',
+    1,
+    'documents/revenue-blueprint-draft-v1.docx',
+    'sha256:blueprintv1',
+    1048576,
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'Blueprint outlines five interventions prioritized by ROI index and automation lift.',
+    '{"language":"en","sections":6}'::jsonb,
+    '00000000-0000-0000-0000-000000000002',
+    NOW()
+  ),
+  (
+    '51000000-0000-0000-0000-000000000003',
+    '50000000-0000-0000-0000-000000000003',
+    2,
+    'documents/atlas-case-study-v2.pdf',
+    'sha256:atlasv2',
+    3145728,
+    'application/pdf',
+    'Final case study highlighting diagnostic lift and blueprint velocity.',
+    '{"language":"en","pages":12}'::jsonb,
+    '00000000-0000-0000-0000-000000000001',
+    NOW()
+  )
+ON CONFLICT (id) DO NOTHING;
+
+UPDATE documents SET current_version_id = '51000000-0000-0000-0000-000000000001' WHERE id = '50000000-0000-0000-0000-000000000001';
+UPDATE documents SET current_version_id = '51000000-0000-0000-0000-000000000002' WHERE id = '50000000-0000-0000-0000-000000000002';
+UPDATE documents SET current_version_id = '51000000-0000-0000-0000-000000000003' WHERE id = '50000000-0000-0000-0000-000000000003';
+
+INSERT INTO document_tags (id, document_id, tag, created_at)
+VALUES
+  (
+    '52000000-0000-0000-0000-000000000001',
+    '50000000-0000-0000-0000-000000000001',
+    'executive',
+    NOW()
+  ),
+  (
+    '52000000-0000-0000-0000-000000000002',
+    '50000000-0000-0000-0000-000000000002',
+    'draft',
+    NOW()
+  ),
+  (
+    '52000000-0000-0000-0000-000000000003',
+    '50000000-0000-0000-0000-000000000003',
+    'case-study',
+    NOW()
+  )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO document_resources (id, document_id, resource_id, linked_at, created_by)
+VALUES
+  (
+    '53000000-0000-0000-0000-000000000001',
+    '50000000-0000-0000-0000-000000000001',
+    '40000000-0000-0000-0000-000000000001',
+    NOW(),
+    '00000000-0000-0000-0000-000000000001'
+  ),
+  (
+    '53000000-0000-0000-0000-000000000002',
+    '50000000-0000-0000-0000-000000000002',
+    '40000000-0000-0000-0000-000000000002',
+    NOW(),
+    '00000000-0000-0000-0000-000000000002'
+  )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO content_items (
+  id,
+  project_id,
+  source_document_id,
+  title,
+  content_type,
+  draft_text,
+  final_text,
+  status,
+  generated_by_agent,
+  metadata,
+  created_by,
+  created_at,
+  updated_at
+)
+VALUES
+  (
+    '54000000-0000-0000-0000-000000000001',
+    '30000000-0000-0000-0000-000000000003',
+    '50000000-0000-0000-0000-000000000003',
+    'Atlas Case Study – Email Draft',
+    'Email',
+    'Subject: How Atlas cut forecast variance by 34%\n\nDraft body text...',
+    'Subject: Atlas Freight crushed forecast variance by 34%\n\nFinal body text...',
+    'Published',
+    'case-study-draft-builder',
+    '{"channel":"email","persona":"CRO"}'::jsonb,
+    '00000000-0000-0000-0000-000000000001',
+    NOW(),
+    NOW()
+  ),
+  (
+    '54000000-0000-0000-0000-000000000002',
+    '30000000-0000-0000-0000-000000000001',
+    '50000000-0000-0000-0000-000000000001',
+    'Robotics Audit Summary – LinkedIn Post',
+    'Post',
+    'Draft post copy summarizing audit lift...',
+    NULL,
+    'Draft',
+    'clarity-audit-summarizer',
+    '{"channel":"linkedin","length":"short"}'::jsonb,
+    '00000000-0000-0000-0000-000000000002',
+    NOW(),
+    NOW()
+  )
+ON CONFLICT (id) DO UPDATE SET
+  status = EXCLUDED.status,
+  final_text = EXCLUDED.final_text,
+  updated_at = NOW();
+
+INSERT INTO project_agent_runs (
+  id,
+  project_id,
+  agent_key,
+  definition_id,
+  run_id,
+  input_payload,
+  output_document_id,
+  created_by,
+  created_at
+)
+VALUES
+  (
+    '55000000-0000-0000-0000-000000000001',
+    '30000000-0000-0000-0000-000000000001',
+    'clarity-audit-summarizer',
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
+    'dddddddd-dddd-dddd-dddd-ddddddddddd1',
+    '{"prompt":"Summarize robotics clarity audit"}'::jsonb,
+    '50000000-0000-0000-0000-000000000001',
+    '00000000-0000-0000-0000-000000000001',
+    NOW()
+  ),
+  (
+    '55000000-0000-0000-0000-000000000002',
+    '30000000-0000-0000-0000-000000000003',
+    'case-study-draft-builder',
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
+    'dddddddd-dddd-dddd-dddd-ddddddddddd2',
+    '{"prompt":"Create Atlas Freight case study email"}'::jsonb,
+    '50000000-0000-0000-0000-000000000003',
+    '00000000-0000-0000-0000-000000000001',
+    NOW()
+  )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO automation_events (
+  id,
+  project_id,
+  source_system,
+  event_key,
+  status,
+  payload,
+  occurred_at,
+  created_at
+)
+VALUES
+  (
+    '56000000-0000-0000-0000-000000000001',
+    '30000000-0000-0000-0000-000000000001',
+    'HubSpot',
+    'deal.closed_won',
+    'processed',
+    '{"dealId":"HS-9001","amount":120000}'::jsonb,
+    NOW() - INTERVAL '18 days',
+    NOW() - INTERVAL '18 days'
+  ),
+  (
+    '56000000-0000-0000-0000-000000000002',
+    '30000000-0000-0000-0000-000000000001',
+    'QuickBooks',
+    'invoice.paid',
+    'processed',
+    '{"invoiceId":"INV-1001","amount":42000}'::jsonb,
+    NOW() - INTERVAL '12 days',
+    NOW() - INTERVAL '12 days'
+  ),
+  (
+    '56000000-0000-0000-0000-000000000003',
+    '30000000-0000-0000-0000-000000000002',
+    'HubSpot',
+    'deal.stage_change',
+    'pending',
+    '{"dealId":"HS-9045","stage":"Contract Sent"}'::jsonb,
+    NOW() - INTERVAL '4 days',
+    NOW() - INTERVAL '4 days'
+  )
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
 -- OPERATIONAL AUTOMATIONS
 -- ============================================================================
 INSERT INTO automation_playbooks (
