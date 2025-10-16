@@ -27,7 +27,6 @@ const calculators: Array<{
   category: CalculatorCategory
   description: string
   stages: string
-  icon: string
 }> = [
   {
     id: 'audit-roi',
@@ -35,7 +34,6 @@ const calculators: Array<{
     category: 'client-facing',
     description: 'Prove the $3,500 audit pays for itself fast',
     stages: 'Stage 1, 6',
-    icon: '💰'
   },
   {
     id: 'pricing-scenario',
@@ -43,7 +41,6 @@ const calculators: Array<{
     category: 'client-facing',
     description: 'Find defensible "sweet spot" price before tests',
     stages: 'Stage 3, 4, 6',
-    icon: '💲'
   },
   {
     id: 'activation-funnel',
@@ -51,7 +48,6 @@ const calculators: Array<{
     category: 'client-facing',
     description: 'Dollarize improving trial→active or lead→qualified',
     stages: 'Stage 3-5',
-    icon: '🎯'
   },
   {
     id: 'retention-ltv',
@@ -59,7 +55,6 @@ const calculators: Array<{
     category: 'client-facing',
     description: 'Show value of cutting churn or adding expansion',
     stages: 'Stage 4-6',
-    icon: '📈'
   },
   {
     id: 'cac-payback',
@@ -67,7 +62,6 @@ const calculators: Array<{
     category: 'client-facing',
     description: 'Decide if pricing/activation changes fix payback',
     stages: 'Stage 5-6',
-    icon: '⚖️'
   },
   {
     id: 'offer-roi',
@@ -75,7 +69,6 @@ const calculators: Array<{
     category: 'client-facing',
     description: 'Justify recommended package with math',
     stages: 'Stage 6',
-    icon: '🎁'
   },
   {
     id: 'revenue-planner',
@@ -83,7 +76,6 @@ const calculators: Array<{
     category: 'internal',
     description: 'Convert volumes and attach rates into gross, then waterfall to ops/marketing/salaries',
     stages: 'Stage 7, Weekly Ops',
-    icon: '📊'
   },
   {
     id: 'volume-targets',
@@ -91,7 +83,6 @@ const calculators: Array<{
     category: 'internal',
     description: 'How many audits needed to hit $X gross or net?',
     stages: 'Weekly Ops',
-    icon: '🎲'
   },
   {
     id: 'revenueos-recognition',
@@ -99,7 +90,6 @@ const calculators: Array<{
     category: 'internal',
     description: 'Smooth enterprise ACV across milestones for forecasting',
     stages: 'Pipeline & Cash Planning',
-    icon: '📅'
   },
   {
     id: 'compensation',
@@ -107,7 +97,6 @@ const calculators: Array<{
     category: 'internal',
     description: 'Jay/Gabe salaries, burden, tax, reinvestments, distributions',
     stages: 'Owner Pay, Planning',
-    icon: '💵'
   }
 ]
 
@@ -120,74 +109,94 @@ export default function CalculatorsPageClient() {
   )
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Revenue Calculators</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            Client-facing and internal calculators for revenue science
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Badge
-            variant={category === 'all' ? 'default' : 'outline'}
-            className="cursor-pointer"
-            onClick={() => setCategory('all')}
-          >
-            All
-          </Badge>
-          <Badge
-            variant={category === 'client-facing' ? 'default' : 'outline'}
-            className="cursor-pointer"
-            onClick={() => setCategory('client-facing')}
-          >
-            Client-Facing
-          </Badge>
-          <Badge
-            variant={category === 'internal' ? 'default' : 'outline'}
-            className="cursor-pointer"
-            onClick={() => setCategory('internal')}
-          >
-            Internal
-          </Badge>
-        </div>
-      </div>
-
-      {/* Calculator Grid */}
+    <div className="space-y-8">
       {!activeCalculator ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredCalculators.map((calc) => (
-            <Card
-              key={calc.id}
-              className="cursor-pointer border-slate-200 transition-all hover:shadow-md hover:border-blue-300"
-              onClick={() => setActiveCalculator(calc.id)}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <span className="text-3xl">{calc.icon}</span>
-                  <Badge
-                    variant="outline"
-                    className={
-                      calc.category === 'client-facing'
-                        ? 'border-emerald-500 text-emerald-600'
-                        : 'border-blue-500 text-blue-600'
-                    }
-                  >
-                    {calc.category === 'client-facing' ? 'Client' : 'Internal'}
-                  </Badge>
+        <section className="grid gap-4 lg:grid-cols-3">
+          <Card className="border-slate-200 lg:col-span-2">
+            <CardHeader className="border-b border-slate-200/60 pb-4">
+              <CardTitle className="text-lg font-semibold">Revenue Calculators</CardTitle>
+              <CardDescription>Client-facing and internal calculators for revenue science</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 pt-4">
+              {filteredCalculators.map((calc) => (
+                <div
+                  key={calc.id}
+                  className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-200/80 bg-white p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
+                  onClick={() => setActiveCalculator(calc.id)}
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-slate-900">{calc.name}</p>
+                      <Badge
+                        variant="outline"
+                        className={
+                          calc.category === 'client-facing'
+                            ? 'border-emerald-500 text-emerald-600'
+                            : 'border-blue-500 text-blue-600'
+                        }
+                      >
+                        {calc.category === 'client-facing' ? 'Client' : 'Internal'}
+                      </Badge>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-600">{calc.description}</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      <span className="font-medium">Used in:</span> {calc.stages}
+                    </p>
+                  </div>
+                  <span className="ml-4 text-slate-400">→</span>
                 </div>
-                <CardTitle className="text-lg">{calc.name}</CardTitle>
-                <CardDescription>{calc.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-xs text-slate-500">
-                  <span className="font-medium">Used in:</span> {calc.stages}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="border-slate-200">
+            <CardHeader className="border-b border-slate-200/60 pb-4">
+              <CardTitle className="text-lg font-semibold">Filter</CardTitle>
+              <CardDescription>Filter calculators by category</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 pt-4">
+              <div
+                className={`cursor-pointer rounded-lg border p-3 transition-all ${
+                  category === 'all'
+                    ? 'border-slate-900 bg-slate-50'
+                    : 'border-slate-200 bg-white hover:border-slate-300'
+                }`}
+                onClick={() => setCategory('all')}
+              >
+                <p className="text-sm font-medium text-slate-900">All Calculators</p>
+                <p className="mt-1 text-xs text-slate-600">{calculators.length} calculators</p>
+              </div>
+
+              <div
+                className={`cursor-pointer rounded-lg border p-3 transition-all ${
+                  category === 'client-facing'
+                    ? 'border-emerald-500 bg-emerald-50'
+                    : 'border-slate-200 bg-white hover:border-slate-300'
+                }`}
+                onClick={() => setCategory('client-facing')}
+              >
+                <p className="text-sm font-medium text-slate-900">Client-Facing</p>
+                <p className="mt-1 text-xs text-slate-600">
+                  {calculators.filter((c) => c.category === 'client-facing').length} calculators
+                </p>
+              </div>
+
+              <div
+                className={`cursor-pointer rounded-lg border p-3 transition-all ${
+                  category === 'internal'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-slate-200 bg-white hover:border-slate-300'
+                }`}
+                onClick={() => setCategory('internal')}
+              >
+                <p className="text-sm font-medium text-slate-900">Internal TRS</p>
+                <p className="mt-1 text-xs text-slate-600">
+                  {calculators.filter((c) => c.category === 'internal').length} calculators
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
       ) : (
         <div>
           <Button
@@ -262,241 +271,218 @@ function AuditROICalculator() {
   }
 
   return (
-    <Card className="border-slate-200">
-      <CardHeader className="border-b border-slate-200/60">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">💰</span>
-          <div>
-            <CardTitle>Audit ROI Quick Estimator</CardTitle>
-            <CardDescription>Prove the $3,500 audit pays for itself fast</CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="pt-6">
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Inputs */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-slate-900">Inputs</h3>
-
-            <div className="space-y-2">
-              <Label>ARPA/ASP ($)</Label>
-              <Input
-                type="number"
-                value={inputs.arpa}
-                onChange={(e) => setInputs({ ...inputs, arpa: Number(e.target.value) })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Monthly Leads</Label>
-              <Input
-                type="number"
-                value={inputs.monthlyLeads}
-                onChange={(e) => setInputs({ ...inputs, monthlyLeads: Number(e.target.value) })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Current Close % </Label>
-              <Input
-                type="number"
-                step="0.1"
-                value={inputs.currentClose}
-                onChange={(e) => setInputs({ ...inputs, currentClose: Number(e.target.value) })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Current Churn % (monthly)</Label>
-              <Input
-                type="number"
-                step="0.1"
-                value={inputs.currentChurn}
-                onChange={(e) => setInputs({ ...inputs, currentChurn: Number(e.target.value) })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Traffic/Lead Volume</Label>
-              <Input
-                type="number"
-                value={inputs.traffic}
-                onChange={(e) => setInputs({ ...inputs, traffic: Number(e.target.value) })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Gross Margin %</Label>
-              <Input
-                type="number"
-                value={inputs.grossMargin}
-                onChange={(e) => setInputs({ ...inputs, grossMargin: Number(e.target.value) })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Proposed Price Increase %</Label>
-              <Input
-                type="number"
-                step="0.1"
-                value={inputs.priceIncrease}
-                onChange={(e) => setInputs({ ...inputs, priceIncrease: Number(e.target.value) })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Proposed Activation Increase (pp)</Label>
-              <Input
-                type="number"
-                step="0.1"
-                value={inputs.activationIncrease}
-                onChange={(e) => setInputs({ ...inputs, activationIncrease: Number(e.target.value) })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Proposed Churn Reduction (pp)</Label>
-              <Input
-                type="number"
-                step="0.1"
-                value={inputs.churnReduction}
-                onChange={(e) => setInputs({ ...inputs, churnReduction: Number(e.target.value) })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Audit Cost ($)</Label>
-              <Input
-                type="number"
-                value={inputs.auditCost}
-                onChange={(e) => setInputs({ ...inputs, auditCost: Number(e.target.value) })}
-              />
-            </div>
-
-            <Button onClick={calculate} className="w-full">
-              Calculate ROI
-            </Button>
+    <section className="grid gap-4 lg:grid-cols-3">
+      <Card className="border-slate-200 lg:col-span-2">
+        <CardHeader className="border-b border-slate-200/60 pb-4">
+          <CardTitle className="text-lg font-semibold">Audit ROI Quick Estimator</CardTitle>
+          <CardDescription>Prove the $3,500 audit pays for itself fast</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4 pt-4">
+          <div className="space-y-2">
+            <Label>ARPA/ASP ($)</Label>
+            <Input
+              type="number"
+              value={inputs.arpa}
+              onChange={(e) => setInputs({ ...inputs, arpa: Number(e.target.value) })}
+            />
           </div>
 
-          {/* Results */}
-          <div>
-            <h3 className="font-semibold text-slate-900 mb-4">Results</h3>
-            {results ? (
-              <div className="space-y-3">
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-                    Price Uplift
-                  </p>
-                  <p className="mt-1 text-2xl font-bold text-emerald-900">
-                    ${results.priceUplift.toLocaleString()}/mo
-                  </p>
-                </div>
+          <div className="space-y-2">
+            <Label>Monthly Leads</Label>
+            <Input
+              type="number"
+              value={inputs.monthlyLeads}
+              onChange={(e) => setInputs({ ...inputs, monthlyLeads: Number(e.target.value) })}
+            />
+          </div>
 
-                <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">
-                    Activation Uplift
-                  </p>
-                  <p className="mt-1 text-2xl font-bold text-blue-900">
-                    ${results.activationUplift.toLocaleString()}/mo
-                  </p>
-                </div>
+          <div className="space-y-2">
+            <Label>Current Close %</Label>
+            <Input
+              type="number"
+              step="0.1"
+              value={inputs.currentClose}
+              onChange={(e) => setInputs({ ...inputs, currentClose: Number(e.target.value) })}
+            />
+          </div>
 
-                <div className="rounded-lg border border-purple-200 bg-purple-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-purple-700">
-                    Churn Uplift
-                  </p>
-                  <p className="mt-1 text-2xl font-bold text-purple-900">
-                    ${results.churnUplift.toLocaleString()}/mo
-                  </p>
-                </div>
+          <div className="space-y-2">
+            <Label>Current Churn % (monthly)</Label>
+            <Input
+              type="number"
+              step="0.1"
+              value={inputs.currentChurn}
+              onChange={(e) => setInputs({ ...inputs, currentChurn: Number(e.target.value) })}
+            />
+          </div>
 
-                <div className="rounded-lg border border-slate-300 bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">
-                    Total Monthly Uplift
-                  </p>
-                  <p className="mt-1 text-2xl font-bold text-slate-900">
-                    ${results.totalMonthlyUplift.toLocaleString()}/mo
-                  </p>
-                </div>
+          <div className="space-y-2">
+            <Label>Traffic/Lead Volume</Label>
+            <Input
+              type="number"
+              value={inputs.traffic}
+              onChange={(e) => setInputs({ ...inputs, traffic: Number(e.target.value) })}
+            />
+          </div>
 
-                <div className="rounded-lg border border-orange-200 bg-orange-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-orange-700">
-                    Payback Period
-                  </p>
-                  <p className="mt-1 text-2xl font-bold text-orange-900">
-                    {results.paybackDays} days
-                  </p>
-                </div>
+          <div className="space-y-2">
+            <Label>Gross Margin %</Label>
+            <Input
+              type="number"
+              value={inputs.grossMargin}
+              onChange={(e) => setInputs({ ...inputs, grossMargin: Number(e.target.value) })}
+            />
+          </div>
 
-                <div className="rounded-lg border border-green-300 bg-green-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-green-700">
-                    90-Day ROI Multiple
-                  </p>
-                  <p className="mt-1 text-2xl font-bold text-green-900">
-                    {results.roi90Days}x
-                  </p>
-                </div>
+          <div className="space-y-2">
+            <Label>Proposed Price Increase %</Label>
+            <Input
+              type="number"
+              step="0.1"
+              value={inputs.priceIncrease}
+              onChange={(e) => setInputs({ ...inputs, priceIncrease: Number(e.target.value) })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Proposed Activation Increase (pp)</Label>
+            <Input
+              type="number"
+              step="0.1"
+              value={inputs.activationIncrease}
+              onChange={(e) => setInputs({ ...inputs, activationIncrease: Number(e.target.value) })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Proposed Churn Reduction (pp)</Label>
+            <Input
+              type="number"
+              step="0.1"
+              value={inputs.churnReduction}
+              onChange={(e) => setInputs({ ...inputs, churnReduction: Number(e.target.value) })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Audit Cost ($)</Label>
+            <Input
+              type="number"
+              value={inputs.auditCost}
+              onChange={(e) => setInputs({ ...inputs, auditCost: Number(e.target.value) })}
+            />
+          </div>
+
+          <Button onClick={calculate} className="w-full">
+            Calculate ROI
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="border-slate-200">
+        <CardHeader className="border-b border-slate-200/60 pb-4">
+          <CardTitle className="text-lg font-semibold">Results</CardTitle>
+          <CardDescription>Calculate to see ROI breakdown</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3 pt-4">
+          {results ? (
+            <>
+              <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
+                <p className="text-xs uppercase tracking-widest text-slate-500">Price Uplift</p>
+                <p className="mt-1 text-2xl font-semibold text-slate-900">
+                  ${results.priceUplift.toLocaleString()}/mo
+                </p>
               </div>
-            ) : (
-              <div className="flex h-full items-center justify-center text-sm text-slate-500">
-                <p>Enter inputs and click Calculate ROI</p>
+
+              <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
+                <p className="text-xs uppercase tracking-widest text-slate-500">Activation Uplift</p>
+                <p className="mt-1 text-2xl font-semibold text-slate-900">
+                  ${results.activationUplift.toLocaleString()}/mo
+                </p>
               </div>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+
+              <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
+                <p className="text-xs uppercase tracking-widest text-slate-500">Churn Uplift</p>
+                <p className="mt-1 text-2xl font-semibold text-slate-900">
+                  ${results.churnUplift.toLocaleString()}/mo
+                </p>
+              </div>
+
+              <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
+                <p className="text-xs uppercase tracking-widest text-slate-500">Total Monthly Uplift</p>
+                <p className="mt-1 text-2xl font-semibold text-slate-900">
+                  ${results.totalMonthlyUplift.toLocaleString()}/mo
+                </p>
+              </div>
+
+              <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
+                <p className="text-xs uppercase tracking-widest text-slate-500">Payback Period</p>
+                <p className="mt-1 text-2xl font-semibold text-slate-900">
+                  {results.paybackDays} days
+                </p>
+              </div>
+
+              <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
+                <p className="text-xs uppercase tracking-widest text-slate-500">90-Day ROI Multiple</p>
+                <p className="mt-1 text-2xl font-semibold text-slate-900">
+                  {results.roi90Days}x
+                </p>
+              </div>
+            </>
+          ) : (
+            <div className="flex h-full items-center justify-center py-12 text-sm text-slate-500">
+              <p>Enter inputs and click Calculate ROI</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </section>
   )
 }
 
 // Placeholder components for other calculators
 function PricingScenarioCalculator() {
-  return <CalculatorPlaceholder name="Pricing Scenario / Elasticity" icon="💲" />
+  return <CalculatorPlaceholder name="Pricing Scenario / Elasticity" />
 }
 
 function ActivationFunnelCalculator() {
-  return <CalculatorPlaceholder name="Activation Funnel Impact" icon="🎯" />
+  return <CalculatorPlaceholder name="Activation Funnel Impact" />
 }
 
 function RetentionLTVCalculator() {
-  return <CalculatorPlaceholder name="Retention / LTV / NRR" icon="📈" />
+  return <CalculatorPlaceholder name="Retention / LTV / NRR" />
 }
 
 function CACPaybackCalculator() {
-  return <CalculatorPlaceholder name="CAC Payback & Unit Econ" icon="⚖️" />
+  return <CalculatorPlaceholder name="CAC Payback & Unit Econ" />
 }
 
 function OfferROICalculator() {
-  return <CalculatorPlaceholder name="Offer ROI Calculator" icon="🎁" />
+  return <CalculatorPlaceholder name="Offer ROI Calculator" />
 }
 
 function RevenuePlannerCalculator() {
-  return <CalculatorPlaceholder name="TRS Revenue Planner" icon="📊" />
+  return <CalculatorPlaceholder name="TRS Revenue Planner" />
 }
 
 function VolumeTargetsCalculator() {
-  return <CalculatorPlaceholder name="Volume Targets (Reverse)" icon="🎲" />
+  return <CalculatorPlaceholder name="Volume Targets (Reverse)" />
 }
 
 function RevenueOSRecognitionCalculator() {
-  return <CalculatorPlaceholder name="RevenueOS Recognition" icon="📅" />
+  return <CalculatorPlaceholder name="RevenueOS Recognition" />
 }
 
 function CompensationCalculator() {
-  return <CalculatorPlaceholder name="Compensation & Distributions" icon="💵" />
+  return <CalculatorPlaceholder name="Compensation & Distributions" />
 }
 
-function CalculatorPlaceholder({ name, icon }: { name: string; icon: string }) {
+function CalculatorPlaceholder({ name }: { name: string }) {
   return (
     <Card className="border-slate-200">
       <CardHeader className="border-b border-slate-200/60">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">{icon}</span>
-          <div>
-            <CardTitle>{name}</CardTitle>
-            <CardDescription>Calculator implementation in progress</CardDescription>
-          </div>
-        </div>
+        <CardTitle>{name}</CardTitle>
+        <CardDescription>Calculator implementation in progress</CardDescription>
       </CardHeader>
       <CardContent className="pt-6">
         <div className="flex h-64 items-center justify-center rounded-lg border-2 border-dashed border-slate-200 text-sm text-slate-500">
