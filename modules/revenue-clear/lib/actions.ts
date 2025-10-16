@@ -232,3 +232,44 @@ export async function createRevenueClearClientAction(
     }
   }
 }
+
+export async function ensureDefaultRevenueClearClient(): Promise<string | null> {
+  const { supabase, user } = await requireAuth({ redirectTo: `/revenue-clear` })
+
+  // Check if user already has clients
+  const { data: existingClients } = await supabase
+    .from('clients')
+    .select('id')
+    .limit(1)
+
+  if (existingClients && existingClients.length > 0) {
+    return existingClients[0].id
+  }
+
+  // Create default client for immediate access
+  const { data: client, error: clientError } = await supabase
+    .from('clients')
+    .insert({
+      name: 'New Revenue Clear Client',
+      owner_id: user.id,
+      phase: 'Discovery',
+      status: 'active',
+      industry: null,
+      revenue_model: null,
+      monthly_recurring_revenue: 0,
+      profit_margin: 0,
+      target_growth: 0,
+      primary_goal: null,
+    })
+    .select('id')
+    .single()
+
+  if (clientError || !client) {
+    console.error('revenue-clear:ensure-default-client', clientError)
+    return null
+  }
+
+  await revalidatePath('/revenue-clear')
+
+  return client.id
+}
