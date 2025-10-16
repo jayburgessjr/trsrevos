@@ -160,6 +160,39 @@ export async function listRevenueClearClients(): Promise<RevenueClearClient[]> {
   return (data ?? []).map(toClient)
 }
 
+export async function createRevenueClearDemoClient(): Promise<RevenueClearClient | null> {
+  const supabase = await createClient()
+
+  const demoPayload = {
+    name: 'Revenue Clear Demo Co.',
+    industry: 'B2B SaaS',
+    revenue_model: 'Subscription',
+    monthly_recurring_revenue: 125_000,
+    profit_margin: 42,
+    target_growth: 18,
+    primary_goal: 'Map revenue leaks and launch interventions.',
+  }
+
+  const { data, error } = await supabase
+    .from('clients')
+    .insert(demoPayload)
+    .select(
+      `id, name, industry, revenue_model, monthly_recurring_revenue, profit_margin, target_growth, primary_goal`,
+    )
+    .single()
+
+  if (error) {
+    console.error('Failed to create Revenue Clear demo client:', error)
+    return null
+  }
+
+  if (!data) {
+    return null
+  }
+
+  return toClient(data)
+}
+
 export async function listRevenuePipelineOptions(): Promise<RevenuePipelineOption[]> {
   const supabase = await createClient()
 

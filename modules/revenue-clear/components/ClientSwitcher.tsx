@@ -1,8 +1,10 @@
 'use client'
 
+import Link from 'next/link'
 import { useTransition, type ChangeEvent } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
+import { Button } from '@/ui/button'
 import { Select } from '@/ui/select'
 
 export type ClientSwitcherOption = {
@@ -34,16 +36,23 @@ export function ClientSwitcher({ clients, activeClientId }: ClientSwitcherProps)
   }
 
   return (
-    <div className="flex w-full flex-col gap-2 rounded-lg border border-[color:var(--color-border)] bg-white p-4 shadow-sm lg:w-auto">
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--color-text-muted)]">
-          Active client
-        </span>
-        {isPending ? (
-          <span className="text-[11px] font-medium uppercase tracking-wide text-[color:var(--color-text-muted)]">
-            Updating…
+    <div className="flex w-full flex-col gap-3 rounded-lg border border-[color:var(--color-border)] bg-white p-4 shadow-sm lg:w-auto">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--color-text-muted)]">
+            Active client
           </span>
-        ) : null}
+          {isPending ? (
+            <span className="text-[11px] font-medium uppercase tracking-wide text-[color:var(--color-text-muted)]">
+              Updating…
+            </span>
+          ) : null}
+        </div>
+        <Button asChild variant="outline" size="sm">
+          <Link href="/revenue-clear/new-client" className="no-underline">
+            + New client
+          </Link>
+        </Button>
       </div>
       <Select
         value={activeClientId}
