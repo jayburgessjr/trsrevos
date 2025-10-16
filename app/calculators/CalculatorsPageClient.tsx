@@ -117,33 +117,33 @@ export default function CalculatorsPageClient() {
               <CardTitle className="text-lg font-semibold">Revenue Calculators</CardTitle>
               <CardDescription>Client-facing and internal calculators for revenue science</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3 pt-4">
+            <CardContent className="grid gap-4 pt-4 md:grid-cols-2">
               {filteredCalculators.map((calc) => (
                 <div
                   key={calc.id}
-                  className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-200/80 bg-white p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
+                  className="flex cursor-pointer flex-col rounded-lg border border-slate-200/80 bg-white p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
                   onClick={() => setActiveCalculator(calc.id)}
                 >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
                       <p className="text-sm font-semibold text-slate-900">{calc.name}</p>
-                      <Badge
-                        variant="outline"
-                        className={
-                          calc.category === 'client-facing'
-                            ? 'border-emerald-500 text-emerald-600'
-                            : 'border-blue-500 text-blue-600'
-                        }
-                      >
-                        {calc.category === 'client-facing' ? 'Client' : 'Internal'}
-                      </Badge>
+                      <p className="mt-1 text-xs uppercase tracking-widest text-slate-500">{calc.category}</p>
                     </div>
-                    <p className="mt-1 text-xs text-slate-600">{calc.description}</p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      <span className="font-medium">Used in:</span> {calc.stages}
-                    </p>
+                    <Badge
+                      variant="outline"
+                      className={
+                        calc.category === 'client-facing'
+                          ? 'border-emerald-500 text-emerald-600'
+                          : 'border-blue-500 text-blue-600'
+                      }
+                    >
+                      {calc.category === 'client-facing' ? 'Client' : 'Internal'}
+                    </Badge>
                   </div>
-                  <span className="ml-4 text-slate-400">→</span>
+                  <p className="mt-2 text-sm text-slate-600">{calc.description}</p>
+                  <div className="mt-2 text-xs text-slate-500">
+                    <span className="font-medium">Used in:</span> {calc.stages}
+                  </div>
                 </div>
               ))}
             </CardContent>
@@ -151,7 +151,7 @@ export default function CalculatorsPageClient() {
 
           <Card className="border-slate-200">
             <CardHeader className="border-b border-slate-200/60 pb-4">
-              <CardTitle className="text-lg font-semibold">Filter</CardTitle>
+              <CardTitle className="text-lg font-semibold">Category Filter</CardTitle>
               <CardDescription>Filter calculators by category</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 pt-4">
