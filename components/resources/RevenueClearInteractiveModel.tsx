@@ -341,7 +341,7 @@ export default function RevenueClearInteractiveModel() {
               <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">
                 Launch the module
               </span>
-              <Button asChild size="md" className="w-full">
+              <Button asChild className="w-full">
                 <Link href="/revenue-clear">Open Revenue Clear workspace</Link>
               </Button>
               <p className="text-xs text-gray-500">
