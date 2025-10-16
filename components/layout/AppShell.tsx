@@ -16,13 +16,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const { projects, documents, automationLogs } = useRevosData()
 
-  // Don't show sidebar/header on login page
-  const isLoginPage = pathname === '/login'
-
-  if (isLoginPage) {
-    return <>{children}</>
-  }
-
   const kpis = useMemo(() => {
     const activeProjects = projects.filter((project) => project.status === 'Active').length
     const deliverablesInProgress = documents.filter((doc) => doc.status !== 'Final').length
@@ -34,6 +27,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       automationHours,
     }
   }, [projects, documents, automationLogs])
+
+  // Don't show sidebar/header on login page
+  const isLoginPage = pathname === '/login'
+
+  if (isLoginPage) {
+    return <>{children}</>
+  }
 
   return (
     <div className="flex min-h-screen bg-[#f6f7f5] text-slate-900">

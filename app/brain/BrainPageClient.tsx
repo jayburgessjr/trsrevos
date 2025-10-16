@@ -29,6 +29,7 @@ export default function BrainPageClient() {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [threadId, setThreadId] = useState<string | null>(null)
 
   // Mock sources for demonstration
   const mockSources: SourceCard[] = [
@@ -69,21 +70,46 @@ export default function BrainPageClient() {
     }
 
     setMessages((prev) => [...prev, userMessage])
+    const userInput = input
     setInput('')
     setIsLoading(true)
 
-    // Simulate AI response with sources
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/brain/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userInput, threadId }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to get response')
+      }
+
+      // Update thread ID for future messages
+      setThreadId(data.threadId)
+
       const assistantMessage: ChatMessage = {
         id: `msg-${Date.now()}-assistant`,
         role: 'assistant',
-        content: `Based on TRS frameworks, here's what I found: ${input.toLowerCase().includes('offer') ? 'Our standard offer structure includes three tiers. Implementation + Advisory ($45k, 12 weeks) is recommended for clients with readiness scores below 70 and $200k+ opportunity. Advisory-only ($18k, 90 days) suits clients with strong internal capacity. RevenueOS lead-in is for enterprise prospects.' : input.toLowerCase().includes('audit') ? 'The Revenue Clarity Audit assesses four dimensions: Pricing Architecture, Activation Systems, Retention Mechanics, and Data Infrastructure. Each dimension receives a 0-100 score, with overall readiness calculated as a weighted average. Gaps are prioritized by ease (1-5) and confidence (0-1).' : 'I can help you with TRS frameworks, past audits, offers, calculators, SOPs, and templates. What would you like to know?'}`,
-        sources: mockSources.slice(0, 2),
+        content: data.response,
+        sources: mockSources.slice(0, 2), // TODO: Get sources from API when available
         timestamp: new Date()
       }
       setMessages((prev) => [...prev, assistantMessage])
+    } catch (error) {
+      console.error('Chat error:', error)
+      const errorMessage: ChatMessage = {
+        id: `msg-${Date.now()}-error`,
+        role: 'assistant',
+        content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`,
+        timestamp: new Date()
+      }
+      setMessages((prev) => [...prev, errorMessage])
+    } finally {
       setIsLoading(false)
-    }, 1500)
+    }
   }
 
   const handleSendToOfferDesk = (messageId: string) => {
