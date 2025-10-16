@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import type { ChangeEvent, FormEvent } from "react"
 
 import { createClient } from "@/lib/supabase/client"
@@ -14,6 +14,7 @@ interface FormState {
 
 export default function LoginScreen() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = useMemo(() => createClient(), [])
   const [isLogin, setIsLogin] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
@@ -46,7 +47,9 @@ export default function LoginScreen() {
         }
 
         setAuthMessage("Signed in successfully.")
-        router.replace("/")
+        // Redirect to the original page or home
+        const redirectTo = searchParams.get('redirectTo') || '/'
+        router.replace(redirectTo)
       } else {
         const { error } = await supabase.auth.signUp({
           email: formData.email,
@@ -76,10 +79,11 @@ export default function LoginScreen() {
     setIsSubmitting(true)
 
     try {
+      const redirectTo = searchParams.get('redirectTo') || '/'
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/`,
+          redirectTo: `${window.location.origin}/auth/callback?next=${redirectTo}`,
         },
       })
 

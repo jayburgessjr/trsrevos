@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useCallback, useContext, useMemo, useReducer } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from 'react'
 
 import {
   mockAgents,
@@ -26,15 +26,50 @@ import { type Agent, type AutomationLog, type ContentItem, type Document, type P
 
 const randomId = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2))
 
-const initialState: RevosState = {
-  projects: mockProjects,
-  documents: mockDocuments,
-  agents: mockAgents,
-  content: mockContent,
-  resources: mockResources,
-  automationLogs: mockAutomationLogs,
-  invoices: mockInvoices,
+const STORAGE_KEY = 'trs-revos-data'
+
+// Load initial state from localStorage or use mock data
+const loadInitialState = (): RevosState => {
+  if (typeof window === 'undefined') {
+    // Server-side: use mock data
+    return {
+      projects: mockProjects,
+      documents: mockDocuments,
+      agents: mockAgents,
+      content: mockContent,
+      resources: mockResources,
+      automationLogs: mockAutomationLogs,
+      invoices: mockInvoices,
+    }
+  }
+
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      const parsed = JSON.parse(stored)
+      // Merge with mock agents (always use latest agent definitions)
+      return {
+        ...parsed,
+        agents: mockAgents,
+      }
+    }
+  } catch (error) {
+    console.error('Failed to load stored data:', error)
+  }
+
+  // Fallback to mock data
+  return {
+    projects: mockProjects,
+    documents: mockDocuments,
+    agents: mockAgents,
+    content: mockContent,
+    resources: mockResources,
+    automationLogs: mockAutomationLogs,
+    invoices: mockInvoices,
+  }
 }
+
+const initialState: RevosState = loadInitialState()
 
 type Action =
   | { type: 'createProject'; payload: CreateProjectInput }
@@ -224,6 +259,17 @@ function reducer(state: RevosState, action: Action): RevosState {
 
 export function RevosDataProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState)
+
+  // Persist state to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+      } catch (error) {
+        console.error('Failed to save data to localStorage:', error)
+      }
+    }
+  }, [state])
 
   const createProject = useCallback((input: CreateProjectInput) => {
     dispatch({ type: 'createProject', payload: input })

@@ -27,7 +27,7 @@ export const mockProjects: Project[] = [
     status: 'Active',
     quickbooksInvoiceUrl: 'https://quickbooks.intuit.com/invoice/aster-labs-clarity',
     documents: ['doc-trs-clarity-summary', 'doc-trs-gap-map'],
-    agents: ['agent-clarity-summarizer', 'agent-follow-up'],
+    agents: [],
     resources: ['res-gap-map', 'res-trs-score'],
     revenueTarget: 32000,
   },
@@ -42,7 +42,7 @@ export const mockProjects: Project[] = [
     status: 'Delivered',
     quickbooksInvoiceUrl: 'https://quickbooks.intuit.com/invoice/nimbus-blueprint',
     documents: ['doc-trs-blueprint'],
-    agents: ['agent-blueprint-generator'],
+    agents: [],
     resources: ['res-trs-score', 'res-qra'],
     revenueTarget: 54000,
   },
@@ -57,7 +57,7 @@ export const mockProjects: Project[] = [
     status: 'Pending',
     quickbooksInvoiceUrl: 'https://quickbooks.intuit.com/invoice/northwind-advisory',
     documents: [],
-    agents: ['agent-follow-up'],
+    agents: [],
     resources: ['res-calculator'],
     revenueTarget: 41000,
   },
@@ -108,30 +108,58 @@ export const mockDocuments: Document[] = [
 
 export const mockAgents: Agent[] = [
   {
-    id: 'agent-clarity-summarizer',
-    name: 'Clarity Audit Summarizer',
-    category: 'Summarization',
-    description: 'Distills uploaded audit documents into executive-ready talking points.',
+    id: 'agent-clarity-bot',
+    name: 'ClarityBot',
+    category: 'Communication',
+    description: 'Automate Revenue Clarity Audit: gap map, readiness score, and dollarized opportunities.',
     prompt:
-      'Summarize the latest Clarity Audit deliverables into three crisp insights and the recommended interventions.',
+      'You are ClarityBot, a Senior Revenue Systems Analyst at TRS. Synthesize client data into executive diagnostics: (1) Executive Summary, (2) Gap Map, (3) Readiness Score, (4) Data Quality Review, (5) Dollarized Opportunities. Tone: precise, financial, systems-oriented. All findings map to TRS RevenueOS framework.',
     defaultOutputType: 'Document',
   },
   {
-    id: 'agent-blueprint-generator',
-    name: 'Revenue Blueprint Generator',
-    category: 'Reporting',
-    description: 'Transforms validated interventions into a blueprint deck outline.',
+    id: 'agent-blueprint-engine',
+    name: 'BlueprintEngine',
+    category: 'Communication',
+    description: 'Converts ClarityBot JSON into client-ready deck and internal brief.',
     prompt:
-      'Translate prioritized interventions and playbooks into a quarter-by-quarter execution plan.',
-    defaultOutputType: 'Content',
+      'You are BlueprintEngine. Given a ClarityBot JSON, produce a 10–12 slide outline and a 1-page prep brief. No new analysis—summarize, visualize, and sequence actions.',
+    defaultOutputType: 'Document',
   },
   {
-    id: 'agent-follow-up',
-    name: 'Client Follow-Up Composer',
+    id: 'agent-offer-desk',
+    name: 'OfferDesk',
     category: 'Communication',
-    description: 'Drafts next-step follow-ups to keep revenue interventions on track.',
-    prompt: 'Draft a follow-up email summarizing key outcomes and next actions for the project sponsor.',
-    defaultOutputType: 'Content',
+    description: 'Turns audit levers into recommended offer path with ROI math.',
+    prompt:
+      'You are OfferDesk. Convert ClarityBot findings into a single recommended offer. Never show a menu—pick the best path. Include ROI math and fallback option.',
+    defaultOutputType: 'Document',
+  },
+  {
+    id: 'agent-data-gate',
+    name: 'DataGate',
+    category: 'Communication',
+    description: 'Validates uploaded files and flags data quality issues before ClarityBot runs.',
+    prompt:
+      'You are DataGate. Check uploaded files for schema compliance, missing columns, date ranges, and ID mismatches. Flag issues early with actionable fixes.',
+    defaultOutputType: 'Document',
+  },
+  {
+    id: 'agent-qra-forecaster',
+    name: 'QRA Forecaster',
+    category: 'Communication',
+    description: 'Projects 12-month ROI bands from levers (best/base/worst scenarios).',
+    prompt:
+      'You are QRA Forecaster. Project 12-month ROI scenarios (best/base/worst) from ClarityBot levers. Include payback period and confidence bands.',
+    defaultOutputType: 'Document',
+  },
+  {
+    id: 'agent-revos-orchestrator',
+    name: 'RevOS Orchestrator',
+    category: 'Communication',
+    description: 'Converts selected offer into sprint backlog with tasks, owners, and deadlines.',
+    prompt:
+      'You are RevOS Orchestrator. Convert closed deals into implementation backlogs with tasks, owners, deadlines, and milestones. Ready for Linear/ClickUp.',
+    defaultOutputType: 'Document',
   },
 ]
 
@@ -198,24 +226,7 @@ export const mockResources: Resource[] = [
   },
 ]
 
-export const mockAutomationLogs: AutomationLog[] = [
-  {
-    id: 'auto-log-001',
-    agentId: 'agent-clarity-summarizer',
-    projectId: 'proj-trs-001',
-    outputType: 'Document',
-    summary: 'Generated executive summary v3 for Clarity Audit.',
-    createdAt: iso(-1),
-  },
-  {
-    id: 'auto-log-002',
-    agentId: 'agent-blueprint-generator',
-    projectId: 'proj-trs-002',
-    outputType: 'Content',
-    summary: 'Drafted blueprint launch email for Nimbus Security.',
-    createdAt: iso(-5),
-  },
-]
+export const mockAutomationLogs: AutomationLog[] = []
 
 export const mockInvoices: InvoiceSummary[] = [
   {

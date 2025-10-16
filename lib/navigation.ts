@@ -9,6 +9,7 @@ export const MAIN_NAV: NavItem[] = [
   { label: 'Projects', href: '/projects', icon: 'Kanban' },
   { label: 'Documents', href: '/documents', icon: 'Files' },
   { label: 'Agents', href: '/agents', icon: 'Bot' },
+  { label: 'TRS Brain', href: '/brain', icon: 'Brain' },
   { label: 'Content', href: '/content', icon: 'FileText' },
   { label: 'Resources', href: '/resources', icon: 'BookOpen' },
   { label: 'Integrations', href: '/settings/integrations', icon: 'Cable' },

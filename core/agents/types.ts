@@ -14,11 +14,17 @@ export type AgentKey =
   | 'commercials'
   | 'collections'
   | 'client-health'
+  | 'clarity-bot'
+  | 'blueprint-engine'
+  | 'offer-desk'
+  | 'data-gate'
+  | 'qra-forecaster'
+  | 'revos-orchestrator'
 
 export type AgentMeta = {
   key: AgentKey
   name: string
-  category: 'Projects' | 'Content' | 'Clients'
+  category: 'Projects' | 'Content' | 'Clients' | 'Communication'
   description: string
   icon?: string
   autoRunnable?: boolean
