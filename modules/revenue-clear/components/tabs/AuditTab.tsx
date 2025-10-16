@@ -50,8 +50,8 @@ type AuditTabProps = {
 function FieldLabel({ label, description }: { label: string; description: string }) {
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-sm font-semibold text-white">{label}</span>
-      <span className="text-xs uppercase tracking-wide text-white/60">{description}</span>
+      <span className="text-sm font-semibold text-[color:var(--color-text)]">{label}</span>
+      <span className="text-xs uppercase tracking-wide text-[color:var(--color-text-muted)]">{description}</span>
     </div>
   )
 }
@@ -108,21 +108,25 @@ export default function AuditTab({ audits, trsScore, status, onChange, onRunLeak
     <div className="space-y-6">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h3 className="text-xl font-semibold">Revenue Leak Audit</h3>
-          <p className="text-sm text-white/60">
+          <h3 className="text-xl font-semibold text-[color:var(--color-text)]">Revenue Leak Audit</h3>
+          <p className="text-sm text-[color:var(--color-text-muted)]">
             Map the severity of leaks by growth pillar. Use the leak scan automation to produce a leak map for executive review.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-center">
-            <div className="text-xs uppercase tracking-wide text-white/60">TRS Score</div>
-            <div className="text-2xl font-semibold text-white">{trsScore}</div>
+          <div className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-4 py-3 text-center">
+            <div className="text-xs uppercase tracking-wide text-[color:var(--color-text-muted)]">TRS Score</div>
+            <div className="text-2xl font-semibold text-[color:var(--color-text)]">{trsScore}</div>
           </div>
-          <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-center">
-            <div className="text-xs uppercase tracking-wide text-white/60">Total Est. Loss</div>
-            <div className="text-lg font-semibold text-white">${aggregateLoss.toLocaleString()}</div>
+          <div className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-4 py-3 text-center">
+            <div className="text-xs uppercase tracking-wide text-[color:var(--color-text-muted)]">Total Est. Loss</div>
+            <div className="text-lg font-semibold text-[color:var(--color-text)]">
+              ${aggregateLoss.toLocaleString()}
+            </div>
           </div>
-          <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/70">{statusLabel}</span>
+          <span className="rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 py-1 text-xs text-[color:var(--color-text-muted)]">
+            {statusLabel}
+          </span>
         </div>
       </header>
 
@@ -137,9 +141,9 @@ export default function AuditTab({ audits, trsScore, status, onChange, onRunLeak
           }
 
           return (
-            <div key={pillar.key} className="space-y-3 rounded-xl border border-white/10 bg-white/5 p-5">
+            <div key={pillar.key} className="space-y-3 rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-5">
               <FieldLabel label={pillar.label} description={pillar.description} />
-              <label className="flex flex-col gap-2 text-xs font-medium uppercase tracking-wide text-white/60">
+              <label className="flex flex-col gap-2 text-xs font-medium uppercase tracking-wide text-[color:var(--color-text-muted)]">
                 <span>Leak Severity ({audit.leakSeverity}/10)</span>
                 <input
                   type="range"
@@ -151,7 +155,7 @@ export default function AuditTab({ audits, trsScore, status, onChange, onRunLeak
                   className="accent-[color:var(--color-accent)]"
                 />
               </label>
-              <label className="flex flex-col gap-2 text-xs font-medium uppercase tracking-wide text-white/60">
+              <label className="flex flex-col gap-2 text-xs font-medium uppercase tracking-wide text-[color:var(--color-text-muted)]">
                 <span>Leak Description</span>
                 <Textarea
                   value={audit.leakDescription}
@@ -160,7 +164,7 @@ export default function AuditTab({ audits, trsScore, status, onChange, onRunLeak
                   placeholder="Describe the leak dynamics and root cause"
                 />
               </label>
-              <label className="flex flex-col gap-2 text-xs font-medium uppercase tracking-wide text-white/60">
+              <label className="flex flex-col gap-2 text-xs font-medium uppercase tracking-wide text-[color:var(--color-text-muted)]">
                 <span>Estimated Loss ($)</span>
                 <Input
                   type="number"
@@ -173,8 +177,8 @@ export default function AuditTab({ audits, trsScore, status, onChange, onRunLeak
         })}
       </div>
 
-      <footer className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-5 py-4">
-        <div className="text-sm text-white/70">
+      <footer className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-5 py-4">
+        <div className="text-sm text-[color:var(--color-text-muted)]">
           {status === 'running'
             ? 'RevenueClarityAI is generating the leak map…'
             : 'Trigger RevenueClarityAI to produce leak map JSON and executive summary.'}

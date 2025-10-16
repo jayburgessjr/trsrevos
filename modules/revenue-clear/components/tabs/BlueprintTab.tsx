@@ -48,23 +48,29 @@ export default function BlueprintTab({ interventions, status, baselineRevenue, o
     <div className="space-y-6">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h3 className="text-xl font-semibold">Blueprint & ROI Model</h3>
-          <p className="text-sm text-white/60">
+          <h3 className="text-xl font-semibold text-[color:var(--color-text)]">Blueprint & ROI Model</h3>
+          <p className="text-sm text-[color:var(--color-text-muted)]">
             Prioritize interventions and pressure test uplift. BlueprintAI returns the top levers and attaches the playbook PDF.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-right">
-            <p className="text-xs uppercase tracking-wide text-white/60">Projected MRR</p>
-            <p className="text-lg font-semibold text-white">${projectedRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-            <p className="text-xs text-white/50">Lift {simulatedLift}% on ${baselineRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+          <div className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-4 py-3 text-right">
+            <p className="text-xs uppercase tracking-wide text-[color:var(--color-text-muted)]">Projected MRR</p>
+            <p className="text-lg font-semibold text-[color:var(--color-text)]">
+              ${projectedRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            </p>
+            <p className="text-xs text-[color:var(--color-text-muted)]">
+              Lift {simulatedLift}% on ${baselineRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            </p>
           </div>
-          <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/70">{statusLabel}</span>
+          <span className="rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 py-1 text-xs text-[color:var(--color-text-muted)]">
+            {statusLabel}
+          </span>
         </div>
       </header>
 
-      <section className="grid gap-4 rounded-xl border border-white/10 bg-white/5 p-5">
-        <label className="flex flex-col gap-2 text-xs font-medium uppercase tracking-wide text-white/60">
+      <section className="grid gap-4 rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-5">
+        <label className="flex flex-col gap-2 text-xs font-medium uppercase tracking-wide text-[color:var(--color-text-muted)]">
           <span>ROI Simulator — Expected Lift (%)</span>
           <input
             type="range"
@@ -78,21 +84,21 @@ export default function BlueprintTab({ interventions, status, baselineRevenue, o
         </label>
       </section>
 
-      <section className="overflow-hidden rounded-xl border border-white/10 bg-white/5">
+      <section className="overflow-hidden rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)]">
         <Table>
           <TableHeader>
-            <TableRow className="border-white/10 bg-white/10 text-left text-xs uppercase tracking-wide text-white/60">
-              <TableHead className="text-white/70">Intervention</TableHead>
-              <TableHead className="text-white/70">Diagnosis</TableHead>
-              <TableHead className="text-white/70">Prescribed Fix</TableHead>
-              <TableHead className="text-white/70">Lift %</TableHead>
-              <TableHead className="text-white/70">Effort</TableHead>
-              <TableHead className="text-white/70">ROI Index</TableHead>
+            <TableRow className="border-b border-[color:var(--color-border)] bg-white text-left text-xs uppercase tracking-wide text-[color:var(--color-text-muted)]">
+              <TableHead className="text-[color:var(--color-text)]">Intervention</TableHead>
+              <TableHead className="text-[color:var(--color-text)]">Diagnosis</TableHead>
+              <TableHead className="text-[color:var(--color-text)]">Prescribed Fix</TableHead>
+              <TableHead className="text-[color:var(--color-text)]">Lift %</TableHead>
+              <TableHead className="text-[color:var(--color-text)]">Effort</TableHead>
+              <TableHead className="text-[color:var(--color-text)]">ROI Index</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {interventions.map((intervention, index) => (
-              <TableRow key={index} className="border-white/10">
+              <TableRow key={index} className="border-b border-[color:var(--color-border)]">
                 <TableCell className="align-top">
                   <Input
                     value={intervention.interventionName}
@@ -104,7 +110,7 @@ export default function BlueprintTab({ interventions, status, baselineRevenue, o
                       href={intervention.blueprintUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-2 block text-xs text-white underline"
+                      className="mt-2 block text-xs text-[color:var(--color-accent)] underline"
                     >
                       Download Blueprint
                     </a>
@@ -153,8 +159,8 @@ export default function BlueprintTab({ interventions, status, baselineRevenue, o
         </Table>
       </section>
 
-      <footer className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-5 py-4">
-        <div className="text-sm text-white/70">
+      <footer className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-5 py-4">
+        <div className="text-sm text-[color:var(--color-text-muted)]">
           {status === 'running'
             ? 'BlueprintAI is composing the intervention plan…'
             : 'Generate BlueprintAI recommendations to refresh interventions and ROI files.'}

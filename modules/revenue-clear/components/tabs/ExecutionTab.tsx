@@ -75,24 +75,26 @@ export default function ExecutionTab({
     <div className="space-y-6">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h3 className="text-xl font-semibold">Execution Tracker</h3>
-          <p className="text-sm text-white/60">
+          <h3 className="text-xl font-semibold text-[color:var(--color-text)]">Execution Tracker</h3>
+          <p className="text-sm text-[color:var(--color-text-muted)]">
             Align the operating rhythm across owners, due dates, and advisor recaps. Filters and autosave keep everyone in sync.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-right">
-            <p className="text-xs uppercase tracking-wide text-white/60">Tasks</p>
-            <p className="text-lg font-semibold text-white">{tasks.length}</p>
+          <div className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-4 py-3 text-right">
+            <p className="text-xs uppercase tracking-wide text-[color:var(--color-text-muted)]">Tasks</p>
+            <p className="text-lg font-semibold text-[color:var(--color-text)]">{tasks.length}</p>
           </div>
-          <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/70">{statusLabel}</span>
+          <span className="rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 py-1 text-xs text-[color:var(--color-text-muted)]">
+            {statusLabel}
+          </span>
           <Button variant="secondary" onClick={handleAddTask}>
             Add Task
           </Button>
         </div>
       </header>
 
-      <section className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm text-white/70">
+      <section className="flex flex-wrap items-center gap-3 rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-5 py-3 text-sm text-[color:var(--color-text-muted)]">
         <span>Filter</span>
         <div className="flex gap-2">
           {['all', ...STATUS_OPTIONS.map((option) => option.value)].map((value) => (
@@ -101,7 +103,9 @@ export default function ExecutionTab({
               type="button"
               onClick={() => setFilter(value as 'all' | ExecutionTask['status'])}
               className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide transition ${
-                filter === value ? 'bg-white text-black' : 'border border-white/30 text-white/70'
+                filter === value
+                  ? 'bg-[color:var(--color-accent)] text-white'
+                  : 'border border-[color:var(--color-border)] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]'
               }`}
             >
               {value === 'all'
@@ -112,21 +116,21 @@ export default function ExecutionTab({
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-xl border border-white/10 bg-white/5">
+      <section className="overflow-hidden rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)]">
         <Table>
           <TableHeader>
-            <TableRow className="border-white/10 bg-white/10 text-left text-xs uppercase tracking-wide text-white/60">
-              <TableHead className="text-white/70">Task</TableHead>
-              <TableHead className="text-white/70">Owner</TableHead>
-              <TableHead className="text-white/70">Status</TableHead>
-              <TableHead className="text-white/70">Start</TableHead>
-              <TableHead className="text-white/70">Due</TableHead>
-              <TableHead className="text-white/70">Notes</TableHead>
+            <TableRow className="border-b border-[color:var(--color-border)] bg-white text-left text-xs uppercase tracking-wide text-[color:var(--color-text-muted)]">
+              <TableHead className="text-[color:var(--color-text)]">Task</TableHead>
+              <TableHead className="text-[color:var(--color-text)]">Owner</TableHead>
+              <TableHead className="text-[color:var(--color-text)]">Status</TableHead>
+              <TableHead className="text-[color:var(--color-text)]">Start</TableHead>
+              <TableHead className="text-[color:var(--color-text)]">Due</TableHead>
+              <TableHead className="text-[color:var(--color-text)]">Notes</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredTasks.map((task) => (
-              <TableRow key={task.id ?? task.taskName}>
+              <TableRow key={task.id ?? task.taskName} className="border-b border-[color:var(--color-border)] last:border-b-0">
                 <TableCell>
                   <Input value={task.taskName} onChange={(event) => handleTaskChange(task.id, 'taskName', event.target.value)} />
                 </TableCell>
@@ -172,11 +176,11 @@ export default function ExecutionTab({
         </Table>
       </section>
 
-      <section className="grid gap-3 rounded-xl border border-white/10 bg-white/5 p-5">
+      <section className="grid gap-3 rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-5">
         <div className="flex items-center justify-between">
           <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wide text-white/60">Weekly Summary</h4>
-            <p className="text-xs text-white/50">AdvisorAI crafts a recap when you complete the review.</p>
+            <h4 className="text-sm font-semibold uppercase tracking-wide text-[color:var(--color-text-muted)]">Weekly Summary</h4>
+            <p className="text-xs text-[color:var(--color-text-muted)]">AdvisorAI crafts a recap when you complete the review.</p>
           </div>
           <Button onClick={onCompleteReview} disabled={status === 'running'}>
             Complete Review
@@ -189,8 +193,8 @@ export default function ExecutionTab({
           placeholder="Wins, blockers, leading indicators"
         />
         {weeklySummary?.advisorSummary ? (
-          <div className="rounded-lg border border-white/10 bg-black/20 p-4 text-sm text-white/80">
-            <p className="mb-2 text-xs uppercase tracking-wide text-white/60">Advisor Summary</p>
+          <div className="rounded-lg border border-[color:var(--color-border)] bg-white p-4 text-sm text-[color:var(--color-text)]">
+            <p className="mb-2 text-xs uppercase tracking-wide text-[color:var(--color-text-muted)]">Advisor Summary</p>
             <p>{weeklySummary.advisorSummary}</p>
           </div>
         ) : null}

@@ -26,7 +26,7 @@ type IntakeTabProps = {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="flex flex-col gap-1 text-xs font-medium uppercase tracking-wide text-white/60">
+    <label className="flex flex-col gap-1 text-xs font-medium uppercase tracking-wide text-[color:var(--color-text-muted)]">
       <span>{label}</span>
       {children}
     </label>
@@ -44,17 +44,21 @@ export default function IntakeTab({ client, value, status, onChange, onSummarize
     <div className="space-y-6">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-xl font-semibold">Intake & Baseline</h3>
-          <p className="text-sm text-white/60">
+          <h3 className="text-xl font-semibold text-[color:var(--color-text)]">Intake & Baseline</h3>
+          <p className="text-sm text-[color:var(--color-text-muted)]">
             Capture the client narrative, revenue picture, and growth objectives. Updates autosave into Supabase in real time.
           </p>
         </div>
-        <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/70">Stage Status: {statusLabel}</span>
+        <span className="rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 py-1 text-xs text-[color:var(--color-text-muted)]">
+          Stage status: {statusLabel}
+        </span>
       </header>
 
       <section className="grid gap-6 md:grid-cols-3">
-        <div className="space-y-3 rounded-xl border border-white/10 bg-white/5 p-5">
-          <h4 className="text-sm font-semibold uppercase tracking-wide text-white/70">Company Profile</h4>
+        <div className="space-y-3 rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-5">
+          <h4 className="text-sm font-semibold uppercase tracking-wide text-[color:var(--color-text-muted)]">
+            Company profile
+          </h4>
           <Field label="Company Name">
             <Input
               value={profile.name}
@@ -93,8 +97,8 @@ export default function IntakeTab({ client, value, status, onChange, onSummarize
           </Field>
         </div>
 
-        <div className="space-y-3 rounded-xl border border-white/10 bg-white/5 p-5">
-          <h4 className="text-sm font-semibold uppercase tracking-wide text-white/70">Financials</h4>
+        <div className="space-y-3 rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-5">
+          <h4 className="text-sm font-semibold uppercase tracking-wide text-[color:var(--color-text-muted)]">Financials</h4>
           <Field label="Monthly Revenue ($)">
             <Input
               type="number"
@@ -133,8 +137,8 @@ export default function IntakeTab({ client, value, status, onChange, onSummarize
           </Field>
         </div>
 
-        <div className="space-y-3 rounded-xl border border-white/10 bg-white/5 p-5">
-          <h4 className="text-sm font-semibold uppercase tracking-wide text-white/70">Goals</h4>
+        <div className="space-y-3 rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-5">
+          <h4 className="text-sm font-semibold uppercase tracking-wide text-[color:var(--color-text-muted)]">Goals</h4>
           <Field label="Primary Goal">
             <Input
               value={goals.primaryGoal}
@@ -175,14 +179,14 @@ export default function IntakeTab({ client, value, status, onChange, onSummarize
         </div>
       </section>
 
-      <footer className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-5 py-4">
-        <div className="text-sm text-white/70">
+      <footer className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-5 py-4">
+        <div className="text-sm text-[color:var(--color-text-muted)]">
           {value.claritySummaryUrl ? (
             <a
               href={value.claritySummaryUrl}
               target="_blank"
               rel="noreferrer"
-              className="text-white underline"
+              className="text-[color:var(--color-accent)] underline"
             >
               Download the latest clarity summary
             </a>

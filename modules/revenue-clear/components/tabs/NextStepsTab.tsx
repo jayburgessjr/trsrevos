@@ -66,25 +66,29 @@ export default function NextStepsTab({ value, status, onChange, onSendProposal }
     <div className="space-y-6">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h3 className="text-xl font-semibold">Next Steps & Proposal</h3>
-          <p className="text-sm text-white/60">
+          <h3 className="text-xl font-semibold text-[color:var(--color-text)]">Next Steps & Proposal</h3>
+          <p className="text-sm text-[color:var(--color-text-muted)]">
             Package the right engagement, align on rationale, and send proposal artifacts with one click.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-right">
-            <p className="text-xs uppercase tracking-wide text-white/60">Projected Outcome</p>
-            <p className="text-lg font-semibold text-white">${value.projectedOutcome.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+          <div className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-4 py-3 text-right">
+            <p className="text-xs uppercase tracking-wide text-[color:var(--color-text-muted)]">Projected Outcome</p>
+            <p className="text-lg font-semibold text-[color:var(--color-text)]">
+              ${value.projectedOutcome.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            </p>
           </div>
-          <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/70">{statusLabel}</span>
+          <span className="rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 py-1 text-xs text-[color:var(--color-text-muted)]">
+            {statusLabel}
+          </span>
           <Button onClick={onSendProposal} disabled={status === 'running'}>
             Send Proposal
           </Button>
         </div>
       </header>
 
-      <section className="grid gap-4 rounded-xl border border-white/10 bg-white/5 p-5">
-        <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-white/60">
+      <section className="grid gap-4 rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-5">
+        <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--color-text-muted)]">
           <span>Recommended Offer</span>
           <Select value={value.nextOffer} onChange={(event) => handleOfferChange(event.target.value as NextStepPlan['nextOffer'])}>
             {OFFER_OPTIONS.map((option) => (
@@ -94,7 +98,7 @@ export default function NextStepsTab({ value, status, onChange, onSendProposal }
             ))}
           </Select>
         </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-white/60">
+        <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--color-text-muted)]">
           <span>Rationale</span>
           <Textarea
             rows={4}
@@ -103,7 +107,7 @@ export default function NextStepsTab({ value, status, onChange, onSendProposal }
             placeholder="Why this path? Decision criteria, success plan, economics"
           />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-white/60">
+        <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--color-text-muted)]">
           <span>Projected Outcome ($)</span>
           <Input
             type="number"
@@ -111,7 +115,7 @@ export default function NextStepsTab({ value, status, onChange, onSendProposal }
             onChange={(event) => onChange({ ...value, projectedOutcome: Number(event.target.value) })}
           />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-white/60">
+        <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--color-text-muted)]">
           <span>Proposal Outline</span>
           <Textarea
             rows={6}
@@ -122,8 +126,11 @@ export default function NextStepsTab({ value, status, onChange, onSendProposal }
       </section>
 
       {value.proposalUrl ? (
-        <div className="rounded-xl border border-sky-500/40 bg-sky-500/10 px-5 py-4 text-sm text-sky-200">
-          Proposal ready: <a href={value.proposalUrl} target="_blank" rel="noreferrer" className="underline">Download</a>
+        <div className="rounded-xl border border-sky-200 bg-sky-50 px-5 py-4 text-sm text-sky-700">
+          Proposal ready:{' '}
+          <a href={value.proposalUrl} target="_blank" rel="noreferrer" className="font-medium underline">
+            Download
+          </a>
         </div>
       ) : null}
     </div>
