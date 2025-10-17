@@ -77,15 +77,15 @@ export default function DocumentsPageClient() {
   return (
     <div className="space-y-8">
       <section className="grid gap-4 lg:grid-cols-3">
-        <Card className="border-slate-200 lg:col-span-2">
-          <CardHeader className="border-b border-slate-200/60 pb-4">
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-4">
             <CardTitle className="text-lg font-semibold">Add Document</CardTitle>
             <CardDescription>Attach deliverables, blueprints, and playbooks to projects.</CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
             <form className="grid grid-cols-1 gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Title</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Title</label>
                 <Input
                   value={form.title}
                   onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
@@ -94,7 +94,7 @@ export default function DocumentsPageClient() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Project</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Project</label>
                 <Select
                   value={form.projectId || projects[0]?.id || ''}
                   onChange={(event) => setForm((current) => ({ ...current, projectId: event.target.value }))}
@@ -107,7 +107,7 @@ export default function DocumentsPageClient() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Type</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Type</label>
                 <Select
                   value={form.type}
                   onChange={(event) => setForm((current) => ({ ...current, type: event.target.value }))}
@@ -120,7 +120,7 @@ export default function DocumentsPageClient() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">File URL</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">File URL</label>
                 <Input
                   value={form.fileUrl}
                   onChange={(event) => setForm((current) => ({ ...current, fileUrl: event.target.value }))}
@@ -128,7 +128,7 @@ export default function DocumentsPageClient() {
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Tags</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tags</label>
                 <Input
                   value={form.tags}
                   onChange={(event) => setForm((current) => ({ ...current, tags: event.target.value }))}
@@ -136,7 +136,7 @@ export default function DocumentsPageClient() {
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Description</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Description</label>
                 <Textarea
                   value={form.description}
                   onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
@@ -152,12 +152,12 @@ export default function DocumentsPageClient() {
             </form>
           </CardContent>
         </Card>
-        <Card className="border-slate-200">
-          <CardHeader className="border-b border-slate-200/60 pb-4">
+        <Card>
+          <CardHeader className="pb-4">
             <CardTitle className="text-lg font-semibold">Filters</CardTitle>
             <CardDescription>Focus on drafts, reviews, or final outputs.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 pt-4 text-sm text-slate-600">
+          <CardContent className="space-y-3 pt-4 text-sm text-muted-foreground">
             <Select value={filter} onChange={(event) => setFilter(event.target.value)}>
               <option value="All">All Documents</option>
               {documentStatuses.map((status) => (
@@ -166,27 +166,27 @@ export default function DocumentsPageClient() {
                 </option>
               ))}
             </Select>
-            <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
-              <p className="text-xs uppercase tracking-widest text-slate-500">Total Documents</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">{documents.length}</p>
+            <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">Total Documents</p>
+              <p className="mt-1 text-2xl font-semibold text-foreground">{documents.length}</p>
             </div>
             <div className="space-y-2">
               {Object.entries(tagCloud).map(([tag, count]) => (
-                <div key={tag} className="flex items-center justify-between rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
-                  <span className="text-sm text-slate-600">#{tag}</span>
-                  <Badge variant="outline" className="border-slate-300 text-slate-600">
+                <div key={tag} className="flex items-center justify-between rounded-lg border border-border bg-card p-3 shadow-sm">
+                  <span className="text-sm text-muted-foreground">#{tag}</span>
+                  <Badge variant="outline">
                     {count}
                   </Badge>
                 </div>
               ))}
-              {Object.keys(tagCloud).length === 0 && <p className="text-xs text-slate-500">No tags yet.</p>}
+              {Object.keys(tagCloud).length === 0 && <p className="text-xs text-muted-foreground">No tags yet.</p>}
             </div>
           </CardContent>
         </Card>
       </section>
 
-      <Card className="border-slate-200">
-        <CardHeader className="border-b border-slate-200/60 pb-4">
+      <Card>
+        <CardHeader className="pb-4">
           <CardTitle className="text-lg font-semibold">Document Library</CardTitle>
           <CardDescription>Version-controlled record of every deliverable.</CardDescription>
         </CardHeader>
@@ -205,15 +205,15 @@ export default function DocumentsPageClient() {
             <TableBody>
               {filteredDocuments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="px-6 py-10 text-center text-sm text-slate-500">
+                  <TableCell colSpan={6} className="px-6 py-10 text-center text-sm text-muted-foreground">
                     No documents found for this filter.
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredDocuments.map((document) => (
-                  <TableRow key={document.id} className="hover:bg-slate-50/60">
+                  <TableRow key={document.id}>
                     <TableCell className="px-6">
-                      <div className="font-medium text-slate-900">{document.title}</div>
+                      <div className="font-medium text-foreground">{document.title}</div>
                       <Link href={document.fileUrl} className="text-xs text-emerald-600 underline">
                         Open file
                       </Link>
@@ -233,7 +233,7 @@ export default function DocumentsPageClient() {
                       </Select>
                     </TableCell>
                     <TableCell>v{document.version}</TableCell>
-                    <TableCell className="text-sm text-slate-600">{document.summary}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{document.summary}</TableCell>
                   </TableRow>
                 ))
               )}
