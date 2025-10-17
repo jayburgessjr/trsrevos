@@ -86,7 +86,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </p>
         </div>
       </aside>
-      <div className="flex w-full flex-1 flex-col md:pl-64">
+      <div className="flex w-full flex-1 flex-col">
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/90 px-6 py-4 backdrop-blur">
           <div className="flex items-center gap-3">
             <Button
