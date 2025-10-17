@@ -103,8 +103,8 @@ export default function DashboardScreen() {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2 border-slate-200">
-          <CardHeader className="flex flex-col gap-1 border-b border-slate-200/60 pb-4">
+        <Card className="lg:col-span-2 border-slate-200 dark:border-slate-800">
+          <CardHeader className="flex flex-col gap-1 border-b border-slate-200/60 dark:border-slate-800/60 pb-4">
             <CardTitle className="text-lg font-semibold">Active Deliverables</CardTitle>
             <CardDescription>Monitor drafts and reviews across all engagements.</CardDescription>
           </CardHeader>
@@ -121,27 +121,27 @@ export default function DashboardScreen() {
               <TableBody>
                 {metrics.deliverableRows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="px-6 py-10 text-center text-sm text-slate-500">
+                    <TableCell colSpan={4} className="px-6 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
                       All deliverables are finalized.
                     </TableCell>
                   </TableRow>
                 ) : (
                   metrics.deliverableRows.map((row) => (
-                    <TableRow key={row.id} className="hover:bg-slate-50/60">
+                    <TableRow key={row.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/60">
                       <TableCell className="px-6">
-                        <div className="font-medium text-slate-900">{row.title}</div>
-                        <div className="text-xs text-slate-500">{row.id}</div>
+                        <div className="font-medium text-slate-900 dark:text-slate-100">{row.title}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">{row.id}</div>
                       </TableCell>
                       <TableCell>{row.project}</TableCell>
                       <TableCell>
                         <Badge
                           variant="outline"
-                          className={row.status === 'In Review' ? 'border-orange-500 text-orange-600' : 'border-slate-300 text-slate-600'}
+                          className={row.status === 'In Review' ? 'border-orange-500 dark:border-orange-600 text-orange-600 dark:text-orange-400' : 'border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400'}
                         >
                           {row.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-xs text-slate-500">
+                      <TableCell className="text-xs text-slate-500 dark:text-slate-400">
                         {new Date(row.updatedAt).toLocaleDateString()}
                       </TableCell>
                     </TableRow>
@@ -151,27 +151,27 @@ export default function DashboardScreen() {
             </Table>
           </CardContent>
         </Card>
-        <Card className="border-slate-200">
-          <CardHeader className="border-b border-slate-200/60 pb-4">
+        <Card className="border-slate-200 dark:border-slate-800">
+          <CardHeader className="border-b border-slate-200/60 dark:border-slate-800/60 pb-4">
             <CardTitle className="text-lg font-semibold">Automation Feed</CardTitle>
             <CardDescription>Recent agent runs powering delivery.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {metrics.automationFeed.length === 0 ? (
-              <p className="text-sm text-slate-500">No automation events yet.</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">No automation events yet.</p>
             ) : (
               metrics.automationFeed.map((item) => (
-                <div key={item.id} className="rounded-lg border border-slate-200/80 bg-white p-4 text-sm shadow-sm">
-                  <p className="font-medium text-slate-900">{item.agent}</p>
-                  <p className="mt-1 text-slate-600">{item.summary}</p>
-                  <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+                <div key={item.id} className="rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800/50 p-4 text-sm shadow-sm">
+                  <p className="font-medium text-slate-900 dark:text-slate-100">{item.agent}</p>
+                  <p className="mt-1 text-slate-600 dark:text-slate-400">{item.summary}</p>
+                  <div className="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                     <span>{item.project ?? 'Standalone run'}</span>
                     <span>{new Date(item.createdAt).toLocaleString()}</span>
                   </div>
                 </div>
               ))
             )}
-            <Button asChild variant="outline" className="w-full border-slate-300">
+            <Button asChild variant="outline" className="w-full border-slate-300 dark:border-slate-700">
               <Link href="/agents">Launch an Agent</Link>
             </Button>
           </CardContent>
@@ -179,24 +179,24 @@ export default function DashboardScreen() {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-3">
-        <Card className="border-slate-200">
-          <CardHeader className="border-b border-slate-200/60 pb-4">
+        <Card className="border-slate-200 dark:border-slate-800">
+          <CardHeader className="border-b border-slate-200/60 dark:border-slate-800/60 pb-4">
             <CardTitle className="text-lg font-semibold">Document Mix</CardTitle>
             <CardDescription>Breakdown of working deliverables.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2 pt-4">
             {Object.entries(metrics.documentCountByType).map(([type, count]) => (
-              <Badge key={type} variant="outline" className="bg-slate-100 text-slate-700">
+              <Badge key={type} variant="outline" className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                 {type} • {count}
               </Badge>
             ))}
             {Object.keys(metrics.documentCountByType).length === 0 && (
-              <p className="text-sm text-slate-500">No documents captured yet.</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">No documents captured yet.</p>
             )}
           </CardContent>
         </Card>
-        <Card className="border-slate-200 lg:col-span-2">
-          <CardHeader className="border-b border-slate-200/60 pb-4">
+        <Card className="border-slate-200 dark:border-slate-800 lg:col-span-2">
+          <CardHeader className="border-b border-slate-200/60 dark:border-slate-800/60 pb-4">
             <CardTitle className="text-lg font-semibold">QuickBooks Invoices</CardTitle>
             <CardDescription>Revenue status synced from finance.</CardDescription>
           </CardHeader>
@@ -204,12 +204,12 @@ export default function DashboardScreen() {
             {['Draft', 'Sent', 'Paid'].map((status) => {
               const summary = metrics.quickbooksSummary[status] ?? { amount: 0, count: 0 }
               return (
-                <div key={status} className="rounded-lg border border-slate-200/80 bg-white p-4 shadow-sm">
-                  <p className="text-xs uppercase tracking-widest text-slate-500">{status}</p>
-                  <p className="mt-1 text-xl font-semibold text-slate-900">
+                <div key={status} className="rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800/50 p-4 shadow-sm">
+                  <p className="text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">{status}</p>
+                  <p className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-100">
                     ${summary.amount.toLocaleString()}
                   </p>
-                  <p className="text-xs text-slate-500">{summary.count} invoices</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{summary.count} invoices</p>
                 </div>
               )
             })}
@@ -218,8 +218,8 @@ export default function DashboardScreen() {
       </section>
 
       <section>
-        <Card className="border-slate-200">
-          <CardHeader className="border-b border-slate-200/60 pb-4">
+        <Card className="border-slate-200 dark:border-slate-800">
+          <CardHeader className="border-b border-slate-200/60 dark:border-slate-800/60 pb-4">
             <CardTitle className="text-lg font-semibold">Content Pipeline</CardTitle>
             <CardDescription>Derivative assets created from project work.</CardDescription>
           </CardHeader>
@@ -236,22 +236,22 @@ export default function DashboardScreen() {
               <TableBody>
                 {content.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="px-6 py-10 text-center text-sm text-slate-500">
+                    <TableCell colSpan={4} className="px-6 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
                       No content generated yet.
                     </TableCell>
                   </TableRow>
                 ) : (
                   content.map((item) => (
-                    <TableRow key={item.id} className="hover:bg-slate-50/60">
+                    <TableRow key={item.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/60">
                       <TableCell className="px-6">
-                        <div className="font-medium text-slate-900">{item.title}</div>
-                        <div className="text-xs text-slate-500">{new Date(item.createdAt).toLocaleDateString()}</div>
+                        <div className="font-medium text-slate-900 dark:text-slate-100">{item.title}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">{new Date(item.createdAt).toLocaleDateString()}</div>
                       </TableCell>
                       <TableCell>{item.type}</TableCell>
                       <TableCell>
                         <Badge
                           variant="outline"
-                          className={item.status === 'Published' ? 'border-emerald-500 text-emerald-600' : 'border-slate-300 text-slate-600'}
+                          className={item.status === 'Published' ? 'border-emerald-500 dark:border-emerald-600 text-emerald-600 dark:text-emerald-400' : 'border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400'}
                         >
                           {item.status}
                         </Badge>
@@ -282,16 +282,16 @@ type MetricCardProps = {
 
 function MetricCard({ label, value, accent, subtitle }: MetricCardProps) {
   const accentClasses = {
-    emerald: 'border-emerald-500 text-emerald-700',
-    orange: 'border-orange-500 text-orange-600',
-    slate: 'border-slate-500 text-slate-600',
+    emerald: 'border-emerald-500 dark:border-emerald-600 text-emerald-700 dark:text-emerald-400',
+    orange: 'border-orange-500 dark:border-orange-600 text-orange-600 dark:text-orange-400',
+    slate: 'border-slate-500 dark:border-slate-600 text-slate-600 dark:text-slate-400',
   }
 
   return (
-    <Card className="border-slate-200">
+    <Card className="border-slate-200 dark:border-slate-800">
       <CardHeader className="pb-3">
-        <CardDescription className="uppercase tracking-widest text-xs text-slate-500">{label}</CardDescription>
-        <CardTitle className="text-2xl font-semibold text-slate-900">{value}</CardTitle>
+        <CardDescription className="uppercase tracking-widest text-xs text-slate-500 dark:text-slate-400">{label}</CardDescription>
+        <CardTitle className="text-2xl font-semibold text-slate-900 dark:text-slate-100">{value}</CardTitle>
       </CardHeader>
       <CardContent>
         <Badge variant="outline" className={accentClasses[accent]}>

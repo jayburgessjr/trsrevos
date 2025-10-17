@@ -75,6 +75,28 @@ body {
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Default light mode styles */
+  * {
+    @apply bg-transparent text-inherit;
+  }
+
+  html {
+    @apply bg-white text-black;
+  }
+
+  body {
+    @apply bg-white text-black;
+  }
+
+  /* Dark mode overrides */
+  .dark html {
+    @apply bg-black text-white;
+  }
+
+  .dark body {
+    @apply bg-black text-white;
+  }
+
   ::selection {
     background: rgba(17, 24, 39, 0.12);
   }
