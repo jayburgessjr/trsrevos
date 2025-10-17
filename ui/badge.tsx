@@ -8,11 +8,11 @@ type BadgeProps = React.HTMLAttributes<HTMLSpanElement> & {
 }
 
 const variantStyles: Record<NonNullable<BadgeProps['variant']>, string> = {
-  default: 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100',
-  outline: 'border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 bg-transparent',
-  success: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',
-  warning: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
-  destructive: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+  default: 'bg-secondary text-secondary-foreground',
+  outline: 'border border-input text-muted-foreground bg-transparent',
+  success: 'bg-success/10 text-success',
+  warning: 'bg-warning/10 text-warning',
+  destructive: 'bg-destructive/10 text-destructive',
 }
 
 export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(

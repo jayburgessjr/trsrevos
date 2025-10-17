@@ -2,10 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Reset all default margins and padding */
+/* =============================================================================
+   THEME SYSTEM - CSS Variables
+   Data-attribute driven: [data-theme="light"] and [data-theme="dark"]
+   ============================================================================= */
+
+/* Reset */
 * {
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
 html {
@@ -22,58 +28,196 @@ body {
   overflow-x: hidden;
 }
 
-#__next {
-  margin: 0;
-  padding: 0;
-  width: 100%;
+/* =============================================================================
+   LIGHT THEME (Default)
+   ============================================================================= */
+:root,
+[data-theme="light"] {
+  /* Background Colors */
+  --color-background: 246 247 245; /* #f6f7f5 */
+  --color-foreground: 15 23 42; /* slate-900 */
+
+  /* Card/Surface Colors */
+  --color-card: 255 255 255; /* white */
+  --color-card-foreground: 15 23 42; /* slate-900 */
+
+  /* Primary Colors */
+  --color-primary: 37 99 235; /* blue-600 */
+  --color-primary-foreground: 255 255 255; /* white */
+
+  /* Secondary Colors */
+  --color-secondary: 241 245 249; /* slate-100 */
+  --color-secondary-foreground: 15 23 42; /* slate-900 */
+
+  /* Muted Colors */
+  --color-muted: 241 245 249; /* slate-100 */
+  --color-muted-foreground: 100 116 139; /* slate-500 */
+
+  /* Accent Colors */
+  --color-accent: 241 245 249; /* slate-100 */
+  --color-accent-foreground: 15 23 42; /* slate-900 */
+
+  /* Border & Input */
+  --color-border: 226 232 240; /* slate-200 */
+  --color-input: 226 232 240; /* slate-200 */
+  --color-ring: 37 99 235; /* blue-600 */
+
+  /* Destructive/Error */
+  --color-destructive: 239 68 68; /* red-500 */
+  --color-destructive-foreground: 255 255 255; /* white */
+
+  /* Success */
+  --color-success: 34 197 94; /* green-500 */
+  --color-success-foreground: 255 255 255; /* white */
+
+  /* Warning */
+  --color-warning: 251 146 60; /* orange-400 */
+  --color-warning-foreground: 255 255 255; /* white */
+
+  /* Semantic colors for status badges */
+  --color-emerald: 16 185 129; /* emerald-500 */
+  --color-orange: 249 115 22; /* orange-500 */
+  --color-blue: 59 130 246; /* blue-500 */
+
+  /* Radius */
+  --radius: 0.5rem;
 }
 
+/* =============================================================================
+   DARK THEME
+   ============================================================================= */
+[data-theme="dark"] {
+  /* Background Colors */
+  --color-background: 10 10 10; /* #0a0a0a */
+  --color-foreground: 241 245 249; /* slate-100 */
+
+  /* Card/Surface Colors */
+  --color-card: 26 26 26; /* #1a1a1a */
+  --color-card-foreground: 241 245 249; /* slate-100 */
+
+  /* Primary Colors */
+  --color-primary: 29 78 216; /* blue-700 */
+  --color-primary-foreground: 255 255 255; /* white */
+
+  /* Secondary Colors */
+  --color-secondary: 30 41 59; /* slate-800 */
+  --color-secondary-foreground: 241 245 249; /* slate-100 */
+
+  /* Muted Colors */
+  --color-muted: 30 41 59; /* slate-800 */
+  --color-muted-foreground: 148 163 184; /* slate-400 */
+
+  /* Accent Colors */
+  --color-accent: 30 41 59; /* slate-800 */
+  --color-accent-foreground: 241 245 249; /* slate-100 */
+
+  /* Border & Input */
+  --color-border: 51 65 85; /* slate-700 */
+  --color-input: 51 65 85; /* slate-700 */
+  --color-ring: 96 165 250; /* blue-400 */
+
+  /* Destructive/Error */
+  --color-destructive: 239 68 68; /* red-500 */
+  --color-destructive-foreground: 255 255 255; /* white */
+
+  /* Success */
+  --color-success: 34 197 94; /* green-500 */
+  --color-success-foreground: 255 255 255; /* white */
+
+  /* Warning */
+  --color-warning: 251 146 60; /* orange-400 */
+  --color-warning-foreground: 15 23 42; /* slate-900 */
+
+  /* Semantic colors for status badges */
+  --color-emerald: 52 211 153; /* emerald-400 */
+  --color-orange: 251 146 60; /* orange-400 */
+  --color-blue: 96 165 250; /* blue-400 */
+}
+
+/* =============================================================================
+   BASE STYLES
+   ============================================================================= */
 @layer base {
-  :root {
-    --color-bg: #ffffff;
-    --color-text: #000000;
-    --color-surface: #f9f9f9;
-    --color-border: #e5e7eb;
-    --color-outline: #e5e7eb;
-    --color-surface-muted: #f3f4f6;
-    --color-text-muted: #6b7280;
-    --color-accent: #2563eb;
-    --color-accent-muted: rgba(37, 99, 235, 0.25);
-    --color-background: var(--color-bg);
-    --color-positive: #16a34a;
-    --color-caution: #f59e0b;
-    --color-critical: #ef4444;
-
-    /* Destructive foreground */
-    --destructive-foreground: oklch(1 0 0);
-    --color-destructive-foreground: var(--destructive-foreground);
-  }
-
-  .dark {
-    --color-bg: #121212;
-    --color-text: #f5f5f5;
-    --color-surface: #1e1e1e;
-    --color-border: #2a2a2a;
-    --color-outline: #2d2d2d;
-    --color-surface-muted: #262626;
-    --color-text-muted: #9ca3af;
-    --color-accent: #60a5fa;
-    --color-accent-muted: rgba(96, 165, 250, 0.35);
-    --color-background: var(--color-bg);
-
-    /* Destructive foreground for dark mode */
-    --destructive-foreground: oklch(1 0 0);
-  }
-
   body {
-    height: 100vh;
+    background-color: rgb(var(--color-background));
+    color: rgb(var(--color-foreground));
     font-family: 'Inter', 'SF Pro Text', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     font-feature-settings: 'liga' 1, 'calt' 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
   }
 
   ::selection {
-    background: rgba(17, 24, 39, 0.12);
+    background: rgba(var(--color-primary), 0.2);
+  }
+}
+
+/* =============================================================================
+   UTILITY CLASSES
+   ============================================================================= */
+@layer utilities {
+  /* Background utilities */
+  .bg-background {
+    background-color: rgb(var(--color-background));
+  }
+
+  .bg-card {
+    background-color: rgb(var(--color-card));
+  }
+
+  .bg-primary {
+    background-color: rgb(var(--color-primary));
+  }
+
+  .bg-secondary {
+    background-color: rgb(var(--color-secondary));
+  }
+
+  .bg-muted {
+    background-color: rgb(var(--color-muted));
+  }
+
+  .bg-accent {
+    background-color: rgb(var(--color-accent));
+  }
+
+  /* Text utilities */
+  .text-foreground {
+    color: rgb(var(--color-foreground));
+  }
+
+  .text-card-foreground {
+    color: rgb(var(--color-card-foreground));
+  }
+
+  .text-primary {
+    color: rgb(var(--color-primary));
+  }
+
+  .text-secondary-foreground {
+    color: rgb(var(--color-secondary-foreground));
+  }
+
+  .text-muted-foreground {
+    color: rgb(var(--color-muted-foreground));
+  }
+
+  .text-accent-foreground {
+    color: rgb(var(--color-accent-foreground));
+  }
+
+  /* Border utilities */
+  .border-border {
+    border-color: rgb(var(--color-border));
+  }
+
+  .border-input {
+    border-color: rgb(var(--color-input));
+  }
+
+  /* Ring utilities */
+  .ring-ring {
+    --tw-ring-color: rgb(var(--color-ring));
   }
 }
