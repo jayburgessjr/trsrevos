@@ -93,7 +93,7 @@ export default function PublicFormClient({ formConfig }: PublicFormClientProps) 
               Your submission has been received.
             </p>
             <p className="text-sm text-gray-400">
-              We'll review your information and get back to you within 24 hours.
+              We&apos;ll review your information and get back to you within 24 hours.
             </p>
             <p className="mt-6 text-xs text-gray-500">
               Check your email for a confirmation and next steps.
