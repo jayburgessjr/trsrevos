@@ -67,34 +67,10 @@ body {
 
   body {
     height: 100vh;
-    background-color: var(--color-bg);
-    color: var(--color-text);
     font-family: 'Inter', 'SF Pro Text', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     font-feature-settings: 'liga' 1, 'calt' 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-
-  /* Default light mode styles */
-  * {
-    @apply bg-transparent text-inherit;
-  }
-
-  html {
-    @apply bg-white text-black;
-  }
-
-  body {
-    @apply bg-white text-black;
-  }
-
-  /* Dark mode overrides */
-  .dark html {
-    @apply bg-black text-white;
-  }
-
-  .dark body {
-    @apply bg-black text-white;
   }
 
   ::selection {
