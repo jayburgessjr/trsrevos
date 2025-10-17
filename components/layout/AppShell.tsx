@@ -36,10 +36,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#f6f7f5] text-slate-900" style={{ width: '100%', margin: 0, padding: 0 }}>
+    <div className="flex min-h-screen bg-[#f6f7f5] text-slate-900" style={{ width: '100vw', margin: 0, padding: 0 }}>
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-40 w-64 border-r border-slate-200 bg-white px-4 py-6 shadow-sm transition-transform duration-200 ease-in-out md:static md:translate-x-0',
+          'fixed inset-y-0 z-40 w-64 border-r border-slate-200 bg-white px-4 py-6 shadow-sm transition-transform duration-200 ease-in-out md:static md:translate-x-0',
           mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
         )}
         style={{ left: 0, margin: 0 }}
