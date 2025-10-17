@@ -98,7 +98,7 @@ export default function ProjectsPageClient() {
           <CardContent className="pt-4">
             <form className="grid grid-cols-1 gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Project Name</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Project Name</label>
                 <Input
                   value={form.name}
                   onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
@@ -107,7 +107,7 @@ export default function ProjectsPageClient() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Client</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Client</label>
                 <Input
                   value={form.client}
                   onChange={(event) => setForm((current) => ({ ...current, client: event.target.value }))}
@@ -116,7 +116,7 @@ export default function ProjectsPageClient() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Type</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Type</label>
                 <Select
                   value={form.type}
                   onChange={(event) =>
@@ -131,7 +131,7 @@ export default function ProjectsPageClient() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Status</label>
                 <Select
                   value={form.status}
                   onChange={(event) =>
@@ -146,7 +146,7 @@ export default function ProjectsPageClient() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Start Date</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Start Date</label>
                 <Input
                   type="date"
                   value={form.startDate}
@@ -154,7 +154,7 @@ export default function ProjectsPageClient() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">End Date</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">End Date</label>
                 <Input
                   type="date"
                   value={form.endDate}
@@ -162,7 +162,7 @@ export default function ProjectsPageClient() {
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Assigned Team</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Assigned Team</label>
                 <Input
                   value={form.team}
                   onChange={(event) => setForm((current) => ({ ...current, team: event.target.value }))}
@@ -170,7 +170,7 @@ export default function ProjectsPageClient() {
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   QuickBooks Invoice URL
                 </label>
                 <Input
@@ -183,7 +183,7 @@ export default function ProjectsPageClient() {
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Revenue Target (USD)</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Revenue Target (USD)</label>
                 <Input
                   type="number"
                   min={0}
@@ -207,20 +207,20 @@ export default function ProjectsPageClient() {
             <CardDescription>Track load and linked knowledge.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 pt-4 text-sm text-slate-600">
-            <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
-              <p className="text-xs uppercase tracking-widest text-slate-500">Total Revenue Target</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">
+            <div className="rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800/50 p-3 shadow-sm">
+              <p className="text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">Total Revenue Target</p>
+              <p className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
                 ${stats.totalRevenue.toLocaleString()}
               </p>
             </div>
-            <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
-              <p className="text-xs uppercase tracking-widest text-slate-500">Resources Linked</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">{stats.linkedResources}</p>
+            <div className="rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800/50 p-3 shadow-sm">
+              <p className="text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">Resources Linked</p>
+              <p className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">{stats.linkedResources}</p>
             </div>
             <div className="space-y-2">
               {projectStatuses.map((status) => (
                 <div key={status} className="flex items-center justify-between rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
-                  <span className="text-sm font-medium text-slate-600">{status}</span>
+                  <span className="text-sm font-medium text-slate-600 dark:text-slate-400">{status}</span>
                   <Badge variant="outline" className="border-slate-300 text-slate-600">
                     {stats.totalsByStatus[status] ?? 0}
                   </Badge>
@@ -318,9 +318,9 @@ export default function ProjectsPageClient() {
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {resources.map((resource) => (
-            <div key={resource.id} className="rounded-lg border border-slate-200/80 bg-white p-4 text-sm shadow-sm">
-              <p className="text-sm font-semibold text-slate-900">{resource.name}</p>
-              <p className="mt-1 text-slate-600">{resource.description}</p>
+            <div key={resource.id} className="rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800/50 p-4 text-sm shadow-sm">
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{resource.name}</p>
+              <p className="mt-1 text-slate-600 dark:text-slate-400">{resource.description}</p>
               <div className="mt-2 flex flex-wrap gap-1">
                 {resource.tags.map((tag) => (
                   <Badge key={tag} variant="outline" className="bg-slate-100 text-slate-700">
@@ -328,7 +328,7 @@ export default function ProjectsPageClient() {
                   </Badge>
                 ))}
               </div>
-              <div className="mt-2 text-xs text-slate-500">
+              <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                 Linked Projects: {resource.relatedProjectIds.length}
               </div>
             </div>
