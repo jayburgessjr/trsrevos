@@ -112,8 +112,8 @@ export default function CalculatorsPageClient() {
     <div className="space-y-8">
       {!activeCalculator ? (
         <section className="grid gap-4 lg:grid-cols-3">
-          <Card className="border-slate-200 lg:col-span-2">
-            <CardHeader className="border-b border-slate-200/60 pb-4">
+          <Card className="lg:col-span-2">
+            <CardHeader className="pb-4">
               <CardTitle className="text-lg font-semibold">Revenue Calculators</CardTitle>
               <CardDescription>Client-facing and internal calculators for revenue science</CardDescription>
             </CardHeader>
@@ -121,13 +121,13 @@ export default function CalculatorsPageClient() {
               {filteredCalculators.map((calc) => (
                 <div
                   key={calc.id}
-                  className="flex cursor-pointer flex-col rounded-lg border border-slate-200/80 bg-white p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
+                  className="flex cursor-pointer flex-col rounded-lg border border-border bg-card p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
                   onClick={() => setActiveCalculator(calc.id)}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">{calc.name}</p>
-                      <p className="mt-1 text-xs uppercase tracking-widest text-slate-500">{calc.category}</p>
+                      <p className="text-sm font-semibold text-foreground">{calc.name}</p>
+                      <p className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">{calc.category}</p>
                     </div>
                     <Badge
                       variant="outline"
@@ -140,8 +140,8 @@ export default function CalculatorsPageClient() {
                       {calc.category === 'client-facing' ? 'Client' : 'Internal'}
                     </Badge>
                   </div>
-                  <p className="mt-2 text-sm text-slate-600">{calc.description}</p>
-                  <div className="mt-2 text-xs text-slate-500">
+                  <p className="mt-2 text-sm text-muted-foreground">{calc.description}</p>
+                  <div className="mt-2 text-xs text-muted-foreground">
                     <span className="font-medium">Used in:</span> {calc.stages}
                   </div>
                 </div>
@@ -149,8 +149,8 @@ export default function CalculatorsPageClient() {
             </CardContent>
           </Card>
 
-          <Card className="border-slate-200">
-            <CardHeader className="border-b border-slate-200/60 pb-4">
+          <Card className="border-border">
+            <CardHeader className="pb-4">
               <CardTitle className="text-lg font-semibold">Category Filter</CardTitle>
               <CardDescription>Filter calculators by category</CardDescription>
             </CardHeader>
@@ -159,24 +159,24 @@ export default function CalculatorsPageClient() {
                 className={`cursor-pointer rounded-lg border p-3 transition-all ${
                   category === 'all'
                     ? 'border-slate-900 bg-slate-50'
-                    : 'border-slate-200 bg-white hover:border-slate-300'
+                    : 'border-border bg-card hover:border-slate-300'
                 }`}
                 onClick={() => setCategory('all')}
               >
-                <p className="text-sm font-medium text-slate-900">All Calculators</p>
-                <p className="mt-1 text-xs text-slate-600">{calculators.length} calculators</p>
+                <p className="text-sm font-medium text-foreground">All Calculators</p>
+                <p className="mt-1 text-xs text-muted-foreground">{calculators.length} calculators</p>
               </div>
 
               <div
                 className={`cursor-pointer rounded-lg border p-3 transition-all ${
                   category === 'client-facing'
                     ? 'border-emerald-500 bg-emerald-50'
-                    : 'border-slate-200 bg-white hover:border-slate-300'
+                    : 'border-border bg-card hover:border-slate-300'
                 }`}
                 onClick={() => setCategory('client-facing')}
               >
-                <p className="text-sm font-medium text-slate-900">Client-Facing</p>
-                <p className="mt-1 text-xs text-slate-600">
+                <p className="text-sm font-medium text-foreground">Client-Facing</p>
+                <p className="mt-1 text-xs text-muted-foreground">
                   {calculators.filter((c) => c.category === 'client-facing').length} calculators
                 </p>
               </div>
@@ -185,12 +185,12 @@ export default function CalculatorsPageClient() {
                 className={`cursor-pointer rounded-lg border p-3 transition-all ${
                   category === 'internal'
                     ? 'border-blue-500 bg-blue-50'
-                    : 'border-slate-200 bg-white hover:border-slate-300'
+                    : 'border-border bg-card hover:border-slate-300'
                 }`}
                 onClick={() => setCategory('internal')}
               >
-                <p className="text-sm font-medium text-slate-900">Internal TRS</p>
-                <p className="mt-1 text-xs text-slate-600">
+                <p className="text-sm font-medium text-foreground">Internal TRS</p>
+                <p className="mt-1 text-xs text-muted-foreground">
                   {calculators.filter((c) => c.category === 'internal').length} calculators
                 </p>
               </div>
@@ -272,8 +272,8 @@ function AuditROICalculator() {
 
   return (
     <section className="grid gap-4 lg:grid-cols-3">
-      <Card className="border-slate-200 lg:col-span-2">
-        <CardHeader className="border-b border-slate-200/60 pb-4">
+      <Card className="lg:col-span-2">
+        <CardHeader className="pb-4">
           <CardTitle className="text-lg font-semibold">Audit ROI Quick Estimator</CardTitle>
           <CardDescription>Prove the $3,500 audit pays for itself fast</CardDescription>
         </CardHeader>
@@ -379,58 +379,58 @@ function AuditROICalculator() {
         </CardContent>
       </Card>
 
-      <Card className="border-slate-200">
-        <CardHeader className="border-b border-slate-200/60 pb-4">
+      <Card className="border-border">
+        <CardHeader className="pb-4">
           <CardTitle className="text-lg font-semibold">Results</CardTitle>
           <CardDescription>Calculate to see ROI breakdown</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 pt-4">
           {results ? (
             <>
-              <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
-                <p className="text-xs uppercase tracking-widest text-slate-500">Price Uplift</p>
-                <p className="mt-1 text-2xl font-semibold text-slate-900">
+              <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">Price Uplift</p>
+                <p className="mt-1 text-2xl font-semibold text-foreground">
                   ${results.priceUplift.toLocaleString()}/mo
                 </p>
               </div>
 
-              <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
-                <p className="text-xs uppercase tracking-widest text-slate-500">Activation Uplift</p>
-                <p className="mt-1 text-2xl font-semibold text-slate-900">
+              <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">Activation Uplift</p>
+                <p className="mt-1 text-2xl font-semibold text-foreground">
                   ${results.activationUplift.toLocaleString()}/mo
                 </p>
               </div>
 
-              <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
-                <p className="text-xs uppercase tracking-widest text-slate-500">Churn Uplift</p>
-                <p className="mt-1 text-2xl font-semibold text-slate-900">
+              <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">Churn Uplift</p>
+                <p className="mt-1 text-2xl font-semibold text-foreground">
                   ${results.churnUplift.toLocaleString()}/mo
                 </p>
               </div>
 
-              <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
-                <p className="text-xs uppercase tracking-widest text-slate-500">Total Monthly Uplift</p>
-                <p className="mt-1 text-2xl font-semibold text-slate-900">
+              <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">Total Monthly Uplift</p>
+                <p className="mt-1 text-2xl font-semibold text-foreground">
                   ${results.totalMonthlyUplift.toLocaleString()}/mo
                 </p>
               </div>
 
-              <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
-                <p className="text-xs uppercase tracking-widest text-slate-500">Payback Period</p>
-                <p className="mt-1 text-2xl font-semibold text-slate-900">
+              <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">Payback Period</p>
+                <p className="mt-1 text-2xl font-semibold text-foreground">
                   {results.paybackDays} days
                 </p>
               </div>
 
-              <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
-                <p className="text-xs uppercase tracking-widest text-slate-500">90-Day ROI Multiple</p>
-                <p className="mt-1 text-2xl font-semibold text-slate-900">
+              <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">90-Day ROI Multiple</p>
+                <p className="mt-1 text-2xl font-semibold text-foreground">
                   {results.roi90Days}x
                 </p>
               </div>
             </>
           ) : (
-            <div className="flex h-full items-center justify-center py-12 text-sm text-slate-500">
+            <div className="flex h-full items-center justify-center py-12 text-sm text-muted-foreground">
               <p>Enter inputs and click Calculate ROI</p>
             </div>
           )}
@@ -479,13 +479,13 @@ function CompensationCalculator() {
 
 function CalculatorPlaceholder({ name }: { name: string }) {
   return (
-    <Card className="border-slate-200">
-      <CardHeader className="border-b border-slate-200/60">
+    <Card className="border-border">
+      <CardHeader className="border-b border-border/60">
         <CardTitle>{name}</CardTitle>
         <CardDescription>Calculator implementation in progress</CardDescription>
       </CardHeader>
       <CardContent className="pt-6">
-        <div className="flex h-64 items-center justify-center rounded-lg border-2 border-dashed border-slate-200 text-sm text-slate-500">
+        <div className="flex h-64 items-center justify-center rounded-lg border-2 border-dashed border-border text-sm text-muted-foreground">
           <div className="text-center">
             <p className="font-medium">Coming Soon</p>
             <p className="mt-1 text-xs">This calculator will be implemented next</p>

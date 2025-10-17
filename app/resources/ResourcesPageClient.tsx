@@ -81,15 +81,15 @@ export default function ResourcesPageClient() {
   return (
     <div className="space-y-8">
       <section className="grid gap-4 lg:grid-cols-3">
-        <Card className="border-slate-200 lg:col-span-2">
-          <CardHeader className="border-b border-slate-200/60 pb-4">
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-4">
             <CardTitle className="text-lg font-semibold">Add Resource</CardTitle>
             <CardDescription>Capture frameworks, calculators, and training assets.</CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
             <form className="grid grid-cols-1 gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
               <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Name</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Name</label>
                 <Input
                   value={form.name}
                   onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
@@ -98,7 +98,7 @@ export default function ResourcesPageClient() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Type</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Type</label>
                 <Select
                   value={form.type}
                   onChange={(event) =>
@@ -113,7 +113,7 @@ export default function ResourcesPageClient() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Link</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Link</label>
                 <Input
                   value={form.link}
                   onChange={(event) => setForm((current) => ({ ...current, link: event.target.value }))}
@@ -122,7 +122,7 @@ export default function ResourcesPageClient() {
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Description</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Description</label>
                 <Textarea
                   value={form.description}
                   onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
@@ -131,7 +131,7 @@ export default function ResourcesPageClient() {
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Tags</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tags</label>
                 <Input
                   value={form.tags}
                   onChange={(event) => setForm((current) => ({ ...current, tags: event.target.value }))}
@@ -139,14 +139,14 @@ export default function ResourcesPageClient() {
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Related Projects</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Related Projects</p>
                 <div className="flex flex-wrap gap-3">
                   {projects.map((project) => {
                     const checked = form.relatedProjectIds.includes(project.id)
                     return (
                       <label
                         key={project.id}
-                        className="flex items-center gap-2 rounded-lg border border-slate-200/80 bg-white px-3 py-2 text-xs text-slate-600 shadow-sm"
+                        className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs text-muted-foreground shadow-sm"
                       >
                         <input
                           type="checkbox"
@@ -158,7 +158,7 @@ export default function ResourcesPageClient() {
                       </label>
                     )
                   })}
-                  {projects.length === 0 && <span className="text-xs text-slate-500">No projects yet.</span>}
+                  {projects.length === 0 && <span className="text-xs text-muted-foreground">No projects yet.</span>}
                 </div>
               </div>
               <div className="md:col-span-2">
@@ -169,12 +169,12 @@ export default function ResourcesPageClient() {
             </form>
           </CardContent>
         </Card>
-        <Card className="border-slate-200">
-          <CardHeader className="border-b border-slate-200/60 pb-4">
+        <Card>
+          <CardHeader className="pb-4">
             <CardTitle className="text-lg font-semibold">Filters</CardTitle>
             <CardDescription>Browse by delivery usage.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 pt-4 text-sm text-slate-600">
+          <CardContent className="space-y-3 pt-4 text-sm text-muted-foreground">
             <Select value={filterType} onChange={(event) => setFilterType(event.target.value)}>
               <option value="All">All Resources</option>
               {resourceTypes.map((type) => (
@@ -183,54 +183,54 @@ export default function ResourcesPageClient() {
                 </option>
               ))}
             </Select>
-            <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
-              <p className="text-xs uppercase tracking-widest text-slate-500">Total Resources</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">{resources.length}</p>
+            <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">Total Resources</p>
+              <p className="mt-1 text-2xl font-semibold text-foreground">{resources.length}</p>
             </div>
             <div className="space-y-2">
               {Object.entries(tagCounts).map(([tag, count]) => (
-                <div key={tag} className="flex items-center justify-between rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
-                  <span className="text-sm text-slate-600">#{tag}</span>
-                  <Badge variant="outline" className="border-slate-300 text-slate-600">
+                <div key={tag} className="flex items-center justify-between rounded-lg border border-border bg-card p-3 shadow-sm">
+                  <span className="text-sm text-muted-foreground">#{tag}</span>
+                  <Badge variant="outline">
                     {count}
                   </Badge>
                 </div>
               ))}
-              {Object.keys(tagCounts).length === 0 && <p className="text-xs text-slate-500">No tags recorded.</p>}
+              {Object.keys(tagCounts).length === 0 && <p className="text-xs text-muted-foreground">No tags recorded.</p>}
             </div>
           </CardContent>
         </Card>
       </section>
 
-      <Card className="border-slate-200">
-        <CardHeader className="border-b border-slate-200/60 pb-4">
+      <Card>
+        <CardHeader className="pb-4">
           <CardTitle className="text-lg font-semibold">Resource Catalog</CardTitle>
           <CardDescription>Knowledge base powering every project.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filteredResources.length === 0 ? (
-            <p className="text-sm text-slate-500">No resources found for this filter.</p>
+            <p className="text-sm text-muted-foreground">No resources found for this filter.</p>
           ) : (
             filteredResources.map((resource) => (
-              <div key={resource.id} className="flex flex-col rounded-lg border border-slate-200/80 bg-white p-4 shadow-sm">
+              <div key={resource.id} className="flex flex-col rounded-lg border border-border bg-card p-4 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-slate-900">{resource.name}</p>
-                  <Badge variant="outline" className="border-slate-300 text-slate-600">
+                  <p className="text-sm font-semibold text-foreground">{resource.name}</p>
+                  <Badge variant="outline">
                     {resource.type}
                   </Badge>
                 </div>
-                <p className="mt-2 text-sm text-slate-600">{resource.description}</p>
+                <p className="mt-2 text-sm text-muted-foreground">{resource.description}</p>
                 <a href={resource.link} className="mt-3 text-sm text-emerald-600 underline">
                   Open resource
                 </a>
                 <div className="mt-3 flex flex-wrap gap-1 text-xs">
                   {resource.tags.map((tag) => (
-                    <Badge key={tag} variant="outline" className="bg-slate-100 text-slate-700">
+                    <Badge key={tag} variant="outline">
                       {tag}
                     </Badge>
                   ))}
                 </div>
-                <div className="mt-3 text-xs text-slate-500">
+                <div className="mt-3 text-xs text-muted-foreground">
                   Linked Projects: {resource.relatedProjectIds.length}
                 </div>
               </div>

@@ -12,9 +12,9 @@ import {
   syncQuickBooks,
 } from "./actions";
 
-const CARD_CLASS = "flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-6";
+const CARD_CLASS = "flex flex-col gap-4 rounded-lg border border-border bg-card p-6";
 const BUTTON_CLASS = "rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-800 transition hover:bg-gray-100";
-const SECONDARY_BUTTON_CLASS = "rounded-md border border-gray-200 px-3 py-1.5 text-sm text-gray-600 transition hover:bg-gray-100";
+const SECONDARY_BUTTON_CLASS = "rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground transition hover:bg-gray-100";
 
 function formatDateTime(value: string | null | undefined) {
   if (!value) return "Never";
@@ -39,13 +39,13 @@ export default async function IntegrationsPage() {
     return (
       <div className="flex flex-col gap-6 p-8">
         <header className="space-y-2">
-          <h1 className="text-2xl font-semibold text-gray-900">Integrations</h1>
-          <p className="max-w-2xl text-sm text-gray-600">
+          <h1 className="text-2xl font-semibold text-foreground">Integrations</h1>
+          <p className="max-w-2xl text-sm text-muted-foreground">
             Configure <code className="font-mono">NEXT_PUBLIC_SUPABASE_URL</code> and{' '}
             <code className="font-mono">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to enable Supabase-backed integrations.
           </p>
         </header>
-        <div className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-600">
+        <div className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
           <p>Supabase credentials are required to manage Gmail, Calendar, and QuickBooks connections.</p>
         </div>
       </div>
@@ -123,8 +123,8 @@ export default async function IntegrationsPage() {
   return (
     <div className="flex flex-col gap-8 p-8">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold text-gray-900">Integrations</h1>
-        <p className="max-w-2xl text-sm text-gray-600">
+        <h1 className="text-2xl font-semibold text-foreground">Integrations</h1>
+        <p className="max-w-2xl text-sm text-muted-foreground">
           Connect Gmail, Google Calendar, and QuickBooks to keep TRS RevOS synchronized through Supabase edge functions.
         </p>
       </header>
@@ -132,24 +132,24 @@ export default async function IntegrationsPage() {
       <section className="grid gap-6 md:grid-cols-2">
         <article className={CARD_CLASS}>
           <div className="flex flex-col gap-1">
-            <h2 className="text-lg font-semibold text-gray-900">Gmail Workspace</h2>
-            <p className="text-sm text-gray-600">
+            <h2 className="text-lg font-semibold text-foreground">Gmail Workspace</h2>
+            <p className="text-sm text-muted-foreground">
               OAuth connection for inbox insights, synced through Supabase functions.
             </p>
           </div>
 
-          <dl className="grid gap-2 text-sm text-gray-600">
+          <dl className="grid gap-2 text-sm text-muted-foreground">
             <div className="flex justify-between">
               <dt>Status</dt>
-              <dd className="font-medium text-gray-900 capitalize">{gmailStatus}</dd>
+              <dd className="font-medium text-foreground capitalize">{gmailStatus}</dd>
             </div>
             <div className="flex justify-between">
               <dt>Last mail sync</dt>
-              <dd className="font-medium text-gray-900">{formatDateTime(gmailLastSynced)}</dd>
+              <dd className="font-medium text-foreground">{formatDateTime(gmailLastSynced)}</dd>
             </div>
             <div className="flex justify-between">
               <dt>Last calendar sync</dt>
-              <dd className="font-medium text-gray-900">{formatDateTime(calendarLastSynced)}</dd>
+              <dd className="font-medium text-foreground">{formatDateTime(calendarLastSynced)}</dd>
             </div>
           </dl>
 
@@ -174,7 +174,7 @@ export default async function IntegrationsPage() {
             </form>
           </div>
 
-          <div className="rounded-md border border-dashed border-gray-200 p-4 text-xs text-gray-500">
+          <div className="rounded-md border border-dashed border-border p-4 text-xs text-muted-foreground">
             <p>Scopes: {gmailConnection?.scope ?? "Not granted"}</p>
             <p>Token expires: {formatDateTime(gmailConnection?.expiry_date ?? null)}</p>
             <p>Last sync count: {(gmailSettings.last_sync_count as number | undefined) ?? 0}</p>
@@ -184,24 +184,24 @@ export default async function IntegrationsPage() {
 
         <article className={CARD_CLASS}>
           <div className="flex flex-col gap-1">
-            <h2 className="text-lg font-semibold text-gray-900">QuickBooks Online</h2>
-            <p className="text-sm text-gray-600">
+            <h2 className="text-lg font-semibold text-foreground">QuickBooks Online</h2>
+            <p className="text-sm text-muted-foreground">
               Finance and invoice sync powered by Supabase service role functions.
             </p>
           </div>
 
-          <dl className="grid gap-2 text-sm text-gray-600">
+          <dl className="grid gap-2 text-sm text-muted-foreground">
             <div className="flex justify-between">
               <dt>Status</dt>
-              <dd className="font-medium text-gray-900 capitalize">{quickbooksStatus}</dd>
+              <dd className="font-medium text-foreground capitalize">{quickbooksStatus}</dd>
             </div>
             <div className="flex justify-between">
               <dt>Last sync</dt>
-              <dd className="font-medium text-gray-900">{formatDateTime(quickbooksLastSynced)}</dd>
+              <dd className="font-medium text-foreground">{formatDateTime(quickbooksLastSynced)}</dd>
             </div>
             <div className="flex justify-between">
               <dt>Invoices synced</dt>
-              <dd className="font-medium text-gray-900">{(quickbooksSettings.last_sync_count as number | undefined) ?? 0}</dd>
+              <dd className="font-medium text-foreground">{(quickbooksSettings.last_sync_count as number | undefined) ?? 0}</dd>
             </div>
           </dl>
 
@@ -223,7 +223,7 @@ export default async function IntegrationsPage() {
             </form>
           </div>
 
-          <div className="rounded-md border border-dashed border-gray-200 p-4 text-xs text-gray-500">
+          <div className="rounded-md border border-dashed border-border p-4 text-xs text-muted-foreground">
             <p>Realm ID: {(quickbooksSettings.realm_id as string | undefined) ?? "Not linked"}</p>
             <p>Default client mapping: {(quickbooksSettings.default_client_id as string | undefined) ?? "Not configured"}</p>
           </div>

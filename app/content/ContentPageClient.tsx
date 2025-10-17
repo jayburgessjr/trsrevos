@@ -62,15 +62,15 @@ export default function ContentPageClient() {
   return (
     <div className="space-y-8">
       <section className="grid gap-4 lg:grid-cols-3">
-        <Card className="border-slate-200 lg:col-span-2">
-          <CardHeader className="border-b border-slate-200/60 pb-4">
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-4">
             <CardTitle className="text-lg font-semibold">Create Content</CardTitle>
             <CardDescription>Draft case studies, emails, and assets from delivery outputs.</CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
             <form className="grid grid-cols-1 gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
               <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Title</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Title</label>
                 <Input
                   value={form.title}
                   onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
@@ -79,7 +79,7 @@ export default function ContentPageClient() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Type</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Type</label>
                 <Select
                   value={form.type}
                   onChange={(event) =>
@@ -94,7 +94,7 @@ export default function ContentPageClient() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Source Project</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Source Project</label>
                 <Select
                   value={form.sourceProjectId || projects[0]?.id || ''}
                   onChange={(event) => setForm((current) => ({ ...current, sourceProjectId: event.target.value }))}
@@ -108,7 +108,7 @@ export default function ContentPageClient() {
                 </Select>
               </div>
               <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Draft</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Draft</label>
                 <Textarea
                   value={form.draft}
                   onChange={(event) => setForm((current) => ({ ...current, draft: event.target.value }))}
@@ -125,27 +125,27 @@ export default function ContentPageClient() {
             </form>
           </CardContent>
         </Card>
-        <Card className="border-slate-200">
-          <CardHeader className="border-b border-slate-200/60 pb-4">
+        <Card>
+          <CardHeader className="pb-4">
             <CardTitle className="text-lg font-semibold">Pipeline Snapshot</CardTitle>
             <CardDescription>Monitor publication readiness and automation triggers.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 pt-4 text-sm text-slate-600">
+          <CardContent className="space-y-3 pt-4 text-sm text-muted-foreground">
             {contentStatuses.map((status) => (
-              <div key={status} className="flex items-center justify-between rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
-                <span className="font-medium text-slate-600">{status}</span>
-                <Badge variant="outline" className="border-slate-300 text-slate-600">
+              <div key={status} className="flex items-center justify-between rounded-lg border border-border bg-card p-3 shadow-sm">
+                <span className="font-medium text-muted-foreground">{status}</span>
+                <Badge variant="outline">
                   {stats[status] ?? 0}
                 </Badge>
               </div>
             ))}
-            <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
-              <p className="text-xs uppercase tracking-widest text-slate-500">Automation Runs</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">{automationLogs.length}</p>
+            <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">Automation Runs</p>
+              <p className="mt-1 text-2xl font-semibold text-foreground">{automationLogs.length}</p>
             </div>
-            <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
-              <p className="text-xs uppercase tracking-widest text-slate-500">Publishing Agents</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">
+            <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">Publishing Agents</p>
+              <p className="mt-1 text-2xl font-semibold text-foreground">
                 {agents.filter((agent) => agent.defaultOutputType === 'Content').length}
               </p>
             </div>
@@ -153,8 +153,8 @@ export default function ContentPageClient() {
         </Card>
       </section>
 
-      <Card className="border-slate-200">
-        <CardHeader className="border-b border-slate-200/60 pb-4">
+      <Card>
+        <CardHeader className="pb-4">
           <CardTitle className="text-lg font-semibold">Content Library</CardTitle>
           <CardDescription>Track derivative assets across the delivery lifecycle.</CardDescription>
         </CardHeader>
@@ -172,7 +172,7 @@ export default function ContentPageClient() {
             <TableBody>
               {content.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="px-6 py-10 text-center text-sm text-slate-500">
+                  <TableCell colSpan={5} className="px-6 py-10 text-center text-sm text-muted-foreground">
                     No content has been generated yet.
                   </TableCell>
                 </TableRow>
@@ -181,16 +181,16 @@ export default function ContentPageClient() {
                   .slice()
                   .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1))
                   .map((item) => (
-                    <TableRow key={item.id} className="hover:bg-slate-50/60">
+                    <TableRow key={item.id}>
                       <TableCell className="px-6">
-                        <div className="font-medium text-slate-900">{item.title}</div>
-                        <div className="text-xs text-slate-500">{new Date(item.createdAt).toLocaleDateString()}</div>
+                        <div className="font-medium text-foreground">{item.title}</div>
+                        <div className="text-xs text-muted-foreground">{new Date(item.createdAt).toLocaleDateString()}</div>
                       </TableCell>
                       <TableCell>{item.type}</TableCell>
                       <TableCell>
                         <Badge
                           variant="outline"
-                          className={item.status === 'Published' ? 'border-emerald-500 text-emerald-600' : 'border-slate-300 text-slate-600'}
+                          className={item.status === 'Published' ? 'border-emerald-500 text-emerald-600' : ''}
                         >
                           {item.status}
                         </Badge>
@@ -204,7 +204,6 @@ export default function ContentPageClient() {
                         <Button
                           type="button"
                           variant="outline"
-                          className="border-slate-300"
                           onClick={() => handleStatusToggle(item.id, item.status, item.draft)}
                         >
                           {item.status === 'Draft' ? 'Publish' : 'Return to Draft'}

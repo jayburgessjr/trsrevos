@@ -65,8 +65,8 @@ export default function AgentsPageClient() {
   return (
     <div className="space-y-8">
       <section className="grid gap-4 lg:grid-cols-3">
-        <Card className="border-slate-200 lg:col-span-2">
-          <CardHeader className="border-b border-slate-200/60 pb-4">
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-4">
             <CardTitle className="text-lg font-semibold">Automation Agents</CardTitle>
             <CardDescription>Reusable playbooks that orchestrate revenue science tasks.</CardDescription>
           </CardHeader>
@@ -82,13 +82,13 @@ export default function AgentsPageClient() {
                   className={`flex flex-col rounded-lg border p-4 shadow-sm ${
                     isSpecialized
                       ? 'border-blue-300 bg-gradient-to-br from-blue-50 to-white'
-                      : 'border-slate-200/80 bg-white'
+                      : 'border-border/80 bg-card'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">{agent.name}</p>
-                      <p className="mt-1 text-xs uppercase tracking-widest text-slate-500">{agent.category}</p>
+                      <p className="text-sm font-semibold text-foreground">{agent.name}</p>
+                      <p className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">{agent.category}</p>
                     </div>
                     <Badge
                       variant="outline"
@@ -97,14 +97,14 @@ export default function AgentsPageClient() {
                       {agent.defaultOutputType}
                     </Badge>
                   </div>
-                  <p className="mt-2 text-sm text-slate-600">{agent.description}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">{agent.description}</p>
 
                   <div className="mt-4 space-y-3 text-sm">
                     {isClarity ? (
                       // ClarityBot specialized inputs
                       <>
                         <div className="space-y-2">
-                          <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Select Project / Client*</label>
+                          <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Select Project / Client*</label>
                           <Select
                             value={state.projectId || projects[0]?.id || ''}
                             onChange={(event) => {
@@ -156,7 +156,7 @@ export default function AgentsPageClient() {
 
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-2">
-                            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Industry</label>
+                            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Industry</label>
                             <input
                               type="text"
                               value={state.industry || ''}
@@ -167,11 +167,11 @@ export default function AgentsPageClient() {
                                 }))
                               }
                               placeholder="B2B SaaS"
-                              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              className="w-full rounded-md border border-border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                             />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                               Monthly Revenue
                               <span className="ml-1 text-[10px] text-slate-400">(override)</span>
                             </label>
@@ -185,13 +185,13 @@ export default function AgentsPageClient() {
                                 }))
                               }
                               placeholder="Auto from project"
-                              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              className="w-full rounded-md border border-border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                             />
                           </div>
                         </div>
 
                         <div className="space-y-2">
-                          <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Files & Context</label>
+                          <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Files & Context</label>
                           <Textarea
                             value={state.notes}
                             onChange={(event) =>
@@ -203,14 +203,14 @@ export default function AgentsPageClient() {
                             placeholder="Paste data, add context, describe files uploaded..."
                             rows={3}
                           />
-                          <p className="text-[10px] text-slate-500">Tip: Upload CSV/XLSX exports, CRM data, or paste relevant context</p>
+                          <p className="text-[10px] text-muted-foreground">Tip: Upload CSV/XLSX exports, CRM data, or paste relevant context</p>
                         </div>
                       </>
                     ) : (
                       // Standard agent inputs
                       <>
                         <div className="space-y-2">
-                          <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Project Context</label>
+                          <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Project Context</label>
                           <Select
                             value={state.projectId || projects[0]?.id || ''}
                             onChange={(event) =>
@@ -229,7 +229,7 @@ export default function AgentsPageClient() {
                           </Select>
                         </div>
                         <div className="space-y-2">
-                          <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Notes</label>
+                          <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Notes</label>
                           <Textarea
                             value={state.notes}
                             onChange={(event) =>
@@ -254,49 +254,49 @@ export default function AgentsPageClient() {
                     </Button>
                   </div>
 
-                  <details className="mt-4 rounded-lg border border-dashed border-slate-200 bg-slate-50/80 p-3 text-xs text-slate-600">
-                    <summary className="cursor-pointer text-slate-500">Prompt Blueprint</summary>
-                    <p className="mt-2 whitespace-pre-wrap text-slate-600">{agent.prompt}</p>
+                  <details className="mt-4 rounded-lg border border-dashed border-border bg-slate-50/80 p-3 text-xs text-muted-foreground">
+                    <summary className="cursor-pointer text-muted-foreground">Prompt Blueprint</summary>
+                    <p className="mt-2 whitespace-pre-wrap text-muted-foreground">{agent.prompt}</p>
                   </details>
                 </div>
               )
             })}
           </CardContent>
         </Card>
-        <Card className="border-slate-200">
-          <CardHeader className="border-b border-slate-200/60 pb-4">
+        <Card className="border-border">
+          <CardHeader className="pb-4">
             <CardTitle className="text-lg font-semibold">Category Snapshot</CardTitle>
             <CardDescription>Ensure balanced automation coverage.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 pt-4 text-sm text-slate-600">
+          <CardContent className="space-y-3 pt-4 text-sm text-muted-foreground">
             {Object.entries(categoryBreakdown).map(([category, count]) => (
-              <div key={category} className="flex items-center justify-between rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
-                <span className="font-medium text-slate-600">{category}</span>
-                <Badge variant="outline" className="border-slate-300 text-slate-600">
+              <div key={category} className="flex items-center justify-between rounded-lg border border-border bg-card p-3 shadow-sm">
+                <span className="font-medium text-muted-foreground">{category}</span>
+                <Badge variant="outline" className="border-border text-muted-foreground">
                   {count}
                 </Badge>
               </div>
             ))}
-            <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
-              <p className="text-xs uppercase tracking-widest text-slate-500">Total Runs</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">{automationLogs.length}</p>
+            <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">Total Runs</p>
+              <p className="mt-1 text-2xl font-semibold text-foreground">{automationLogs.length}</p>
             </div>
-            <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-sm">
-              <p className="text-xs uppercase tracking-widest text-slate-500">Hours Saved</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">{(automationLogs.length * 1.5).toFixed(1)}</p>
+            <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">Hours Saved</p>
+              <p className="mt-1 text-2xl font-semibold text-foreground">{(automationLogs.length * 1.5).toFixed(1)}</p>
             </div>
           </CardContent>
         </Card>
       </section>
 
-      <Card className="border-slate-200">
-        <CardHeader className="border-b border-slate-200/60 pb-4">
+      <Card className="border-border">
+        <CardHeader className="pb-4">
           <CardTitle className="text-lg font-semibold">Automation Activity</CardTitle>
           <CardDescription>Latest agent executions and outcomes.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           {automationLogs.length === 0 ? (
-            <p className="text-sm text-slate-500">No automation runs recorded yet.</p>
+            <p className="text-sm text-muted-foreground">No automation runs recorded yet.</p>
           ) : (
             automationLogs
               .slice()
@@ -313,10 +313,10 @@ export default function AgentsPageClient() {
                   <div
                     key={log.id}
                     className={`rounded-lg border p-4 shadow-sm ${
-                      isSpecialized ? 'border-blue-200 bg-gradient-to-br from-blue-50/50 to-white' : 'border-slate-200/80 bg-white'
+                      isSpecialized ? 'border-blue-200 bg-gradient-to-br from-blue-50/50 to-white' : 'border-border/80 bg-card'
                     }`}
                   >
-                    <div className="flex items-center justify-between text-sm font-medium text-slate-900">
+                    <div className="flex items-center justify-between text-sm font-medium text-foreground">
                       <div className="flex items-center gap-2">
                         <span>{agent?.name ?? log.agentId}</span>
                         {isClarity && (
@@ -325,13 +325,13 @@ export default function AgentsPageClient() {
                           </Badge>
                         )}
                       </div>
-                      <span className="text-xs text-slate-500 suppress-hydration-warning">
+                      <span className="text-xs text-muted-foreground suppress-hydration-warning">
                         {new Date(log.createdAt).toLocaleString()}
                       </span>
                     </div>
-                    <p className="mt-2 text-sm text-slate-600">{log.summary}</p>
-                    <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
-                      <Badge variant="outline" className="border-slate-300 text-slate-600">
+                    <p className="mt-2 text-sm text-muted-foreground">{log.summary}</p>
+                    <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                      <Badge variant="outline" className="border-border text-muted-foreground">
                         {project ?? 'Unassigned'}
                       </Badge>
                       <Badge
