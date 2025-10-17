@@ -34,6 +34,10 @@ export function ThemeProvider({
     const stored = localStorage.getItem(storageKey) as Theme | null
     if (stored === "light" || stored === "dark") {
       setTheme(stored)
+    } else {
+      // Check system preference
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      setTheme(prefersDark ? "dark" : "light")
     }
   }, [storageKey])
 

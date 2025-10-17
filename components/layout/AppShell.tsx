@@ -10,6 +10,7 @@ import { MAIN_NAV } from '@/lib/navigation'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/ui/badge'
 import { Button } from '@/ui/button'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? '/'
@@ -87,35 +88,36 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
       <div className="flex w-full flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/90 px-6 py-4 backdrop-blur">
-          <div className="flex items-center gap-3">
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/90 px-3 sm:px-4 md:px-6 py-3 md:py-4 backdrop-blur">
+          <div className="flex items-center gap-2 md:gap-3">
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden"
+              className="md:hidden h-8 w-8"
               aria-label="Open navigation"
               onClick={() => setMobileOpen((value) => !value)}
             >
-              <Icons.Menu className="h-5 w-5" />
+              <Icons.Menu className="h-4 w-4" />
             </Button>
             <div>
-              <p className="text-xs uppercase tracking-widest text-slate-500">Execution Layer</p>
-              <p className="font-semibold text-slate-900">TRS-RevOS</p>
+              <p className="text-[10px] sm:text-xs uppercase tracking-widest text-slate-500">Execution Layer</p>
+              <p className="text-sm sm:text-base font-semibold text-slate-900">TRS-RevOS</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 text-xs">
-            <Badge variant="outline" className="border-emerald-500 text-emerald-700">
+          <div className="flex items-center gap-2 text-xs">
+            <Badge variant="outline" className="hidden sm:inline-flex border-emerald-500 text-emerald-700">
               Active Projects • {kpis.activeProjects}
             </Badge>
-            <Badge variant="outline" className="border-orange-500 text-orange-600">
+            <Badge variant="outline" className="hidden md:inline-flex border-orange-500 text-orange-600">
               Deliverables • {kpis.deliverablesInProgress}
             </Badge>
-            <Badge variant="outline" className="border-slate-400 text-slate-600">
+            <Badge variant="outline" className="hidden lg:inline-flex border-slate-400 text-slate-600">
               Automation Hours • {kpis.automationHours}
             </Badge>
+            <ThemeToggle />
           </div>
         </header>
-        <main className="flex-1 px-6 pb-16 pt-8 md:pb-8">{children}</main>
+        <main className="flex-1 px-3 sm:px-4 md:px-6 pb-16 pt-6 md:pt-8 md:pb-8">{children}</main>
       </div>
     </div>
   )
