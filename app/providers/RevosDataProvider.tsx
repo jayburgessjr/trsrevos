@@ -1,6 +1,7 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState } from 'react'
+import { supabase } from '@/lib/supabase-client'
 
 import {
   mockAgents,
@@ -27,11 +28,11 @@ import { type Agent, type AutomationLog, type ContentItem, type Document, type P
 const randomId = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2))
 
 const STORAGE_KEY = 'trs-revos-data'
+const MIGRATION_KEY = 'trs-revos-migrated'
 
-// Load initial state from localStorage or use mock data
+// Load initial state - will be replaced with Supabase data after mount
 const loadInitialState = (): RevosState => {
   if (typeof window === 'undefined') {
-    // Server-side: use mock data
     return {
       projects: mockProjects,
       documents: mockDocuments,
@@ -47,7 +48,6 @@ const loadInitialState = (): RevosState => {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) {
       const parsed = JSON.parse(stored)
-      // Merge with mock agents (always use latest agent definitions)
       return {
         ...parsed,
         agents: mockAgents,
@@ -57,7 +57,6 @@ const loadInitialState = (): RevosState => {
     console.error('Failed to load stored data:', error)
   }
 
-  // Fallback to mock data
   return {
     projects: mockProjects,
     documents: mockDocuments,
@@ -72,6 +71,10 @@ const loadInitialState = (): RevosState => {
 const initialState: RevosState = loadInitialState()
 
 type Action =
+  | { type: 'setProjects'; payload: Project[] }
+  | { type: 'setDocuments'; payload: Document[] }
+  | { type: 'setResources'; payload: Resource[] }
+  | { type: 'setContent'; payload: ContentItem[] }
   | { type: 'createProject'; payload: CreateProjectInput }
   | { type: 'updateProjectStatus'; payload: UpdateProjectStatusInput }
   | { type: 'createDocument'; payload: CreateDocumentInput }
@@ -82,8 +85,8 @@ type Action =
   | { type: 'runAgent'; payload: RunAgentInput }
 
 type RevosContextValue = RevosState & {
-  createProject: (input: CreateProjectInput) => void
-  updateProjectStatus: (input: UpdateProjectStatusInput) => void
+  createProject: (input: CreateProjectInput) => Promise<void>
+  updateProjectStatus: (input: UpdateProjectStatusInput) => Promise<void>
   createDocument: (input: CreateDocumentInput) => void
   updateDocumentStatus: (input: UpdateDocumentStatusInput) => void
   createContent: (input: CreateContentInput) => void
@@ -101,6 +104,14 @@ const summariseDocument = (description: string) => {
 
 function reducer(state: RevosState, action: Action): RevosState {
   switch (action.type) {
+    case 'setProjects':
+      return { ...state, projects: action.payload }
+    case 'setDocuments':
+      return { ...state, documents: action.payload }
+    case 'setResources':
+      return { ...state, resources: action.payload }
+    case 'setContent':
+      return { ...state, content: action.payload }
     case 'createProject': {
       const projectId = randomId()
       const newProject: Project = {
@@ -259,24 +270,172 @@ function reducer(state: RevosState, action: Action): RevosState {
 
 export function RevosDataProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState)
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Persist state to localStorage whenever it changes
+  // Load data from Supabase on mount and migrate localStorage if needed
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    async function loadFromSupabase() {
+      try {
+        const hasMigrated = localStorage.getItem(MIGRATION_KEY)
+
+        // Load projects from Supabase
+        const { data: projects, error: projectsError } = await supabase
+          .from('revos_projects')
+          .select('*')
+          .order('created_at', { ascending: false })
+
+        if (projectsError) {
+          console.error('Error loading projects:', projectsError)
+        } else if (projects) {
+          // Transform Supabase data to app format
+          const transformedProjects: Project[] = projects.map((p) => ({
+            id: p.id,
+            name: p.name,
+            client: p.client,
+            type: p.type as Project['type'],
+            status: p.status as Project['status'],
+            team: p.team || [],
+            startDate: p.start_date,
+            endDate: p.end_date || undefined,
+            quickbooksInvoiceUrl: p.quickbooks_invoice_url || undefined,
+            revenueTarget: Number(p.revenue_target) || 0,
+            documents: p.documents || [],
+            agents: p.agents || [],
+            resources: p.resources || [],
+          }))
+
+          dispatch({ type: 'setProjects', payload: transformedProjects })
+        }
+
+        // If not migrated yet and there's localStorage data, migrate it
+        if (!hasMigrated) {
+          const localData = localStorage.getItem(STORAGE_KEY)
+          if (localData) {
+            const parsed = JSON.parse(localData)
+
+            // Migrate projects if any exist
+            if (parsed.projects && parsed.projects.length > 0) {
+              console.log('Migrating', parsed.projects.length, 'projects from localStorage to Supabase...')
+
+              for (const project of parsed.projects) {
+                // Check if project already exists in Supabase
+                const { data: existing } = await supabase
+                  .from('revos_projects')
+                  .select('id')
+                  .eq('id', project.id)
+                  .single()
+
+                if (!existing) {
+                  await supabase.from('revos_projects').insert({
+                    id: project.id,
+                    name: project.name,
+                    client: project.client,
+                    type: project.type,
+                    status: project.status,
+                    team: project.team,
+                    start_date: project.startDate,
+                    end_date: project.endDate,
+                    quickbooks_invoice_url: project.quickbooksInvoiceUrl,
+                    revenue_target: project.revenueTarget,
+                    documents: project.documents,
+                    agents: project.agents,
+                    resources: project.resources,
+                  })
+                }
+              }
+
+              console.log('✓ Migration complete!')
+            }
+          }
+
+          // Mark as migrated
+          localStorage.setItem(MIGRATION_KEY, 'true')
+        }
+      } catch (error) {
+        console.error('Error loading from Supabase:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadFromSupabase()
+  }, [])
+
+  // Keep localStorage as backup (but Supabase is source of truth)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !isLoading) {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
       } catch (error) {
-        console.error('Failed to save data to localStorage:', error)
+        console.error('Failed to save backup to localStorage:', error)
       }
     }
-  }, [state])
+  }, [state, isLoading])
 
-  const createProject = useCallback((input: CreateProjectInput) => {
+  const createProject = useCallback(async (input: CreateProjectInput) => {
+    const projectId = randomId()
+    const newProject: Project = {
+      id: projectId,
+      documents: input.documents ?? [],
+      agents: input.agents ?? [],
+      resources: input.resources ?? [],
+      name: input.name,
+      client: input.client,
+      type: input.type,
+      team: input.team,
+      startDate: input.startDate,
+      endDate: input.endDate,
+      status: input.status,
+      quickbooksInvoiceUrl: input.quickbooksInvoiceUrl,
+      revenueTarget: input.revenueTarget,
+    }
+
+    // Optimistic update
     dispatch({ type: 'createProject', payload: input })
+
+    // Save to Supabase
+    try {
+      const { error } = await supabase.from('revos_projects').insert({
+        id: projectId,
+        name: input.name,
+        client: input.client,
+        type: input.type,
+        status: input.status,
+        team: input.team,
+        start_date: input.startDate,
+        end_date: input.endDate,
+        quickbooks_invoice_url: input.quickbooksInvoiceUrl,
+        revenue_target: input.revenueTarget,
+        documents: input.documents ?? [],
+        agents: input.agents ?? [],
+        resources: input.resources ?? [],
+      })
+
+      if (error) {
+        console.error('Error creating project in Supabase:', error)
+      }
+    } catch (error) {
+      console.error('Error saving project:', error)
+    }
   }, [])
 
-  const updateProjectStatus = useCallback((input: UpdateProjectStatusInput) => {
+  const updateProjectStatus = useCallback(async (input: UpdateProjectStatusInput) => {
+    // Optimistic update
     dispatch({ type: 'updateProjectStatus', payload: input })
+
+    // Save to Supabase
+    try {
+      const { error } = await supabase
+        .from('revos_projects')
+        .update({ status: input.status })
+        .eq('id', input.id)
+
+      if (error) {
+        console.error('Error updating project status in Supabase:', error)
+      }
+    } catch (error) {
+      console.error('Error updating project status:', error)
+    }
   }, [])
 
   const createDocument = useCallback((input: CreateDocumentInput) => {
@@ -317,6 +476,17 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
     }),
     [state, createProject, updateProjectStatus, createDocument, updateDocumentStatus, createContent, updateContentStatus, createResource, runAgent],
   )
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading data...</p>
+        </div>
+      </div>
+    )
+  }
 
   return <RevosContext.Provider value={value}>{children}</RevosContext.Provider>
 }
