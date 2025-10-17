@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Copy, Check } from 'lucide-react'
 import { Badge } from '@/ui/badge'
 import { Button } from '@/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card'
@@ -24,12 +25,66 @@ type ChatMessage = {
   timestamp: Date
 }
 
+// Component to render formatted markdown-like text
+function FormattedText({ content }: { content: string }) {
+  const renderContent = () => {
+    const lines = content.split('\n')
+    const elements: JSX.Element[] = []
+
+    lines.forEach((line, index) => {
+      // Headers (##, ###)
+      if (line.startsWith('### ')) {
+        elements.push(<h3 key={index} className="text-base font-bold mt-4 mb-2">{line.replace('### ', '')}</h3>)
+      } else if (line.startsWith('## ')) {
+        elements.push(<h2 key={index} className="text-lg font-bold mt-4 mb-2">{line.replace('## ', '')}</h2>)
+      } else if (line.startsWith('# ')) {
+        elements.push(<h1 key={index} className="text-xl font-bold mt-4 mb-2">{line.replace('# ', '')}</h1>)
+      }
+      // Bold text (**text**)
+      else if (line.includes('**')) {
+        const parts = line.split(/(\*\*.*?\*\*)/)
+        elements.push(
+          <p key={index} className="mb-2">
+            {parts.map((part, i) => {
+              if (part.startsWith('**') && part.endsWith('**')) {
+                return <strong key={i}>{part.slice(2, -2)}</strong>
+              }
+              return <span key={i}>{part}</span>
+            })}
+          </p>
+        )
+      }
+      // Bullet points (-, *)
+      else if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
+        elements.push(<li key={index} className="ml-4 mb-1">{line.trim().substring(2)}</li>)
+      }
+      // Numbered lists (1., 2., etc)
+      else if (/^\d+\.\s/.test(line.trim())) {
+        elements.push(<li key={index} className="ml-4 mb-1">{line.trim().replace(/^\d+\.\s/, '')}</li>)
+      }
+      // Empty lines
+      else if (line.trim() === '') {
+        elements.push(<br key={index} />)
+      }
+      // Regular text
+      else {
+        elements.push(<p key={index} className="mb-2">{line}</p>)
+      }
+    })
+
+    return elements
+  }
+
+  return <div className="text-sm">{renderContent()}</div>
+}
+
 export default function BrainPageClient() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [threadId, setThreadId] = useState<string | null>(null)
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
 
   // Mock sources for demonstration
   const mockSources: SourceCard[] = [
@@ -112,9 +167,14 @@ export default function BrainPageClient() {
     }
   }
 
-  const handleSendToOfferDesk = (messageId: string) => {
-    alert(`Sending message ${messageId} to OfferDesk agent...`)
-    // TODO: Implement actual integration with OfferDesk agent
+  const handleCopyMessage = async (content: string, messageId: string) => {
+    try {
+      await navigator.clipboard.writeText(content)
+      setCopiedMessageId(messageId)
+      setTimeout(() => setCopiedMessageId(null), 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -164,7 +224,12 @@ export default function BrainPageClient() {
                           : 'bg-slate-100 text-slate-900'
                       }`}
                     >
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      {/* Message content with formatting */}
+                      {message.role === 'user' ? (
+                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      ) : (
+                        <FormattedText content={message.content} />
+                      )}
 
                       {/* Sources */}
                       {message.sources && message.sources.length > 0 && (
@@ -197,16 +262,26 @@ export default function BrainPageClient() {
                         </div>
                       )}
 
-                      {/* Send to OfferDesk */}
+                      {/* Copy button for assistant messages */}
                       {message.role === 'assistant' && (
-                        <div className="mt-3">
+                        <div className="mt-3 flex items-center gap-2">
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleSendToOfferDesk(message.id)}
+                            onClick={() => handleCopyMessage(message.content, message.id)}
                             className="text-xs"
                           >
-                            Send to OfferDesk
+                            {copiedMessageId === message.id ? (
+                              <>
+                                <Check className="h-3 w-3 mr-1" />
+                                Copied
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="h-3 w-3 mr-1" />
+                                Copy
+                              </>
+                            )}
                           </Button>
                         </div>
                       )}
