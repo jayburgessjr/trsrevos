@@ -2,6 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Reset all default margins and padding */
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+#__next {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
 @layer base {
   :root {
     --color-bg: #ffffff;
@@ -39,25 +65,14 @@
     --destructive-foreground: oklch(1 0 0);
   }
 
-  html,
   body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-  }
-
-  body {
+    height: 100vh;
     background-color: var(--color-bg);
     color: var(--color-text);
     font-family: 'Inter', 'SF Pro Text', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     font-feature-settings: 'liga' 1, 'calt' 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-
-  * {
-    box-sizing: border-box;
   }
 
   ::selection {
