@@ -1,148 +1,172 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo } from 'react'
+import { useMemo, useEffect, useState } from 'react'
 
 import { useRevosData } from '@/app/providers/RevosDataProvider'
 import { Badge } from '@/ui/badge'
 import { Button } from '@/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table'
+import { FileText, Users, Plus, TrendingUp } from 'lucide-react'
+
+type NewsArticle = {
+  title: string
+  description: string
+  url: string
+  publishedAt: string
+  source: string
+}
 
 export default function DashboardScreen() {
-  const { projects, documents, content, agents, automationLogs, invoices } = useRevosData()
+  const { projects, documents, content } = useRevosData()
+  const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([])
+  const [newsLoading, setNewsLoading] = useState(true)
+
+  // Fetch news articles on mount
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        // Using NewsAPI - you'll need to add NEXT_PUBLIC_NEWS_API_KEY to your .env.local
+        const apiKey = process.env.NEXT_PUBLIC_NEWS_API_KEY || 'demo'
+        const response = await fetch(
+          `https://newsapi.org/v2/top-headlines?category=business&language=en&pageSize=6&apiKey=${apiKey}`
+        )
+        const data = await response.json()
+
+        if (data.articles) {
+          setNewsArticles(data.articles.map((article: any) => ({
+            title: article.title,
+            description: article.description || '',
+            url: article.url,
+            publishedAt: article.publishedAt,
+            source: article.source.name
+          })))
+        }
+      } catch (error) {
+        console.error('Error fetching news:', error)
+        // Fallback to mock data if API fails
+        setNewsArticles([
+          {
+            title: 'Stock Market Update: Markets Rally on Tech Earnings',
+            description: 'Major tech companies report strong quarterly earnings',
+            url: '#',
+            publishedAt: new Date().toISOString(),
+            source: 'Financial Times'
+          }
+        ])
+      } finally {
+        setNewsLoading(false)
+      }
+    }
+
+    fetchNews()
+  }, [])
 
   const metrics = useMemo(() => {
+    // Calculate revenue metrics from projects (same as clients page)
+    const totalAnnualRevenue = projects.reduce((sum, project) => sum + (project.revenueTarget || 0), 0)
+    const totalMonthlyRevenue = Math.round(totalAnnualRevenue / 12)
+
+    // Number of unique clients
+    const uniqueClients = new Set(projects.map(project => project.client)).size
+
+    // Active projects
     const activeProjects = projects.filter((project) => project.status === 'Active').length
-    const deliverablesInProgress = documents.filter((doc) => doc.status !== 'Final')
-    const activeClients = new Set(
-      projects.filter((project) => project.status === 'Active' || project.status === 'Pending').map((project) => project.client),
-    ).size
-    const blueprintsDelivered = documents.filter(
-      (doc) => doc.type.toLowerCase().includes('blueprint') && doc.status === 'Final',
-    ).length
-    const revenueInProgress = invoices
-      .filter((invoice) => invoice.status !== 'Paid')
-      .reduce((total, invoice) => total + invoice.amount, 0)
-    const automationHoursSaved = (automationLogs.length * 1.5).toFixed(1)
 
-    const documentCountByType = documents.reduce<Record<string, number>>((acc, doc) => {
-      acc[doc.type] = (acc[doc.type] ?? 0) + 1
-      return acc
-    }, {})
+    // Total documents created
+    const totalDocuments = documents.length
 
-    const quickbooksSummary = invoices.reduce(
-      (acc, invoice) => {
-        acc[invoice.status] = {
-          amount: (acc[invoice.status]?.amount ?? 0) + invoice.amount,
-          count: (acc[invoice.status]?.count ?? 0) + 1,
-        }
-        return acc
-      },
-      {} as Record<string, { amount: number; count: number }>,
-    )
-
-    const deliverableRows = deliverablesInProgress
-      .map((doc) => ({
+    // Recent documents (last 5)
+    const recentDocuments = [...documents]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 5)
+      .map(doc => ({
         id: doc.id,
         title: doc.title,
         project: projects.find((project) => project.id === doc.projectId)?.name ?? 'Unlinked',
-        status: doc.status,
-        updatedAt: doc.updatedAt,
+        type: doc.type,
+        createdAt: doc.createdAt,
       }))
-      .sort((a, b) => (a.updatedAt > b.updatedAt ? -1 : 1))
-      .slice(0, 5)
-
-    const automationFeed = automationLogs
-      .map((log) => ({
-        id: log.id,
-        summary: log.summary,
-        agent: agents.find((agent) => agent.id === log.agentId)?.name ?? 'Unknown Agent',
-        project: log.projectId ? projects.find((project) => project.id === log.projectId)?.name : undefined,
-        createdAt: log.createdAt,
-      }))
-      .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1))
-      .slice(0, 6)
 
     return {
+      totalAnnualRevenue,
+      totalMonthlyRevenue,
+      totalRevenue: totalAnnualRevenue, // For display
+      uniqueClients,
       activeProjects,
-      deliverablesInProgress: deliverablesInProgress.length,
-      activeClients,
-      blueprintsDelivered,
-      revenueInProgress,
-      automationHoursSaved,
-      documentCountByType,
-      quickbooksSummary,
-      deliverableRows,
-      automationFeed,
+      totalDocuments,
+      recentDocuments,
     }
-  }, [projects, documents, automationLogs, invoices, agents])
+  }, [projects, documents])
 
   return (
     <div className="space-y-8">
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="Active Projects" value={metrics.activeProjects} accent="emerald" subtitle="Tracking live engagements" />
         <MetricCard
-          label="Deliverables in Progress"
-          value={metrics.deliverablesInProgress}
-          accent="orange"
-          subtitle="Documents awaiting review"
-        />
-        <MetricCard
-          label="Revenue in Progress"
-          value={`$${metrics.revenueInProgress.toLocaleString()}`}
-          accent="slate"
-          subtitle="Open QuickBooks invoices"
-        />
-        <MetricCard
-          label="Automation Hours Saved"
-          value={metrics.automationHoursSaved}
+          label="Annual Revenue"
+          value={`$${metrics.totalAnnualRevenue.toLocaleString()}`}
           accent="emerald"
-          subtitle="Based on agent run history"
+          subtitle="Total from all projects"
+        />
+        <MetricCard
+          label="Monthly Revenue"
+          value={`$${metrics.totalMonthlyRevenue.toLocaleString()}`}
+          accent="emerald"
+          subtitle="Average monthly recurring"
+        />
+        <MetricCard
+          label="Number of Clients"
+          value={metrics.uniqueClients}
+          accent="slate"
+          subtitle="Unique active clients"
+        />
+        <MetricCard
+          label="Total Documents"
+          value={metrics.totalDocuments}
+          accent="orange"
+          subtitle="Created across all projects"
         />
       </section>
 
       <section className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2 border-slate-200 dark:border-slate-800">
           <CardHeader className="flex flex-col gap-1 border-b border-slate-200/60 dark:border-slate-800/60 pb-4">
-            <CardTitle className="text-lg font-semibold">Active Deliverables</CardTitle>
-            <CardDescription>Monitor drafts and reviews across all engagements.</CardDescription>
+            <CardTitle className="text-lg font-semibold">Recent Documents Created</CardTitle>
+            <CardDescription>Latest documents across all projects</CardDescription>
           </CardHeader>
           <CardContent className="px-0">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="px-6">Document</TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead>Project</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Updated</TableHead>
+                  <TableHead>Created</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {metrics.deliverableRows.length === 0 ? (
+                {metrics.recentDocuments.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={4} className="px-6 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
-                      All deliverables are finalized.
+                      No documents created yet.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  metrics.deliverableRows.map((row) => (
-                    <TableRow key={row.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/60">
+                  metrics.recentDocuments.map((doc) => (
+                    <TableRow key={doc.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/60">
                       <TableCell className="px-6">
-                        <div className="font-medium text-slate-900 dark:text-slate-100">{row.title}</div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400">{row.id}</div>
+                        <div className="font-medium text-slate-900 dark:text-slate-100">{doc.title}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">{doc.id}</div>
                       </TableCell>
-                      <TableCell>{row.project}</TableCell>
                       <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={row.status === 'In Review' ? 'border-orange-500 dark:border-orange-600 text-orange-600 dark:text-orange-400' : 'border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400'}
-                        >
-                          {row.status}
+                        <Badge variant="outline" className="border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400">
+                          {doc.type}
                         </Badge>
                       </TableCell>
+                      <TableCell className="text-sm text-slate-600 dark:text-slate-400">{doc.project}</TableCell>
                       <TableCell className="text-xs text-slate-500 dark:text-slate-400">
-                        {new Date(row.updatedAt).toLocaleDateString()}
+                        {new Date(doc.createdAt).toLocaleDateString()}
                       </TableCell>
                     </TableRow>
                   ))
@@ -153,27 +177,34 @@ export default function DashboardScreen() {
         </Card>
         <Card className="border-slate-200 dark:border-slate-800">
           <CardHeader className="border-b border-slate-200/60 dark:border-slate-800/60 pb-4">
-            <CardTitle className="text-lg font-semibold">Automation Feed</CardTitle>
-            <CardDescription>Recent agent runs powering delivery.</CardDescription>
+            <CardTitle className="text-lg font-semibold">Business News Feed</CardTitle>
+            <CardDescription>Latest business and market news</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {metrics.automationFeed.length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400">No automation events yet.</p>
+          <CardContent className="space-y-4 pt-4">
+            {newsLoading ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400">Loading news...</p>
+            ) : newsArticles.length === 0 ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400">No news available</p>
             ) : (
-              metrics.automationFeed.map((item) => (
-                <div key={item.id} className="rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800/50 p-4 text-sm shadow-sm">
-                  <p className="font-medium text-slate-900 dark:text-slate-100">{item.agent}</p>
-                  <p className="mt-1 text-slate-600 dark:text-slate-400">{item.summary}</p>
+              newsArticles.map((article, index) => (
+                <a
+                  key={index}
+                  href={article.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800/50 p-4 text-sm shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors"
+                >
+                  <p className="font-medium text-slate-900 dark:text-slate-100 line-clamp-2">{article.title}</p>
+                  {article.description && (
+                    <p className="mt-1 text-slate-600 dark:text-slate-400 text-xs line-clamp-2">{article.description}</p>
+                  )}
                   <div className="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                    <span>{item.project ?? 'Standalone run'}</span>
-                    <span>{new Date(item.createdAt).toLocaleString()}</span>
+                    <span>{article.source}</span>
+                    <span>{new Date(article.publishedAt).toLocaleDateString()}</span>
                   </div>
-                </div>
+                </a>
               ))
             )}
-            <Button asChild variant="outline" className="w-full border-slate-300 dark:border-slate-700">
-              <Link href="/agents">Launch an Agent</Link>
-            </Button>
           </CardContent>
         </Card>
       </section>
@@ -181,38 +212,72 @@ export default function DashboardScreen() {
       <section className="grid gap-6 lg:grid-cols-3">
         <Card className="border-slate-200 dark:border-slate-800">
           <CardHeader className="border-b border-slate-200/60 dark:border-slate-800/60 pb-4">
-            <CardTitle className="text-lg font-semibold">Document Mix</CardTitle>
-            <CardDescription>Breakdown of working deliverables.</CardDescription>
+            <CardTitle className="text-lg font-semibold">Quick Actions</CardTitle>
+            <CardDescription>Create new items in your workspace</CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-wrap gap-2 pt-4">
-            {Object.entries(metrics.documentCountByType).map(([type, count]) => (
-              <Badge key={type} variant="outline" className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                {type} • {count}
-              </Badge>
-            ))}
-            {Object.keys(metrics.documentCountByType).length === 0 && (
-              <p className="text-sm text-slate-500 dark:text-slate-400">No documents captured yet.</p>
-            )}
+          <CardContent className="space-y-3 pt-4">
+            <Button asChild className="w-full bg-[#015e32] hover:bg-[#01753d] justify-start" size="lg">
+              <Link href="/projects">
+                <Plus className="h-5 w-5 mr-2" />
+                Create a Project
+              </Link>
+            </Button>
+            <Button asChild className="w-full bg-[#015e32] hover:bg-[#01753d] justify-start" size="lg">
+              <Link href="/clients-revos">
+                <Users className="h-5 w-5 mr-2" />
+                Create a Client
+              </Link>
+            </Button>
+            <Button asChild className="w-full bg-[#015e32] hover:bg-[#01753d] justify-start" size="lg">
+              <Link href="/content">
+                <FileText className="h-5 w-5 mr-2" />
+                Create Content
+              </Link>
+            </Button>
           </CardContent>
         </Card>
         <Card className="border-slate-200 dark:border-slate-800 lg:col-span-2">
           <CardHeader className="border-b border-slate-200/60 dark:border-slate-800/60 pb-4">
-            <CardTitle className="text-lg font-semibold">QuickBooks Invoices</CardTitle>
-            <CardDescription>Revenue status synced from finance.</CardDescription>
+            <CardTitle className="text-lg font-semibold">Active Projects</CardTitle>
+            <CardDescription>Currently active client engagements</CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-4 pt-4 md:grid-cols-3">
-            {['Draft', 'Sent', 'Paid'].map((status) => {
-              const summary = metrics.quickbooksSummary[status] ?? { amount: 0, count: 0 }
-              return (
-                <div key={status} className="rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800/50 p-4 shadow-sm">
-                  <p className="text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">{status}</p>
-                  <p className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-100">
-                    ${summary.amount.toLocaleString()}
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{summary.count} invoices</p>
-                </div>
-              )
-            })}
+          <CardContent className="px-0">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="px-6">Project</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Revenue</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {projects.filter(p => p.status === 'Active').length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="px-6 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                      No active projects
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  projects.filter(p => p.status === 'Active').slice(0, 5).map((project) => (
+                    <TableRow key={project.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/60">
+                      <TableCell className="px-6">
+                        <div className="font-medium text-slate-900 dark:text-slate-100">{project.name}</div>
+                      </TableCell>
+                      <TableCell className="text-sm text-slate-600 dark:text-slate-400">{project.client}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400">
+                          {project.type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-semibold text-slate-900 dark:text-slate-100">
+                        ${project.revenueTarget?.toLocaleString() || 0}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </section>
