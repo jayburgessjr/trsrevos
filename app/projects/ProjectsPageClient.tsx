@@ -41,6 +41,18 @@ const initialFormState: FormState = {
 export default function ProjectsPageClient() {
   const { projects, resources, invoices, createProject, updateProjectStatus } = useRevosData()
   const [form, setForm] = useState<FormState>(initialFormState)
+  const [isNewClient, setIsNewClient] = useState(false)
+
+  // Get unique client names from existing projects
+  const existingClients = useMemo(() => {
+    const clientSet = new Set<string>()
+    projects.forEach((project) => {
+      if (project.client && project.client.trim()) {
+        clientSet.add(project.client.trim())
+      }
+    })
+    return Array.from(clientSet).sort()
+  }, [projects])
 
   const sortedProjects = useMemo(() => {
     return [...projects].sort((a, b) => (a.startDate > b.startDate ? -1 : 1))
@@ -108,12 +120,50 @@ export default function ProjectsPageClient() {
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Client</label>
-                <Input
-                  value={form.client}
-                  onChange={(event) => setForm((current) => ({ ...current, client: event.target.value }))}
-                  placeholder="Client name"
-                  required
-                />
+                {isNewClient ? (
+                  <div className="space-y-2">
+                    <Input
+                      value={form.client}
+                      onChange={(event) => setForm((current) => ({ ...current, client: event.target.value }))}
+                      placeholder="Enter new client name"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsNewClient(false)
+                        setForm((current) => ({ ...current, client: '' }))
+                      }}
+                      className="text-xs text-muted-foreground hover:text-foreground underline"
+                    >
+                      Choose existing client
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Select
+                      value={form.client}
+                      onChange={(event) => {
+                        const value = event.target.value
+                        if (value === '__new__') {
+                          setIsNewClient(true)
+                          setForm((current) => ({ ...current, client: '' }))
+                        } else {
+                          setForm((current) => ({ ...current, client: value }))
+                        }
+                      }}
+                      required
+                    >
+                      <option value="">Select a client...</option>
+                      {existingClients.map((client) => (
+                        <option key={client} value={client}>
+                          {client}
+                        </option>
+                      ))}
+                      <option value="__new__">+ Add New Client</option>
+                    </Select>
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Type</label>
