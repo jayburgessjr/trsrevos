@@ -500,7 +500,7 @@ export default function ClientDetailPageClient({ clientName }: ClientDetailProps
                       <p className="text-sm font-medium text-muted-foreground mb-2">Team Members</p>
                       <div className="flex flex-wrap gap-2">
                         {[...new Set(clientData.projects.flatMap(p => p.team))].map(member => (
-                          <Badge key={member} variant="secondary">{member}</Badge>
+                          <Badge key={member} variant="outline">{member}</Badge>
                         ))}
                       </div>
                     </div>

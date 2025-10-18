@@ -9,10 +9,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Building2, DollarSign, FileText, TrendingUp } from 'lucide-react'
 import { Input } from '@/ui/input'
 import AddClientDialog from '@/components/clients/AddClientDialog'
+import type { Project } from '@/lib/revos/types'
 
 type ClientData = {
   name: string
-  projects: typeof useRevosData extends () => infer R ? R['projects'] : never
+  projects: Project[]
   totalRevenue: number
   monthlyRevenue: number
   documentsCount: number

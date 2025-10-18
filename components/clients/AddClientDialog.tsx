@@ -15,13 +15,7 @@ import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 import { Textarea } from '@/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/ui/select'
+import { Select } from '@/ui/select'
 import { Plus, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { ProjectType } from '@/lib/revos/types'
@@ -139,7 +133,7 @@ ${notes}`,
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+      <DialogTrigger>
         <Button className="bg-[#015e32] hover:bg-[#01753d]">
           <Plus className="h-4 w-4 mr-2" />
           Add Client
@@ -269,18 +263,14 @@ ${notes}`,
                   <div className="grid gap-2">
                     <Label htmlFor="projectType">Project Type</Label>
                     <Select
+                      id="projectType"
                       value={projectType}
-                      onValueChange={(value) => setProjectType(value as ProjectType)}
+                      onChange={(e) => setProjectType(e.target.value as ProjectType)}
                     >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Audit">Audit</SelectItem>
-                        <SelectItem value="Blueprint">Blueprint</SelectItem>
-                        <SelectItem value="Advisory">Advisory</SelectItem>
-                        <SelectItem value="Internal">Internal</SelectItem>
-                      </SelectContent>
+                      <option value="Audit">Audit</option>
+                      <option value="Blueprint">Blueprint</option>
+                      <option value="Advisory">Advisory</option>
+                      <option value="Internal">Internal</option>
                     </Select>
                   </div>
 
