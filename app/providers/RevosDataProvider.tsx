@@ -189,6 +189,7 @@ function reducer(state: RevosState, action: Action): RevosState {
         type: action.payload.type,
         sourceProjectId: action.payload.sourceProjectId,
         draft: action.payload.draft,
+        finalText: action.payload.finalText,
         status: 'Draft',
         createdAt: new Date().toISOString(),
       }

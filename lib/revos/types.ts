@@ -131,6 +131,7 @@ export type CreateContentInput = {
   type: ContentItem['type']
   sourceProjectId?: string
   draft: string
+  finalText?: string
 }
 
 export type UpdateContentStatusInput = {

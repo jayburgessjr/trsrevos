@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Link from 'next/link'
 
 import { useRevosData } from '@/app/providers/RevosDataProvider'
 import { Badge } from '@/ui/badge'
@@ -10,6 +11,16 @@ import { Input } from '@/ui/input'
 import { Select } from '@/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table'
 import { Textarea } from '@/ui/textarea'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/ui/dialog'
+import { Loader2, Download, Copy, Eye } from 'lucide-react'
+import type { ContentItem } from '@/lib/revos/types'
 
 const contentTypes = ['Case Study', 'Post', 'Email', 'Slide'] as const
 const contentStatuses = ['Draft', 'Published'] as const
@@ -31,6 +42,9 @@ const initialForm: FormState = {
 export default function ContentPageClient() {
   const { content, projects, agents, automationLogs, createContent, updateContentStatus } = useRevosData()
   const [form, setForm] = useState<FormState>(initialForm)
+  const [generating, setGenerating] = useState(false)
+  const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null)
+  const [viewDialogOpen, setViewDialogOpen] = useState(false)
 
   const stats = useMemo(() => {
     return content.reduce(
@@ -42,21 +56,79 @@ export default function ContentPageClient() {
     )
   }, [content])
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!form.title.trim() || !form.draft.trim()) return
-    createContent({
-      title: form.title.trim(),
-      type: form.type,
-      sourceProjectId: form.sourceProjectId || undefined,
-      draft: form.draft.trim(),
-    })
-    setForm(initialForm)
+
+    setGenerating(true)
+
+    try {
+      // Call OpenAI API to generate content
+      const response = await fetch('/api/content/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: form.title,
+          type: form.type,
+          instructions: form.draft,
+          sourceProject: form.sourceProjectId
+            ? projects.find((p) => p.id === form.sourceProjectId)?.name
+            : undefined,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        alert(data.error || 'Failed to generate content')
+        return
+      }
+
+      // Create content with generated text as finalText
+      createContent({
+        title: form.title.trim(),
+        type: form.type,
+        sourceProjectId: form.sourceProjectId || undefined,
+        draft: form.draft.trim(),
+        finalText: data.content,
+      })
+
+      setForm(initialForm)
+    } catch (error) {
+      console.error('Error generating content:', error)
+      alert('Failed to generate content. Please try again.')
+    } finally {
+      setGenerating(false)
+    }
   }
 
   const handleStatusToggle = (id: string, status: 'Draft' | 'Published', draft: string) => {
     const nextStatus = status === 'Draft' ? 'Published' : 'Draft'
     updateContentStatus({ id, status: nextStatus, finalText: nextStatus === 'Published' ? draft : undefined })
+  }
+
+  const handleViewContent = (item: ContentItem) => {
+    setSelectedContent(item)
+    setViewDialogOpen(true)
+  }
+
+  const handleCopyContent = (item: ContentItem) => {
+    const textToCopy = item.finalText || item.draft
+    navigator.clipboard.writeText(textToCopy)
+    alert('Content copied to clipboard!')
+  }
+
+  const handleDownloadContent = (item: ContentItem) => {
+    const textToDownload = item.finalText || item.draft
+    const blob = new Blob([textToDownload], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${item.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -108,18 +180,26 @@ export default function ContentPageClient() {
                 </Select>
               </div>
               <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Draft</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Instructions</label>
                 <Textarea
                   value={form.draft}
                   onChange={(event) => setForm((current) => ({ ...current, draft: event.target.value }))}
-                  placeholder="Summarize the key wins and customer quote..."
+                  placeholder="Describe what content you want to generate... e.g., 'Write a case study highlighting the key wins, include a customer quote about ROI impact'"
                   rows={6}
                   required
+                  disabled={generating}
                 />
               </div>
               <div className="md:col-span-2">
-                <Button type="submit" className="w-full md:w-auto">
-                  Save Draft
+                <Button type="submit" className="w-full md:w-auto bg-[#015e32] hover:bg-[#01753d]" disabled={generating}>
+                  {generating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    'Generate'
+                  )}
                 </Button>
               </div>
             </form>
@@ -183,8 +263,13 @@ export default function ContentPageClient() {
                   .map((item) => (
                     <TableRow key={item.id}>
                       <TableCell className="px-6">
-                        <div className="font-medium text-foreground">{item.title}</div>
-                        <div className="text-xs text-muted-foreground">{new Date(item.createdAt).toLocaleDateString()}</div>
+                        <button
+                          onClick={() => handleViewContent(item)}
+                          className="text-left hover:underline"
+                        >
+                          <div className="font-medium text-foreground">{item.title}</div>
+                          <div className="text-xs text-muted-foreground">{new Date(item.createdAt).toLocaleDateString()}</div>
+                        </button>
                       </TableCell>
                       <TableCell>{item.type}</TableCell>
                       <TableCell>
@@ -201,13 +286,35 @@ export default function ContentPageClient() {
                           : 'Standalone'}
                       </TableCell>
                       <TableCell>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => handleStatusToggle(item.id, item.status, item.draft)}
-                        >
-                          {item.status === 'Draft' ? 'Publish' : 'Return to Draft'}
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewContent(item)}
+                            title="View content"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopyContent(item)}
+                            title="Copy content"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownloadContent(item)}
+                            title="Download content"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -216,6 +323,83 @@ export default function ContentPageClient() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* View Content Dialog */}
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          {selectedContent && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{selectedContent.title}</DialogTitle>
+                <DialogDescription>
+                  {selectedContent.type} • Created {new Date(selectedContent.createdAt).toLocaleDateString()}
+                  {selectedContent.sourceProjectId && (
+                    <> • {projects.find((p) => p.id === selectedContent.sourceProjectId)?.name || 'Unknown Project'}</>
+                  )}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                {selectedContent.finalText ? (
+                  <>
+                    <div>
+                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                        Generated Content
+                      </h3>
+                      <div className="bg-muted/50 p-4 rounded-lg whitespace-pre-wrap text-sm">
+                        {selectedContent.finalText}
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                        Original Instructions
+                      </h3>
+                      <div className="bg-muted/30 p-4 rounded-lg text-sm text-muted-foreground">
+                        {selectedContent.draft}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                      Content
+                    </h3>
+                    <div className="bg-muted/50 p-4 rounded-lg whitespace-pre-wrap text-sm">
+                      {selectedContent.draft}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter className="gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleCopyContent(selectedContent)}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy Content
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleDownloadContent(selectedContent)}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+                <Button
+                  type="button"
+                  className="bg-[#015e32] hover:bg-[#01753d]"
+                  onClick={() => setViewDialogOpen(false)}
+                >
+                  Close
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
