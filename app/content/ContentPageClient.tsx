@@ -28,6 +28,7 @@ const contentStatuses = ['Draft', 'Published'] as const
 type FormState = {
   title: string
   type: (typeof contentTypes)[number]
+  client: string
   sourceProjectId: string
   draft: string
 }
@@ -35,6 +36,7 @@ type FormState = {
 const initialForm: FormState = {
   title: '',
   type: 'Case Study',
+  client: '',
   sourceProjectId: '',
   draft: '',
 }
@@ -63,6 +65,9 @@ export default function ContentPageClient() {
     setGenerating(true)
 
     try {
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+
       // Call OpenAI API to generate content
       const response = await fetch('/api/content/generate', {
         method: 'POST',
@@ -84,7 +89,27 @@ export default function ContentPageClient() {
         return
       }
 
-      // Create content with generated text as finalText
+      const contentId = `content-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+
+      // Save to Supabase revos_content table
+      const { error: contentError } = await supabase.from('revos_content').insert({
+        id: contentId,
+        title: form.title.trim(),
+        type: form.type,
+        client: form.client.trim() || null,
+        source_project_id: form.sourceProjectId || null,
+        draft: form.draft.trim(),
+        final_text: data.content,
+        status: 'Draft',
+      })
+
+      if (contentError) {
+        console.error('Error saving content to Supabase:', contentError)
+        alert('Failed to save content. Please try again.')
+        return
+      }
+
+      // Create content in local state for immediate UI update
       createContent({
         title: form.title.trim(),
         type: form.type,
@@ -93,6 +118,7 @@ export default function ContentPageClient() {
         finalText: data.content,
       })
 
+      alert('Content generated and saved successfully!')
       setForm(initialForm)
     } catch (error) {
       console.error('Error generating content:', error)
@@ -148,6 +174,7 @@ export default function ContentPageClient() {
                   onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
                   placeholder="Case Study: Client Impact"
                   required
+                  disabled={generating}
                 />
               </div>
               <div className="space-y-2">
@@ -157,6 +184,7 @@ export default function ContentPageClient() {
                   onChange={(event) =>
                     setForm((current) => ({ ...current, type: event.target.value as FormState['type'] }))
                   }
+                  disabled={generating}
                 >
                   {contentTypes.map((type) => (
                     <option key={type} value={type}>
@@ -166,15 +194,33 @@ export default function ContentPageClient() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Source Project</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Client</label>
+                <Input
+                  value={form.client}
+                  onChange={(event) => setForm((current) => ({ ...current, client: event.target.value }))}
+                  placeholder="Client name (optional)"
+                  disabled={generating}
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Source Project (Optional)</label>
                 <Select
-                  value={form.sourceProjectId || projects[0]?.id || ''}
-                  onChange={(event) => setForm((current) => ({ ...current, sourceProjectId: event.target.value }))}
+                  value={form.sourceProjectId || ''}
+                  onChange={(event) => {
+                    const projectId = event.target.value
+                    const selectedProject = projects.find((p) => p.id === projectId)
+                    setForm((current) => ({
+                      ...current,
+                      sourceProjectId: projectId,
+                      client: selectedProject?.client || current.client,
+                    }))
+                  }}
+                  disabled={generating}
                 >
                   <option value="">Standalone</option>
                   {projects.map((project) => (
                     <option key={project.id} value={project.id}>
-                      {project.name}
+                      {project.name} ({project.client})
                     </option>
                   ))}
                 </Select>
