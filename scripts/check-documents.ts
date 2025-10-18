@@ -33,6 +33,7 @@ async function checkDocuments() {
     console.log(`   Project ID: ${doc.project_id || 'null'}`)
     console.log(`   Created: ${doc.created_at}`)
     console.log(`   Tags: ${doc.tags?.join(', ') || 'none'}`)
+    console.log(`   Description preview: ${doc.description?.substring(0, 200) || 'none'}...`)
     console.log('')
   })
 }

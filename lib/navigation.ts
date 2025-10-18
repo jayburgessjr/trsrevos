@@ -6,6 +6,7 @@ export type NavItem = {
 
 export const MAIN_NAV: NavItem[] = [
   { label: 'Dashboard', href: '/', icon: 'LayoutDashboard' },
+  { label: 'Clients', href: '/clients-revos', icon: 'Building2' },
   { label: 'Projects', href: '/projects', icon: 'Kanban' },
   { label: 'Documents', href: '/documents', icon: 'Files' },
   { label: 'Agents', href: '/agents', icon: 'Bot' },

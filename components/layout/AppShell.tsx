@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 import { Badge } from '@/ui/badge'
 import { Button } from '@/ui/button'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import GlobalSearch from '@/components/search/GlobalSearch'
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? '/'
@@ -106,6 +107,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <div className="flex items-center gap-2 text-xs">
+            <GlobalSearch />
             <Badge variant="outline" className="hidden sm:inline-flex border-emerald-500 dark:border-emerald-600 text-emerald-700 dark:text-emerald-400">
               Active Projects • {kpis.activeProjects}
             </Badge>
