@@ -70,12 +70,12 @@ export default function PublicFormClient({ formConfig }: PublicFormClientProps) 
 
   if (isSubmitted) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0A0F1E] p-4">
+      <div className="flex min-h-screen items-center justify-center bg-[#015e32] p-4">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
-            <div className="mx-auto mb-8 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10">
+            <div className="mx-auto mb-8 flex h-16 w-16 items-center justify-center rounded-full bg-[#fd8216]/10 border-2 border-[#fd8216]">
               <svg
-                className="h-8 w-8 text-emerald-500"
+                className="h-8 w-8 text-[#fd8216]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -88,14 +88,14 @@ export default function PublicFormClient({ formConfig }: PublicFormClientProps) 
                 />
               </svg>
             </div>
-            <h1 className="text-3xl font-bold text-white mb-4">Thank You!</h1>
-            <p className="text-lg text-gray-300 mb-2">
+            <h1 className="text-3xl font-bold text-[#f8f8f6] mb-4">Thank You!</h1>
+            <p className="text-lg text-[#f8f8f6]/90 mb-2">
               Your submission has been received.
             </p>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-[#f8f8f6]/70">
               We&apos;ll review your information and get back to you within 24 hours.
             </p>
-            <p className="mt-6 text-xs text-gray-500">
+            <p className="mt-6 text-xs text-[#f8f8f6]/50">
               Check your email for a confirmation and next steps.
             </p>
           </div>
@@ -105,21 +105,21 @@ export default function PublicFormClient({ formConfig }: PublicFormClientProps) 
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0A0F1E] p-4 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-[#015e32] p-4 py-12">
       <div className="w-full max-w-2xl">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-white mb-2">{formConfig.title}</h1>
-          <p className="text-gray-300">{formConfig.description}</p>
+          <h1 className="text-3xl font-bold text-[#f8f8f6] mb-2">{formConfig.title}</h1>
+          <p className="text-[#f8f8f6]/90">{formConfig.description}</p>
         </div>
 
-        <Card className="border-gray-800 bg-[#0F1729]">
+        <Card className="border-[#f8f8f6]/20 bg-[#015e32]/50 backdrop-blur-sm shadow-xl">
           <CardContent className="p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
             {formConfig.fields.map((field) => (
               <div key={field.name} className="space-y-2">
-                <Label htmlFor={field.name} className="text-white text-sm font-medium">
+                <Label htmlFor={field.name} className="text-[#f8f8f6] text-sm font-medium">
                   {field.label}
-                  {field.required && <span className="text-red-400 ml-1">*</span>}
+                  {field.required && <span className="text-[#fd8216] ml-1">*</span>}
                 </Label>
 
                 {field.type === 'textarea' ? (
@@ -130,7 +130,7 @@ export default function PublicFormClient({ formConfig }: PublicFormClientProps) 
                     required={field.required}
                     placeholder={field.placeholder}
                     rows={4}
-                    className="w-full bg-[#1A2332] border-gray-700 text-white placeholder:text-gray-500 focus:border-emerald-500 focus:ring-emerald-500"
+                    className="w-full bg-[#004d28] border-[#f8f8f6]/30 text-[#f8f8f6] placeholder:text-[#f8f8f6]/40 focus:border-[#fd8216] focus:ring-[#fd8216]"
                   />
                 ) : field.type === 'select' && field.options ? (
                   <Select
@@ -138,11 +138,11 @@ export default function PublicFormClient({ formConfig }: PublicFormClientProps) 
                     value={formData[field.name] || ''}
                     onChange={(e) => handleChange(field.name, e.target.value)}
                     required={field.required}
-                    className="w-full bg-[#1A2332] border-gray-700 text-white focus:border-emerald-500 focus:ring-emerald-500"
+                    className="w-full bg-[#004d28] border-[#f8f8f6]/30 text-[#f8f8f6] focus:border-[#fd8216] focus:ring-[#fd8216]"
                   >
-                    <option value="" className="bg-[#1A2332]">Select...</option>
+                    <option value="" className="bg-[#004d28]">Select...</option>
                     {field.options.map((option) => (
-                      <option key={option} value={option} className="bg-[#1A2332]">
+                      <option key={option} value={option} className="bg-[#004d28]">
                         {option}
                       </option>
                     ))}
@@ -157,14 +157,14 @@ export default function PublicFormClient({ formConfig }: PublicFormClientProps) 
                     placeholder={field.placeholder}
                     min={field.min}
                     max={field.max}
-                    className="w-full bg-[#1A2332] border-gray-700 text-white placeholder:text-gray-500 focus:border-emerald-500 focus:ring-emerald-500"
+                    className="w-full bg-[#004d28] border-[#f8f8f6]/30 text-[#f8f8f6] placeholder:text-[#f8f8f6]/40 focus:border-[#fd8216] focus:ring-[#fd8216]"
                   />
                 )}
               </div>
             ))}
 
             {error && (
-              <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">
+              <div className="rounded-lg border border-[#fd8216]/50 bg-[#fd8216]/10 p-4 text-sm text-[#f8f8f6]">
                 {error}
               </div>
             )}
@@ -172,12 +172,12 @@ export default function PublicFormClient({ formConfig }: PublicFormClientProps) 
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3"
+              className="w-full bg-[#fd8216] hover:bg-[#fd8216]/90 text-[#f8f8f6] font-medium py-3 transition-colors"
             >
               {isSubmitting ? 'Submitting...' : 'Submit Form'}
             </Button>
 
-            <p className="text-xs text-center text-gray-500">
+            <p className="text-xs text-center text-[#f8f8f6]/60">
               Your information is secure and will only be used to provide you with our services.
             </p>
           </form>
