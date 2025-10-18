@@ -20,9 +20,23 @@ import {
   MessageSquare,
   Send,
   Sparkles,
-  Loader2
+  Loader2,
+  Plus,
+  Eye,
+  Trash2,
+  Edit
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { Input } from '@/ui/input'
+
+type ClientNote = {
+  id: string
+  client_name: string
+  title: string
+  content: string
+  created_at: string
+  updated_at: string
+}
 
 type ClientDetailProps = {
   clientName: string
@@ -30,8 +44,12 @@ type ClientDetailProps = {
 
 export default function ClientDetailPageClient({ clientName }: ClientDetailProps) {
   const { projects, documents, content, resources } = useRevosData()
-  const [notes, setNotes] = useState('')
+  const [clientNotes, setClientNotes] = useState<ClientNote[]>([])
   const [notesLoading, setNotesLoading] = useState(true)
+  const [selectedNote, setSelectedNote] = useState<ClientNote | null>(null)
+  const [isCreatingNote, setIsCreatingNote] = useState(false)
+  const [noteTitle, setNoteTitle] = useState('')
+  const [noteContent, setNoteContent] = useState('')
   const [notesSaving, setNotesSaving] = useState(false)
   const [notesSaved, setNotesSaved] = useState(false)
   const [chatMessage, setChatMessage] = useState('')
@@ -39,56 +57,137 @@ export default function ClientDetailPageClient({ clientName }: ClientDetailProps
 
   // Load client notes from Supabase
   useEffect(() => {
-    const loadNotes = async () => {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from('client_notes')
-        .select('notes')
-        .eq('client_name', clientName)
-        .single()
-
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows
-        console.error('Error loading notes:', error)
-      } else if (data) {
-        setNotes(data.notes || '')
-      }
-      setNotesLoading(false)
-    }
-
     loadNotes()
   }, [clientName])
 
-  // Save notes to Supabase
-  const handleSaveNotes = async () => {
+  const loadNotes = async () => {
+    setNotesLoading(true)
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('client_notes')
+      .select('*')
+      .eq('client_name', clientName)
+      .order('created_at', { ascending: false })
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error loading notes:', error)
+    } else if (data) {
+      setClientNotes(data)
+    }
+    setNotesLoading(false)
+  }
+
+  // Create new note
+  const handleCreateNote = () => {
+    setIsCreatingNote(true)
+    setSelectedNote(null)
+    setNoteTitle('')
+    setNoteContent('')
+  }
+
+  // Save note (create or update)
+  const handleSaveNote = async () => {
+    if (!noteTitle.trim()) {
+      alert('Please enter a note title')
+      return
+    }
+
     setNotesSaving(true)
     setNotesSaved(false)
 
     try {
       const supabase = createClient()
-      const { error } = await supabase
-        .from('client_notes')
-        .upsert({
-          id: `client-${clientName}`,
-          client_name: clientName,
-          notes,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'client_name'
-        })
 
-      if (error) {
-        console.error('Error saving notes:', error)
-        alert('Failed to save notes. Please try again.')
+      if (selectedNote) {
+        // Update existing note
+        const { error } = await supabase
+          .from('client_notes')
+          .update({
+            title: noteTitle,
+            content: noteContent,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', selectedNote.id)
+
+        if (error) throw error
       } else {
-        setNotesSaved(true)
-        setTimeout(() => setNotesSaved(false), 3000)
+        // Create new note
+        const { error } = await supabase
+          .from('client_notes')
+          .insert({
+            id: `note-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            client_name: clientName,
+            title: noteTitle,
+            content: noteContent
+          })
+
+        if (error) throw error
       }
+
+      setNotesSaved(true)
+      setTimeout(() => setNotesSaved(false), 3000)
+
+      // Reload notes and reset form
+      await loadNotes()
+      setIsCreatingNote(false)
+      setSelectedNote(null)
+      setNoteTitle('')
+      setNoteContent('')
     } catch (error) {
-      console.error('Error saving notes:', error)
-      alert('Failed to save notes. Please try again.')
+      console.error('Error saving note:', error)
+      alert('Failed to save note. Please try again.')
     } finally {
       setNotesSaving(false)
     }
+  }
+
+  // View note
+  const handleViewNote = (note: ClientNote) => {
+    setSelectedNote(note)
+    setNoteTitle(note.title)
+    setNoteContent(note.content)
+    setIsCreatingNote(false)
+  }
+
+  // Edit note
+  const handleEditNote = (note: ClientNote) => {
+    setSelectedNote(note)
+    setNoteTitle(note.title)
+    setNoteContent(note.content)
+    setIsCreatingNote(true)
+  }
+
+  // Delete note
+  const handleDeleteNote = async (noteId: string) => {
+    if (!confirm('Are you sure you want to delete this note?')) return
+
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('client_notes')
+        .delete()
+        .eq('id', noteId)
+
+      if (error) throw error
+
+      await loadNotes()
+      if (selectedNote?.id === noteId) {
+        setSelectedNote(null)
+        setNoteTitle('')
+        setNoteContent('')
+      }
+    } catch (error) {
+      console.error('Error deleting note:', error)
+      alert('Failed to delete note. Please try again.')
+    }
+  }
+
+  // Cancel editing
+  const handleCancelEdit = () => {
+    setIsCreatingNote(false)
+    setSelectedNote(null)
+    setNoteTitle('')
+    setNoteContent('')
   }
 
   // Get client-specific data
@@ -409,49 +508,185 @@ export default function ClientDetailPageClient({ clientName }: ClientDetailProps
                 </TabsContent>
 
                 {/* Notes Tab */}
-                <TabsContent value="notes" className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-foreground mb-2 block">
-                      Client Notes
-                    </label>
-                    {notesLoading ? (
-                      <div className="flex items-center justify-center py-10">
-                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                      </div>
-                    ) : (
-                      <>
-                        <Textarea
-                          value={notes}
-                          onChange={(e) => setNotes(e.target.value)}
-                          placeholder="Add notes about this client..."
-                          rows={10}
-                          className="w-full"
-                          disabled={notesSaving}
-                        />
-                        <div className="flex items-center gap-3 mt-4">
+                <TabsContent value="notes" className="space-y-0">
+                  {notesLoading ? (
+                    <div className="flex items-center justify-center py-10">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-4 h-[600px]">
+                      {/* Left Column - Notes List */}
+                      <div className="col-span-1 border-r pr-4 overflow-y-auto">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="font-semibold text-sm">All Notes ({clientNotes.length})</h3>
                           <Button
-                            onClick={handleSaveNotes}
-                            disabled={notesSaving}
+                            onClick={handleCreateNote}
+                            size="sm"
                             className="bg-[#015e32] hover:bg-[#01753d]"
                           >
-                            {notesSaving ? (
-                              <>
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                Saving...
-                              </>
-                            ) : (
-                              'Save Notes'
-                            )}
+                            <Plus className="h-4 w-4 mr-1" />
+                            New
                           </Button>
-                          {notesSaved && (
-                            <span className="text-sm text-emerald-600 font-medium">
-                              Notes saved successfully!
-                            </span>
-                          )}
                         </div>
-                      </>
-                    )}
-                  </div>
+
+                        {clientNotes.length === 0 ? (
+                          <div className="text-center py-8">
+                            <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                            <p className="text-sm text-muted-foreground">No notes yet</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Click &quot;New&quot; to create your first note
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {clientNotes.map((note) => (
+                              <div
+                                key={note.id}
+                                onClick={() => handleViewNote(note)}
+                                className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                                  selectedNote?.id === note.id
+                                    ? 'bg-[#015e32]/10 border-[#015e32]'
+                                    : 'hover:bg-muted border-border'
+                                }`}
+                              >
+                                <div className="font-medium text-sm truncate">{note.title}</div>
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  {new Date(note.created_at).toLocaleDateString()}
+                                </div>
+                                {note.content && (
+                                  <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                    {note.content}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right Column - Note Editor/Viewer */}
+                      <div className="col-span-2">
+                        {!selectedNote && !isCreatingNote ? (
+                          <div className="flex flex-col items-center justify-center h-full text-center">
+                            <FileText className="h-16 w-16 text-muted-foreground mb-4" />
+                            <p className="text-muted-foreground">
+                              Select a note to view or create a new one
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col h-full">
+                            {/* Note Header */}
+                            <div className="flex items-center justify-between mb-4">
+                              <h3 className="font-semibold">
+                                {isCreatingNote ? (selectedNote ? 'Edit Note' : 'New Note') : 'View Note'}
+                              </h3>
+                              <div className="flex gap-2">
+                                {!isCreatingNote && selectedNote && (
+                                  <>
+                                    <Button
+                                      onClick={() => handleEditNote(selectedNote)}
+                                      size="sm"
+                                      variant="outline"
+                                    >
+                                      <Edit className="h-4 w-4 mr-1" />
+                                      Edit
+                                    </Button>
+                                    <Button
+                                      onClick={() => handleDeleteNote(selectedNote.id)}
+                                      size="sm"
+                                      variant="outline"
+                                      className="text-red-600 hover:text-red-700"
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-1" />
+                                      Delete
+                                    </Button>
+                                  </>
+                                )}
+                                {isCreatingNote && (
+                                  <Button
+                                    onClick={handleCancelEdit}
+                                    size="sm"
+                                    variant="outline"
+                                  >
+                                    Cancel
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Note Content */}
+                            {isCreatingNote ? (
+                              <div className="flex flex-col gap-4 flex-1">
+                                <div>
+                                  <label className="text-sm font-medium mb-2 block">
+                                    Title
+                                  </label>
+                                  <Input
+                                    value={noteTitle}
+                                    onChange={(e) => setNoteTitle(e.target.value)}
+                                    placeholder="Enter note title..."
+                                    disabled={notesSaving}
+                                  />
+                                </div>
+                                <div className="flex-1 flex flex-col">
+                                  <label className="text-sm font-medium mb-2 block">
+                                    Content
+                                  </label>
+                                  <Textarea
+                                    value={noteContent}
+                                    onChange={(e) => setNoteContent(e.target.value)}
+                                    placeholder="Enter note content..."
+                                    className="flex-1 min-h-[400px]"
+                                    disabled={notesSaving}
+                                  />
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <Button
+                                    onClick={handleSaveNote}
+                                    disabled={notesSaving}
+                                    className="bg-[#015e32] hover:bg-[#01753d]"
+                                  >
+                                    {notesSaving ? (
+                                      <>
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        Saving...
+                                      </>
+                                    ) : (
+                                      'Save Note'
+                                    )}
+                                  </Button>
+                                  {notesSaved && (
+                                    <span className="text-sm text-emerald-600 font-medium">
+                                      Note saved successfully!
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            ) : (
+                              selectedNote && (
+                                <div className="flex flex-col gap-4">
+                                  <div>
+                                    <h4 className="text-lg font-semibold">{selectedNote.title}</h4>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      Created: {new Date(selectedNote.created_at).toLocaleString()}
+                                      {selectedNote.updated_at !== selectedNote.created_at && (
+                                        <> • Updated: {new Date(selectedNote.updated_at).toLocaleString()}</>
+                                      )}
+                                    </p>
+                                  </div>
+                                  <div className="border rounded-lg p-4 bg-muted/30 whitespace-pre-wrap">
+                                    {selectedNote.content || (
+                                      <span className="text-muted-foreground italic">No content</span>
+                                    )}
+                                  </div>
+                                </div>
+                              )
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </TabsContent>
               </CardContent>
             </Tabs>
