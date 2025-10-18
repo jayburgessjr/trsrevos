@@ -29,10 +29,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, [projects, documents, automationLogs])
 
-  // Don't show sidebar/header on login page
+  // Don't show sidebar/header on login page or public forms
   const isLoginPage = pathname === '/login'
+  const isPublicFormPage = pathname.startsWith('/forms/')
 
-  if (isLoginPage) {
+  if (isLoginPage || isPublicFormPage) {
     return <>{children}</>
   }
 

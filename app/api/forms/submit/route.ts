@@ -16,8 +16,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing formId or data' }, { status: 400 })
     }
 
+    // Validate environment variables
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Missing Supabase environment variables')
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+    }
+
     // Use service role key to bypass RLS for public form submissions
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
 
     // Format the form data as a readable document description
     const formattedDescription = Object.entries(data)

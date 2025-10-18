@@ -79,6 +79,7 @@ type Action =
   | { type: 'updateProjectStatus'; payload: UpdateProjectStatusInput }
   | { type: 'createDocument'; payload: CreateDocumentInput }
   | { type: 'updateDocumentStatus'; payload: UpdateDocumentStatusInput }
+  | { type: 'updateDocumentProject'; payload: { id: string; projectId: string } }
   | { type: 'createContent'; payload: CreateContentInput }
   | { type: 'updateContentStatus'; payload: UpdateContentStatusInput }
   | { type: 'createResource'; payload: CreateResourceInput }
@@ -89,6 +90,7 @@ type RevosContextValue = RevosState & {
   updateProjectStatus: (input: UpdateProjectStatusInput) => Promise<void>
   createDocument: (input: CreateDocumentInput) => Promise<void>
   updateDocumentStatus: (input: UpdateDocumentStatusInput) => Promise<void>
+  updateDocumentProject: (input: { id: string; projectId: string }) => Promise<void>
   createContent: (input: CreateContentInput) => void
   updateContentStatus: (input: UpdateContentStatusInput) => void
   createResource: (input: CreateResourceInput) => void
@@ -169,6 +171,14 @@ function reducer(state: RevosState, action: Action): RevosState {
         ...state,
         documents: state.documents.map((document) =>
           document.id === action.payload.id ? { ...document, status: action.payload.status } : document,
+        ),
+      }
+    }
+    case 'updateDocumentProject': {
+      return {
+        ...state,
+        documents: state.documents.map((document) =>
+          document.id === action.payload.id ? { ...document, projectId: action.payload.projectId } : document,
         ),
       }
     }
@@ -272,66 +282,79 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState)
   const [isLoading, setIsLoading] = useState(true)
 
+  // Load projects from Supabase
+  const loadProjects = useCallback(async () => {
+    console.log('Loading projects from Supabase...')
+    const { data: projects, error: projectsError } = await supabase
+      .from('revos_projects')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (projectsError) {
+      console.error('Error loading projects:', projectsError)
+    } else if (projects) {
+      console.log(`Loaded ${projects.length} projects from Supabase`)
+      const transformedProjects: Project[] = projects.map((p) => ({
+        id: p.id,
+        name: p.name,
+        client: p.client,
+        type: p.type as Project['type'],
+        status: p.status as Project['status'],
+        team: p.team || [],
+        startDate: p.start_date,
+        endDate: p.end_date || undefined,
+        quickbooksInvoiceUrl: p.quickbooks_invoice_url || undefined,
+        revenueTarget: Number(p.revenue_target) || 0,
+        documents: p.documents || [],
+        agents: p.agents || [],
+        resources: p.resources || [],
+      }))
+
+      console.log('Dispatching projects to state:', transformedProjects)
+      dispatch({ type: 'setProjects', payload: transformedProjects })
+    }
+  }, [])
+
+  // Load documents from Supabase
+  const loadDocuments = useCallback(async () => {
+    console.log('Loading documents from Supabase...')
+    const { data: documents, error: documentsError } = await supabase
+      .from('revos_documents')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (documentsError) {
+      console.error('Error loading documents:', documentsError)
+    } else if (documents) {
+      console.log(`Loaded ${documents.length} documents from Supabase`)
+      const transformedDocuments: Document[] = documents.map((d) => ({
+        id: d.id,
+        projectId: d.project_id,
+        title: d.title,
+        description: d.description,
+        type: d.type,
+        tags: d.tags || [],
+        fileUrl: d.file_url || '#',
+        version: d.version || 1,
+        status: d.status as Document['status'],
+        summary: d.summary || '',
+        updatedAt: d.updated_at,
+      }))
+
+      console.log('Dispatching documents to state:', transformedDocuments)
+      dispatch({ type: 'setDocuments', payload: transformedDocuments })
+    }
+  }, [])
+
   // Load data from Supabase on mount and migrate localStorage if needed
   useEffect(() => {
     async function loadFromSupabase() {
       try {
         const hasMigrated = localStorage.getItem(MIGRATION_KEY)
 
-        // Load projects from Supabase
-        const { data: projects, error: projectsError } = await supabase
-          .from('revos_projects')
-          .select('*')
-          .order('created_at', { ascending: false })
-
-        if (projectsError) {
-          console.error('Error loading projects:', projectsError)
-        } else if (projects) {
-          // Transform Supabase data to app format
-          const transformedProjects: Project[] = projects.map((p) => ({
-            id: p.id,
-            name: p.name,
-            client: p.client,
-            type: p.type as Project['type'],
-            status: p.status as Project['status'],
-            team: p.team || [],
-            startDate: p.start_date,
-            endDate: p.end_date || undefined,
-            quickbooksInvoiceUrl: p.quickbooks_invoice_url || undefined,
-            revenueTarget: Number(p.revenue_target) || 0,
-            documents: p.documents || [],
-            agents: p.agents || [],
-            resources: p.resources || [],
-          }))
-
-          dispatch({ type: 'setProjects', payload: transformedProjects })
-        }
-
-        // Load documents from Supabase
-        const { data: documents, error: documentsError } = await supabase
-          .from('revos_documents')
-          .select('*')
-          .order('created_at', { ascending: false })
-
-        if (documentsError) {
-          console.error('Error loading documents:', documentsError)
-        } else if (documents) {
-          const transformedDocuments: Document[] = documents.map((d) => ({
-            id: d.id,
-            projectId: d.project_id,
-            title: d.title,
-            description: d.description,
-            type: d.type,
-            tags: d.tags || [],
-            fileUrl: d.file_url || '#',
-            version: d.version || 1,
-            status: d.status as Document['status'],
-            summary: d.summary || '',
-            updatedAt: d.updated_at,
-          }))
-
-          dispatch({ type: 'setDocuments', payload: transformedDocuments })
-        }
+        // Load projects and documents from Supabase
+        await loadProjects()
+        await loadDocuments()
 
         // If not migrated yet and there's localStorage data, migrate it
         if (!hasMigrated) {
@@ -385,7 +408,55 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
     }
 
     loadFromSupabase()
-  }, [])
+  }, [loadProjects, loadDocuments])
+
+  // Subscribe to realtime changes for projects
+  useEffect(() => {
+    const channel = supabase
+      .channel('revos_projects_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'revos_projects'
+        },
+        (payload) => {
+          console.log('Project change detected:', payload)
+          // Reload projects when any change occurs
+          loadProjects()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [loadProjects])
+
+  // Subscribe to realtime changes for documents
+  useEffect(() => {
+    const channel = supabase
+      .channel('revos_documents_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'revos_documents'
+        },
+        (payload) => {
+          console.log('Document change detected:', payload)
+          // Reload documents when any change occurs
+          loadDocuments()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [loadDocuments])
 
   // Keep localStorage as backup (but Supabase is source of truth)
   useEffect(() => {
@@ -513,6 +584,25 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  const updateDocumentProject = useCallback(async (input: { id: string; projectId: string }) => {
+    // Optimistic update
+    dispatch({ type: 'updateDocumentProject', payload: input })
+
+    // Save to Supabase
+    try {
+      const { error } = await supabase
+        .from('revos_documents')
+        .update({ project_id: input.projectId || null, updated_at: new Date().toISOString() })
+        .eq('id', input.id)
+
+      if (error) {
+        console.error('Error updating document project in Supabase:', error)
+      }
+    } catch (error) {
+      console.error('Error updating document project:', error)
+    }
+  }, [])
+
   const createContent = useCallback((input: CreateContentInput) => {
     dispatch({ type: 'createContent', payload: input })
   }, [])
@@ -536,12 +626,13 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
       updateProjectStatus,
       createDocument,
       updateDocumentStatus,
+      updateDocumentProject,
       createContent,
       updateContentStatus,
       createResource,
       runAgent,
     }),
-    [state, createProject, updateProjectStatus, createDocument, updateDocumentStatus, createContent, updateContentStatus, createResource, runAgent],
+    [state, createProject, updateProjectStatus, createDocument, updateDocumentStatus, updateDocumentProject, createContent, updateContentStatus, createResource, runAgent],
   )
 
   if (isLoading) {

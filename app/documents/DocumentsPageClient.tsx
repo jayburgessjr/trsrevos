@@ -1,7 +1,6 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import Link from 'next/link'
 
 import { useRevosData } from '@/app/providers/RevosDataProvider'
 import { Badge } from '@/ui/badge'
@@ -11,6 +10,8 @@ import { Input } from '@/ui/input'
 import { Select } from '@/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table'
 import { Textarea } from '@/ui/textarea'
+import DocumentViewerModal from '@/components/documents/DocumentViewerModal'
+import type { Document } from '@/lib/revos/types'
 
 const documentTypes = ['Audit Report', 'Intervention Blueprint', 'Proposal', 'Enablement Asset']
 const documentStatuses = ['Draft', 'In Review', 'Final'] as const
@@ -34,9 +35,10 @@ const initialForm: FormState = {
 }
 
 export default function DocumentsPageClient() {
-  const { documents, projects, createDocument, updateDocumentStatus } = useRevosData()
+  const { documents, projects, createDocument, updateDocumentStatus, updateDocumentProject } = useRevosData()
   const [form, setForm] = useState<FormState>(initialForm)
   const [filter, setFilter] = useState<string>('All')
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
 
   const filteredDocuments = useMemo(() => {
     if (filter === 'All') return documents
@@ -63,6 +65,10 @@ export default function DocumentsPageClient() {
   const handleStatusChange = (documentId: string, status: string) => {
     if (!documentStatuses.includes(status as (typeof documentStatuses)[number])) return
     updateDocumentStatus({ id: documentId, status: status as (typeof documentStatuses)[number] })
+  }
+
+  const handleProjectChange = (documentId: string, projectId: string) => {
+    updateDocumentProject({ id: documentId, projectId })
   }
 
   const tagCloud = useMemo(() => {
@@ -195,7 +201,7 @@ export default function DocumentsPageClient() {
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 <TableHead className="px-6">Title</TableHead>
-                <TableHead>Project</TableHead>
+                <TableHead>Link to Project</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Version</TableHead>
@@ -214,11 +220,26 @@ export default function DocumentsPageClient() {
                   <TableRow key={document.id}>
                     <TableCell className="px-6">
                       <div className="font-medium text-foreground">{document.title}</div>
-                      <Link href={document.fileUrl} className="text-xs text-emerald-600 underline">
+                      <button
+                        onClick={() => setSelectedDocument(document)}
+                        className="text-xs text-emerald-600 underline hover:text-emerald-700 transition-colors"
+                      >
                         Open file
-                      </Link>
+                      </button>
                     </TableCell>
-                    <TableCell>{projects.find((project) => project.id === document.projectId)?.name ?? 'Unlinked'}</TableCell>
+                    <TableCell>
+                      <Select
+                        value={document.projectId || ''}
+                        onChange={(event) => handleProjectChange(document.id, event.target.value)}
+                      >
+                        <option value="">Unlinked</option>
+                        {projects.map((project) => (
+                          <option key={project.id} value={project.id}>
+                            {project.name}
+                          </option>
+                        ))}
+                      </Select>
+                    </TableCell>
                     <TableCell>{document.type}</TableCell>
                     <TableCell>
                       <Select
@@ -241,6 +262,13 @@ export default function DocumentsPageClient() {
           </Table>
         </CardContent>
       </Card>
+
+      {selectedDocument && (
+        <DocumentViewerModal
+          document={selectedDocument}
+          onClose={() => setSelectedDocument(null)}
+        />
+      )}
     </div>
   )
 }
