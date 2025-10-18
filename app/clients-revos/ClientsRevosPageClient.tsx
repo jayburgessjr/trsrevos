@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table'
 import { Building2, DollarSign, FileText, TrendingUp } from 'lucide-react'
 import { Input } from '@/ui/input'
+import AddClientDialog from '@/components/clients/AddClientDialog'
 
 type ClientData = {
   name: string
@@ -86,9 +87,12 @@ export default function ClientsRevosPageClient() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Clients</h1>
-        <p className="text-muted-foreground mt-1">Track revenue, projects, and deliverables by client</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Clients</h1>
+          <p className="text-muted-foreground mt-1">Track revenue, projects, and deliverables by client</p>
+        </div>
+        <AddClientDialog />
       </div>
 
       {/* Summary Cards */}
