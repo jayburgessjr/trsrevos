@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRevosData } from '@/app/providers/RevosDataProvider'
 import { Badge } from '@/ui/badge'
@@ -56,11 +56,7 @@ export default function ClientDetailPageClient({ clientName }: ClientDetailProps
   const [chatHistory, setChatHistory] = useState<Array<{role: 'user' | 'assistant', content: string}>>([])
 
   // Load client notes from Supabase
-  useEffect(() => {
-    loadNotes()
-  }, [clientName])
-
-  const loadNotes = async () => {
+  const loadNotes = useCallback(async () => {
     setNotesLoading(true)
     const supabase = createClient()
     const { data, error } = await supabase
@@ -75,7 +71,11 @@ export default function ClientDetailPageClient({ clientName }: ClientDetailProps
       setClientNotes(data)
     }
     setNotesLoading(false)
-  }
+  }, [clientName])
+
+  useEffect(() => {
+    loadNotes()
+  }, [loadNotes])
 
   // Create new note
   const handleCreateNote = () => {
