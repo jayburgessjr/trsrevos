@@ -79,14 +79,14 @@ export default function DashboardScreen() {
 
     // Recent documents (last 5)
     const recentDocuments = [...documents]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
       .slice(0, 5)
       .map(doc => ({
         id: doc.id,
         title: doc.title,
         project: projects.find((project) => project.id === doc.projectId)?.name ?? 'Unlinked',
         type: doc.type,
-        createdAt: doc.createdAt,
+        updatedAt: doc.updatedAt,
       }))
 
     return {
@@ -142,7 +142,7 @@ export default function DashboardScreen() {
                   <TableHead className="px-6">Document</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Project</TableHead>
-                  <TableHead>Created</TableHead>
+                  <TableHead>Updated</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -166,7 +166,7 @@ export default function DashboardScreen() {
                       </TableCell>
                       <TableCell className="text-sm text-slate-600 dark:text-slate-400">{doc.project}</TableCell>
                       <TableCell className="text-xs text-slate-500 dark:text-slate-400">
-                        {new Date(doc.createdAt).toLocaleDateString()}
+                        {new Date(doc.updatedAt).toLocaleDateString()}
                       </TableCell>
                     </TableRow>
                   ))
