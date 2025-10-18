@@ -47,6 +47,18 @@ export default function ContentPageClient() {
   const [generating, setGenerating] = useState(false)
   const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null)
   const [viewDialogOpen, setViewDialogOpen] = useState(false)
+  const [isNewClient, setIsNewClient] = useState(false)
+
+  // Get unique client names from existing projects
+  const existingClients = useMemo(() => {
+    const clientSet = new Set<string>()
+    projects.forEach((project) => {
+      if (project.client && project.client.trim()) {
+        clientSet.add(project.client.trim())
+      }
+    })
+    return Array.from(clientSet).sort()
+  }, [projects])
 
   const stats = useMemo(() => {
     return content.reduce(
@@ -195,12 +207,49 @@ export default function ContentPageClient() {
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Client</label>
-                <Input
-                  value={form.client}
-                  onChange={(event) => setForm((current) => ({ ...current, client: event.target.value }))}
-                  placeholder="Client name (optional)"
-                  disabled={generating}
-                />
+                {isNewClient ? (
+                  <div className="space-y-2">
+                    <Input
+                      value={form.client}
+                      onChange={(event) => setForm((current) => ({ ...current, client: event.target.value }))}
+                      placeholder="Enter new client name"
+                      disabled={generating}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsNewClient(false)
+                        setForm((current) => ({ ...current, client: '' }))
+                      }}
+                      className="text-xs text-muted-foreground hover:text-foreground underline"
+                      disabled={generating}
+                    >
+                      Choose existing client
+                    </button>
+                  </div>
+                ) : (
+                  <Select
+                    value={form.client}
+                    onChange={(event) => {
+                      const value = event.target.value
+                      if (value === '__new__') {
+                        setIsNewClient(true)
+                        setForm((current) => ({ ...current, client: '' }))
+                      } else {
+                        setForm((current) => ({ ...current, client: value }))
+                      }
+                    }}
+                    disabled={generating}
+                  >
+                    <option value="">Select a client (optional)...</option>
+                    {existingClients.map((client) => (
+                      <option key={client} value={client}>
+                        {client}
+                      </option>
+                    ))}
+                    <option value="__new__">+ Add New Client</option>
+                  </Select>
+                )}
               </div>
               <div className="space-y-2 md:col-span-2">
                 <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Source Project (Optional)</label>
