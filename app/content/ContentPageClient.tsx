@@ -326,12 +326,12 @@ export default function ContentPageClient() {
 
       {/* View Content Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-background border border-border">
           {selectedContent && (
             <>
               <DialogHeader>
-                <DialogTitle>{selectedContent.title}</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-foreground">{selectedContent.title}</DialogTitle>
+                <DialogDescription className="text-muted-foreground">
                   {selectedContent.type} • Created {new Date(selectedContent.createdAt).toLocaleDateString()}
                   {selectedContent.sourceProjectId && (
                     <> • {projects.find((p) => p.id === selectedContent.sourceProjectId)?.name || 'Unknown Project'}</>
@@ -346,7 +346,7 @@ export default function ContentPageClient() {
                       <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
                         Generated Content
                       </h3>
-                      <div className="bg-muted/50 p-4 rounded-lg whitespace-pre-wrap text-sm">
+                      <div className="bg-card border border-border p-4 rounded-lg whitespace-pre-wrap text-sm text-foreground">
                         {selectedContent.finalText}
                       </div>
                     </div>
@@ -354,7 +354,7 @@ export default function ContentPageClient() {
                       <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
                         Original Instructions
                       </h3>
-                      <div className="bg-muted/30 p-4 rounded-lg text-sm text-muted-foreground">
+                      <div className="bg-muted border border-border p-4 rounded-lg text-sm text-muted-foreground">
                         {selectedContent.draft}
                       </div>
                     </div>
@@ -364,7 +364,7 @@ export default function ContentPageClient() {
                     <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
                       Content
                     </h3>
-                    <div className="bg-muted/50 p-4 rounded-lg whitespace-pre-wrap text-sm">
+                    <div className="bg-card border border-border p-4 rounded-lg whitespace-pre-wrap text-sm text-foreground">
                       {selectedContent.draft}
                     </div>
                   </div>
