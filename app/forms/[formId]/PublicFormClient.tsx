@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { Button } from '@/ui/button'
 import { Card, CardContent } from '@/ui/card'
 import { Input } from '@/ui/input'
@@ -178,11 +179,23 @@ export default function PublicFormClient({ formConfig }: PublicFormClientProps) 
   return (
     <div className="min-h-screen bg-[#015e32] p-4 py-8">
       <div className="max-w-3xl mx-auto">
+        {/* TRS Logo */}
+        <div className="mb-8 flex justify-start">
+          <Image
+            src="/images/trs-logo.png"
+            alt="The Revenue Scientists - TRS"
+            width={400}
+            height={64}
+            className="h-16 w-auto"
+            priority
+          />
+        </div>
+
         {/* Header */}
         <div className="mb-8 text-center">
           <div className="inline-flex items-center gap-2 mb-4 px-4 py-2 rounded-full bg-[#fd8216]/20 border-2 border-[#fd8216]">
             <Sparkles className="h-4 w-4 text-[#fd8216]" />
-            <span className="text-sm font-medium text-white">Revenue Growth Assessment</span>
+            <span className="text-sm font-medium text-white">Revenue Clarity - Future Client</span>
           </div>
           <h1 className="text-4xl font-bold text-white mb-2">{formConfig.title}</h1>
           <p className="text-white/90">{formConfig.description}</p>
