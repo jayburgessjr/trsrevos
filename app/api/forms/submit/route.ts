@@ -53,13 +53,56 @@ export async function POST(request: NextRequest) {
       formId.includes('clarity') ? 'Clarity Intake' : 'Blueprint Intake'
     } - ${clientName}`
 
-    // Generate a unique ID for the document
+    // Generate unique IDs
     const documentId = `form-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const projectId = `project-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
-    // Insert document into revos_documents table
+    // Step 1: Create client in clients table
+    const { data: client, error: clientError } = await supabase
+      .from('clients')
+      .insert({
+        name: clientName,
+        industry: data.industry || null,
+        monthly_recurring_revenue: Number(data.monthlyRevenue) || 0,
+        primary_goal: data.goals || null,
+        phase: 'Discovery',
+        status: 'active',
+      })
+      .select('id')
+      .single()
+
+    if (clientError) {
+      console.error('Error creating client:', clientError)
+      // Continue anyway - we'll create an unlinked project
+    }
+
+    // Step 2: Create Revenue Audit project in revos_projects table
+    const annualRevenue = (Number(data.monthlyRevenue) || 0) * 12
+    const { error: projectError } = await supabase
+      .from('revos_projects')
+      .insert({
+        id: projectId,
+        name: `Revenue Audit - ${clientName}`,
+        client: clientName,
+        type: 'Audit',
+        team: [],
+        start_date: new Date().toISOString().split('T')[0],
+        status: 'Active',
+        revenue_target: annualRevenue,
+        documents: [],
+        agents: [],
+        resources: [],
+      })
+
+    if (projectError) {
+      console.error('Error creating project:', projectError)
+      // Continue anyway - we'll still save the document
+    }
+
+    // Step 3: Insert document into revos_documents table, linked to the project
     const { error: insertError } = await supabase.from('revos_documents').insert({
       id: documentId,
-      project_id: null, // Unassigned - you'll link it later
+      project_id: projectId, // Link to the created project
       title: documentTitle,
       description: formattedDescription,
       type: documentType,
@@ -80,6 +123,8 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Form submitted successfully',
       documentId,
+      projectId,
+      clientId: client?.id,
     })
   } catch (error) {
     console.error('Form submission error:', error)
