@@ -1,11 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { randomUUID } from 'crypto'
+
+export const runtime = 'nodejs'
 
 // This API endpoint is PUBLIC - no auth required
 // It creates a document in Supabase from form submissions
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+const defaultClientOwnerId = process.env.SUPABASE_DEFAULT_CLIENT_OWNER_ID?.trim()
+
+function parseCurrency(value: unknown): number {
+  if (typeof value !== 'string' && typeof value !== 'number') {
+    return 0
+  }
+
+  const normalized = String(value).replace(/[^0-9.-]+/g, '')
+  const parsed = Number.parseFloat(normalized)
+
+  return Number.isFinite(parsed) ? parsed : 0
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -54,30 +69,41 @@ export async function POST(request: NextRequest) {
     } - ${clientName}`
 
     // Generate unique IDs
-    const documentId = `form-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    const projectId = `project-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const documentId = randomUUID()
+    const projectId = randomUUID()
 
-    // Step 1: Create client in clients table
-    const { data: client, error: clientError } = await supabase
-      .from('clients')
-      .insert({
-        name: clientName,
-        industry: data.industry || null,
-        monthly_recurring_revenue: Number(data.monthlyRevenue) || 0,
-        primary_goal: data.goals || null,
-        phase: 'Discovery',
-        status: 'active',
-      })
-      .select('id')
-      .single()
+    // Normalize revenue inputs for reuse
+    const monthlyRevenue = parseCurrency(data.monthlyRevenue)
+    const annualRevenue = parseCurrency(data.annualRevenue) || monthlyRevenue * 12
 
-    if (clientError) {
-      console.error('Error creating client:', clientError)
-      // Continue anyway - we'll create an unlinked project
+    // Step 1: Create client in clients table (requires an owner)
+    let clientId: string | undefined
+    if (defaultClientOwnerId) {
+      const { data: client, error: clientError } = await supabase
+        .from('clients')
+        .insert({
+          name: clientName,
+          industry: data.industry || null,
+          arr: annualRevenue,
+          phase: 'Discovery',
+          status: 'active',
+          owner_id: defaultClientOwnerId,
+          notes: formattedDescription,
+        })
+        .select('id')
+        .single()
+
+      if (clientError) {
+        console.error('Error creating client:', clientError)
+        // Continue anyway - we'll create an unlinked project
+      } else {
+        clientId = client.id
+      }
+    } else {
+      console.warn('SUPABASE_DEFAULT_CLIENT_OWNER_ID not set - skipping client creation')
     }
 
     // Step 2: Create Revenue Audit project in revos_projects table
-    const annualRevenue = (Number(data.monthlyRevenue) || 0) * 12
     const { error: projectError } = await supabase
       .from('revos_projects')
       .insert({
@@ -124,7 +150,7 @@ export async function POST(request: NextRequest) {
       message: 'Form submitted successfully',
       documentId,
       projectId,
-      clientId: client?.id,
+      clientId,
     })
   } catch (error) {
     console.error('Form submission error:', error)
