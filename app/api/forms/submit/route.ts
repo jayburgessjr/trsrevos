@@ -68,7 +68,6 @@ export async function POST(request: NextRequest) {
       version: 1,
       status: 'Draft',
       summary: `Client submission from ${formId} form`,
-      created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
 
