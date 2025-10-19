@@ -85,7 +85,7 @@ export function DialogContent({
   return createPortal(
     open ? (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-        <div className={cn('w-full max-w-md rounded-lg bg-[color:var(--color-surface)] p-6 shadow-xl', className)}>
+        <div className={cn('w-full max-w-md rounded-lg bg-white dark:bg-slate-900 p-6 shadow-xl', className)}>
           {children}
         </div>
       </div>
