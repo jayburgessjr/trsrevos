@@ -42,7 +42,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen bg-[#015e32] dark:bg-[#004d28] text-white" style={{ width: '100vw', margin: 0, padding: 0 }}>
       <aside
         className={cn(
-          'fixed inset-y-0 z-40 w-64 border-r border-[#fd8216] dark:border-[#fd8216] bg-[#004d28] dark:bg-[#003320] px-4 py-6 shadow-lg transition-transform duration-200 ease-in-out md:static md:translate-x-0',
+          'fixed inset-y-0 z-40 w-64 border-r border-gray-700 dark:border-gray-700 bg-[#004d28] dark:bg-[#003320] px-4 py-6 shadow-lg transition-transform duration-200 ease-in-out md:static md:translate-x-0',
           mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
         )}
         style={{ left: 0, margin: 0 }}
@@ -82,7 +82,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             )
           })}
         </nav>
-        <div className="mt-8 rounded-lg bg-[#015e32] border-2 border-[#fd8216] p-4 text-xs text-white/90">
+        <div className="mt-8 rounded-lg bg-[#015e32] border-2 border-gray-700 p-4 text-xs text-white/90">
           <p className="font-semibold text-[#fd8216]">Automation Pulse</p>
           <p className="mt-1 leading-relaxed">
             {automationLogs.length} agent runs logged. {kpis.automationHours} hours saved.
@@ -90,7 +90,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
       <div className="flex w-full flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#fd8216] bg-[#004d28]/95 backdrop-blur px-3 sm:px-4 md:px-6 py-3 md:py-4">
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-gray-700 bg-[#004d28]/95 backdrop-blur px-3 sm:px-4 md:px-6 py-3 md:py-4">
           <div className="flex items-center gap-2 md:gap-3">
             <Button
               variant="ghost"
@@ -108,13 +108,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex items-center gap-2 text-xs">
             <GlobalSearch />
-            <Badge variant="outline" className="hidden sm:inline-flex border-[#fd8216] text-white bg-[#015e32]">
+            <Badge variant="outline" className="hidden sm:inline-flex border-gray-600 text-white bg-[#015e32]">
               Active Projects • {kpis.activeProjects}
             </Badge>
-            <Badge variant="outline" className="hidden md:inline-flex border-[#fd8216] text-white bg-[#015e32]">
+            <Badge variant="outline" className="hidden md:inline-flex border-gray-600 text-white bg-[#015e32]">
               Deliverables • {kpis.deliverablesInProgress}
             </Badge>
-            <Badge variant="outline" className="hidden lg:inline-flex border-[#fd8216] text-white bg-[#015e32]">
+            <Badge variant="outline" className="hidden lg:inline-flex border-gray-600 text-white bg-[#015e32]">
               Automation Hours • {kpis.automationHours}
             </Badge>
             <ThemeToggle />
