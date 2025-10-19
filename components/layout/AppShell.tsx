@@ -82,12 +82,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             )
           })}
         </nav>
-        <div className="mt-8 rounded-lg bg-[#015e32] border-2 border-gray-700 p-4 text-xs text-white/90">
-          <p className="font-semibold text-[#fd8216]">Automation Pulse</p>
-          <p className="mt-1 leading-relaxed">
-            {automationLogs.length} agent runs logged. {kpis.automationHours} hours saved.
-          </p>
-        </div>
       </aside>
       <div className="flex w-full flex-1 flex-col">
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-gray-700 bg-[#004d28]/95 backdrop-blur px-3 sm:px-4 md:px-6 py-3 md:py-4">
@@ -108,16 +102,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex items-center gap-2 text-xs">
             <GlobalSearch />
-            <Badge variant="outline" className="hidden sm:inline-flex border-gray-600 text-white bg-[#015e32]">
-              Active Projects • {kpis.activeProjects}
-            </Badge>
-            <Badge variant="outline" className="hidden md:inline-flex border-gray-600 text-white bg-[#015e32]">
-              Deliverables • {kpis.deliverablesInProgress}
-            </Badge>
-            <Badge variant="outline" className="hidden lg:inline-flex border-gray-600 text-white bg-[#015e32]">
-              Automation Hours • {kpis.automationHours}
-            </Badge>
-            <ThemeToggle />
           </div>
         </header>
         <main className="flex-1 px-3 sm:px-4 md:px-6 pb-16 pt-6 md:pt-8 md:pb-8">{children}</main>

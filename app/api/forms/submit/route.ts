@@ -63,36 +63,55 @@ export async function POST(request: NextRequest) {
     const documentId = randomUUID()
     const projectId = randomUUID()
 
-    // Step 1: Create client in clients table
-    console.log('Step 1: Creating client with data:', {
-      name: clientName,
-      industry: data.industry || null,
-      monthly_recurring_revenue: Number(data.monthlyRevenue) || 0,
-      primary_goal: data.goals || null,
-      phase: 'Discovery',
-      status: 'active',
-    })
+    // Step 1: Check if client already exists, otherwise create new
+    console.log('Step 1: Checking if client exists:', clientName)
 
-    const { data: client, error: clientError } = await supabase
+    const { data: existingClient, error: checkError } = await supabase
       .from('clients')
-      .insert({
+      .select('id, name')
+      .ilike('name', clientName)
+      .maybeSingle()
+
+    if (checkError) {
+      console.error('❌ Error checking for existing client:', JSON.stringify(checkError, null, 2))
+    }
+
+    let client = existingClient
+
+    if (existingClient) {
+      console.log('✅ Found existing client:', existingClient.id)
+    } else {
+      console.log('Creating new client with data:', {
         name: clientName,
         industry: data.industry || null,
         monthly_recurring_revenue: Number(data.monthlyRevenue) || 0,
         primary_goal: data.goals || null,
         phase: 'Discovery',
         status: 'active',
-        user_id: null,  // Public form submission - no user associated
-        owner_id: null, // Public form submission - no owner yet
       })
-      .select('id')
-      .single()
 
-    if (clientError) {
-      console.error('❌ Error creating client:', JSON.stringify(clientError, null, 2))
-      // Continue anyway - we'll create an unlinked project
-    } else {
-      console.log('✅ Client created successfully:', client)
+      const { data: newClient, error: clientError } = await supabase
+        .from('clients')
+        .insert({
+          name: clientName,
+          industry: data.industry || null,
+          monthly_recurring_revenue: Number(data.monthlyRevenue) || 0,
+          primary_goal: data.goals || null,
+          phase: 'Discovery',
+          status: 'active',
+          user_id: null,  // Public form submission - no user associated
+          owner_id: null, // Public form submission - no owner yet
+        })
+        .select('id')
+        .single()
+
+      if (clientError) {
+        console.error('❌ Error creating client:', JSON.stringify(clientError, null, 2))
+        // Continue anyway - we'll create an unlinked project
+      } else {
+        console.log('✅ Client created successfully:', newClient)
+        client = newClient
+      }
     }
 
     // Step 2: Create Revenue Audit project in revos_projects table

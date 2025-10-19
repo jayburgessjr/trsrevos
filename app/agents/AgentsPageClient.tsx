@@ -79,10 +79,10 @@ export default function AgentsPageClient() {
               return (
                 <div
                   key={agent.id}
-                  className={`flex flex-col rounded-lg border p-4 shadow-sm ${
+                  className={`flex flex-col rounded-lg border-2 border-[#fd8216] p-4 shadow-sm ${
                     isSpecialized
-                      ? 'border-blue-300 bg-gradient-to-br from-blue-50 to-white'
-                      : 'border-border/80 bg-card'
+                      ? 'bg-[#004d28]'
+                      : 'bg-[#004d28]'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -134,9 +134,9 @@ export default function AgentsPageClient() {
                         {state.projectId && (() => {
                           const selectedProject = projects.find(p => p.id === state.projectId)
                           return selectedProject ? (
-                            <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-3 text-xs">
-                              <p className="font-semibold text-blue-900">Project Context:</p>
-                              <div className="mt-2 grid grid-cols-2 gap-2 text-slate-700">
+                            <div className="rounded-lg border-2 border-[#fd8216] bg-[#015e32] p-3 text-xs">
+                              <p className="font-semibold text-white">Project Context:</p>
+                              <div className="mt-2 grid grid-cols-2 gap-2 text-white/80">
                                 <div>
                                   <span className="font-medium">Client:</span> {selectedProject.client}
                                 </div>
@@ -254,9 +254,9 @@ export default function AgentsPageClient() {
                     </Button>
                   </div>
 
-                  <details className="mt-4 rounded-lg border border-dashed border-border bg-slate-50/80 p-3 text-xs text-muted-foreground">
-                    <summary className="cursor-pointer text-muted-foreground">Prompt Blueprint</summary>
-                    <p className="mt-2 whitespace-pre-wrap text-muted-foreground">{agent.prompt}</p>
+                  <details className="mt-4 rounded-lg border-2 border-dashed border-[#fd8216] bg-[#015e32] p-3 text-xs text-white/80">
+                    <summary className="cursor-pointer text-white font-medium">Prompt Blueprint</summary>
+                    <p className="mt-2 whitespace-pre-wrap text-white/70">{agent.prompt}</p>
                   </details>
                 </div>
               )
@@ -312,9 +312,7 @@ export default function AgentsPageClient() {
                 return (
                   <div
                     key={log.id}
-                    className={`rounded-lg border p-4 shadow-sm ${
-                      isSpecialized ? 'border-blue-200 bg-gradient-to-br from-blue-50/50 to-white' : 'border-border/80 bg-card'
-                    }`}
+                    className="rounded-lg border-2 border-[#fd8216] bg-[#004d28] p-4 shadow-sm"
                   >
                     <div className="flex items-center justify-between text-sm font-medium text-foreground">
                       <div className="flex items-center gap-2">
