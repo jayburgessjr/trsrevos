@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
           user_id: null,  // Public form submission - no user associated
           owner_id: null, // Public form submission - no owner yet
         })
-        .select('id')
+        .select('id, name')
         .single()
 
       if (clientError) {

@@ -95,7 +95,7 @@ export default function DashboardScreen() {
     // New granular metrics
     const activeClients = new Set(projects.filter(p => p.status === 'Active').map(p => p.client)).size
     const avgRevenuePerClient = uniqueClients > 0 ? Math.round(totalAnnualRevenue / uniqueClients) : 0
-    const planningProjects = projects.filter(p => p.status === 'Planning').length
+    const planningProjects = projects.filter(p => p.status === 'Pending').length
 
     // Document velocity (last 30 days vs previous 30 days)
     const now = new Date()
@@ -233,7 +233,7 @@ export default function DashboardScreen() {
           label="Active Projects"
           value={metrics.activeProjects}
           accent="emerald"
-          subtitle={`${metrics.planningProjects} in planning`}
+          subtitle={`${metrics.planningProjects} pending`}
           trend={15}
         />
         <MetricCard

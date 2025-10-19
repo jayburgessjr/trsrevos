@@ -14,7 +14,6 @@ export const MAIN_NAV: NavItem[] = [
   { label: 'Calculators', href: '/calculators', icon: 'Calculator' },
   { label: 'Content', href: '/content', icon: 'FileText' },
   { label: 'Resources', href: '/resources', icon: 'BookOpen' },
-  { label: 'Integrations', href: '/settings/integrations', icon: 'Cable' },
 ]
 
 export const BOTTOM_NAV_ITEMS: NavItem[] = [

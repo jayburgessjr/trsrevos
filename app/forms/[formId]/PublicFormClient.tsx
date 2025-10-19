@@ -147,8 +147,19 @@ export default function PublicFormClient({ formConfig }: PublicFormClientProps) 
 
   if (isSubmitted) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#015e32] p-4">
-        <div className="w-full max-w-md space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex min-h-screen items-center justify-center bg-[#015e32] p-4 relative">
+        {/* Background image with 30% opacity */}
+        <div className="fixed inset-0 pointer-events-none z-0">
+          <Image
+            src="/images/data-science-background.png"
+            alt=""
+            fill
+            className="object-cover opacity-30"
+            priority
+          />
+        </div>
+
+        <div className="w-full max-w-md space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative z-10">
           <div className="text-center">
             <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-full bg-[#fd8216] shadow-lg shadow-[#fd8216]/50 animate-in zoom-in duration-500">
               <Check className="h-10 w-10 text-white" strokeWidth={3} />
@@ -177,8 +188,19 @@ export default function PublicFormClient({ formConfig }: PublicFormClientProps) 
   )
 
   return (
-    <div className="min-h-screen bg-[#015e32] p-4 py-8">
-      <div className="max-w-3xl mx-auto">
+    <div className="min-h-screen bg-[#015e32] p-4 py-8 relative">
+      {/* Background image with 30% opacity */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <Image
+          src="/images/data-science-background.png"
+          alt=""
+          fill
+          className="object-cover opacity-30"
+          priority
+        />
+      </div>
+
+      <div className="max-w-3xl mx-auto relative z-10">
         {/* TRS Logo */}
         <div className="mb-8 flex justify-start">
           <Image

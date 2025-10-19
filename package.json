@@ -25,12 +25,16 @@
     "@supabase/supabase-js": "^2.75.0",
     "class-variance-authority": "0.7.0",
     "googleapis": "^162.0.0",
+    "gray-matter": "^4.0.3",
     "lucide-react": "0.460.0",
     "next": "14.2.6",
     "openai": "^6.3.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "recharts": "^3.2.1"
+    "react-markdown": "^10.1.0",
+    "recharts": "^3.2.1",
+    "rehype-highlight": "^7.0.2",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@types/node": "20.14.10",
