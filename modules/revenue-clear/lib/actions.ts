@@ -101,13 +101,36 @@ export async function convertPipelineOpportunityAction(
 
       clientId = insertedClient.id
 
-      const normalizedStage = typeof opportunity.stage === 'string' && opportunity.stage ? opportunity.stage : 'Prospect'
-      const probability = resolveProbability(normalizedStage, opportunity.probability)
-
+      // Also create a project in revos_projects table for client management integration
       const amountValue =
         typeof opportunity.amount === 'number'
           ? opportunity.amount
           : Number.parseFloat(String(opportunity.amount ?? 0)) || 0
+
+      const projectId = `project-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      const { error: projectError } = await supabase
+        .from('revos_projects')
+        .insert({
+          id: projectId,
+          name: 'Revenue Clarity Engagement',
+          client: opportunity.name,
+          type: 'Advisory',
+          team: [],
+          start_date: new Date().toISOString().split('T')[0],
+          status: 'Active',
+          revenue_target: amountValue,
+          documents: [],
+          agents: [],
+          resources: []
+        })
+
+      if (projectError) {
+        console.error('revenue-clear:onboarding.insert-project', projectError)
+        // Don't fail - client was still created successfully
+      }
+
+      const normalizedStage = typeof opportunity.stage === 'string' && opportunity.stage ? opportunity.stage : 'Prospect'
+      const probability = resolveProbability(normalizedStage, opportunity.probability)
 
       const { error: updateOpportunityError } = await supabase
         .from('opportunities')
@@ -198,6 +221,29 @@ export async function createRevenueClearClientAction(
     if (clientError || !client) {
       console.error('revenue-clear:onboarding.insert-client', clientError)
       return { status: 'error', error: 'Unable to create the client. Try again in a moment.' }
+    }
+
+    // Also create a project in revos_projects table for client management integration
+    const projectId = `project-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const { error: projectError } = await supabase
+      .from('revos_projects')
+      .insert({
+        id: projectId,
+        name: 'Revenue Clarity Engagement',
+        client: name.trim(),
+        type: 'Advisory',
+        team: [],
+        start_date: new Date().toISOString().split('T')[0],
+        status: 'Active',
+        revenue_target: dealValue,
+        documents: [],
+        agents: [],
+        resources: []
+      })
+
+    if (projectError) {
+      console.error('revenue-clear:onboarding.insert-project', projectError)
+      // Don't fail - client was still created successfully
     }
 
     const opportunityName = `${name.toString().trim()} • Revenue Clear`
