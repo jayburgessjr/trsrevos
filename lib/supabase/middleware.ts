@@ -35,20 +35,25 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protect all routes except /login and API routes
-  const isLoginPage = request.nextUrl.pathname === '/login'
-  const isApiRoute = request.nextUrl.pathname.startsWith('/api/')
+  const { pathname } = request.nextUrl
 
-  if (!user && !isLoginPage && !isApiRoute) {
+  // Protect all routes except explicitly public ones and API routes
+  const isApiRoute = pathname.startsWith('/api/')
+  const publicExactRoutes = ['/login']
+  const publicPrefixes = ['/forms']
+  const isPublicRoute =
+    publicExactRoutes.includes(pathname) || publicPrefixes.some((prefix) => pathname.startsWith(prefix))
+
+  if (!user && !isPublicRoute && !isApiRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     // Store the original URL to redirect back after login
-    url.searchParams.set('redirectTo', request.nextUrl.pathname)
+    url.searchParams.set('redirectTo', pathname)
     return NextResponse.redirect(url)
   }
 
   // If user is logged in and trying to access login page, redirect to home
-  if (user && isLoginPage) {
+  if (user && pathname === '/login') {
     const url = request.nextUrl.clone()
     url.pathname = '/'
     return NextResponse.redirect(url)
