@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { randomUUID } from 'crypto'
 
 // This API endpoint is PUBLIC - no auth required
 // It creates a document in Supabase from form submissions
@@ -54,8 +55,8 @@ export async function POST(request: NextRequest) {
     } - ${clientName}`
 
     // Generate unique IDs
-    const documentId = `form-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    const projectId = `project-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const documentId = randomUUID()
+    const projectId = randomUUID()
 
     // Step 1: Create client in clients table
     const { data: client, error: clientError } = await supabase
