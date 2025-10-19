@@ -39,18 +39,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#f6f7f5] dark:bg-[#0a0a0a] text-slate-900 dark:text-slate-100" style={{ width: '100vw', margin: 0, padding: 0 }}>
+    <div className="flex min-h-screen bg-[#015e32] dark:bg-[#004d28] text-white" style={{ width: '100vw', margin: 0, padding: 0 }}>
       <aside
         className={cn(
-          'fixed inset-y-0 z-40 w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#121212] px-4 py-6 shadow-sm transition-transform duration-200 ease-in-out md:static md:translate-x-0',
+          'fixed inset-y-0 z-40 w-64 border-r border-[#fd8216] dark:border-[#fd8216] bg-[#004d28] dark:bg-[#003320] px-4 py-6 shadow-lg transition-transform duration-200 ease-in-out md:static md:translate-x-0',
           mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
         )}
         style={{ left: 0, margin: 0 }}
       >
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">TRS</p>
-            <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">RevOS</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#fd8216]">TRS</p>
+            <p className="text-lg font-semibold text-white">RevOS</p>
           </div>
           <Button
             variant="ghost"
@@ -71,8 +71,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-slate-600 dark:text-slate-400 transition-colors',
-                  active ? 'bg-slate-900 dark:bg-slate-700 text-white shadow-sm' : 'hover:bg-slate-100 dark:hover:bg-slate-800',
+                  'flex items-center gap-3 rounded-lg px-3 py-2 font-medium transition-colors',
+                  active ? 'bg-[#fd8216] text-white shadow-lg shadow-[#fd8216]/30' : 'text-white/80 hover:bg-[#015e32] hover:text-white',
                 )}
                 onClick={() => setMobileOpen(false)}
               >
@@ -82,39 +82,39 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             )
           })}
         </nav>
-        <div className="mt-8 rounded-lg bg-slate-50 dark:bg-slate-800/50 p-4 text-xs text-slate-600 dark:text-slate-400">
-          <p className="font-semibold text-slate-900 dark:text-slate-100">Automation Pulse</p>
+        <div className="mt-8 rounded-lg bg-[#015e32] border-2 border-[#fd8216] p-4 text-xs text-white/90">
+          <p className="font-semibold text-[#fd8216]">Automation Pulse</p>
           <p className="mt-1 leading-relaxed">
             {automationLogs.length} agent runs logged. {kpis.automationHours} hours saved.
           </p>
         </div>
       </aside>
       <div className="flex w-full flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-[#121212]/90 px-3 sm:px-4 md:px-6 py-3 md:py-4 backdrop-blur">
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#fd8216] bg-[#004d28]/95 backdrop-blur px-3 sm:px-4 md:px-6 py-3 md:py-4">
           <div className="flex items-center gap-2 md:gap-3">
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden h-8 w-8"
+              className="md:hidden h-8 w-8 text-white hover:bg-[#015e32]"
               aria-label="Open navigation"
               onClick={() => setMobileOpen((value) => !value)}
             >
               <Icons.Menu className="h-4 w-4" />
             </Button>
             <div>
-              <p className="text-[10px] sm:text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">Execution Layer</p>
-              <p className="text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100">TRS-RevOS</p>
+              <p className="text-[10px] sm:text-xs uppercase tracking-widest text-[#fd8216]">Execution Layer</p>
+              <p className="text-sm sm:text-base font-semibold text-white">TRS-RevOS</p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-xs">
             <GlobalSearch />
-            <Badge variant="outline" className="hidden sm:inline-flex border-emerald-500 dark:border-emerald-600 text-emerald-700 dark:text-emerald-400">
+            <Badge variant="outline" className="hidden sm:inline-flex border-[#fd8216] text-white bg-[#015e32]">
               Active Projects • {kpis.activeProjects}
             </Badge>
-            <Badge variant="outline" className="hidden md:inline-flex border-orange-500 dark:border-orange-600 text-orange-600 dark:text-orange-400">
+            <Badge variant="outline" className="hidden md:inline-flex border-[#fd8216] text-white bg-[#015e32]">
               Deliverables • {kpis.deliverablesInProgress}
             </Badge>
-            <Badge variant="outline" className="hidden lg:inline-flex border-slate-400 dark:border-slate-600 text-slate-600 dark:text-slate-400">
+            <Badge variant="outline" className="hidden lg:inline-flex border-[#fd8216] text-white bg-[#015e32]">
               Automation Hours • {kpis.automationHours}
             </Badge>
             <ThemeToggle />
