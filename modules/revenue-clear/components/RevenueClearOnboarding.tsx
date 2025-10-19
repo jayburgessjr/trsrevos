@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useFormState, useFormStatus } from 'react-dom'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 import { PageTemplate } from '@/components/layout/PageTemplate'
 import { Button } from '@/ui/button'
@@ -101,10 +102,13 @@ export default function RevenueClearOnboarding({ pipelineOptions }: RevenueClear
     >
       {/* TRS Logo */}
       <div className="mb-8">
-        <img
+        <Image
           src="/images/trs-logo.png"
           alt="The Revenue Scientists - TRS"
+          width={400}
+          height={64}
           className="h-16 w-auto"
+          priority
         />
       </div>
 
