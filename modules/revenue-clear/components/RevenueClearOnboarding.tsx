@@ -95,10 +95,19 @@ export default function RevenueClearOnboarding({ pipelineOptions }: RevenueClear
 
   return (
     <PageTemplate
-      title="Revenue Clear onboarding"
+      title="Revenue Clarity - Future Client"
       description="Load a pipeline company or create a client to launch the guided Revenue Clear workflow."
       containerClassName="py-12"
     >
+      {/* TRS Logo */}
+      <div className="mb-8">
+        <img
+          src="/images/trs-logo.png"
+          alt="The Revenue Scientists - TRS"
+          className="h-16 w-auto"
+        />
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="h-full">
           <form action={convertAction} className="flex h-full flex-col">
