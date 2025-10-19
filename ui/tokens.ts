@@ -1,16 +1,17 @@
 export const colors = {
-  background: '#f9fafb',
-  surface: '#ffffff',
-  surfaceMuted: '#f3f4f6',
-  border: '#e5e7eb',
-  outline: '#d1d5db',
-  text: '#111827',
-  textMuted: '#6b7280',
-  accent: '#111827',
-  accentMuted: '#4b5563',
-  positive: '#16a34a',
-  caution: '#f59e0b',
-  critical: '#ef4444',
+  // TRS Brand Colors
+  background: '#015e32',        // TRS Green
+  surface: '#ffffff',           // White for cards/content
+  surfaceMuted: '#004d28',      // Darker TRS Green
+  border: '#fd8216',            // TRS Orange accent
+  outline: '#fd8216',           // TRS Orange
+  text: '#ffffff',              // White text on green backgrounds
+  textMuted: 'rgba(255, 255, 255, 0.7)',  // Semi-transparent white
+  accent: '#fd8216',            // TRS Orange
+  accentMuted: '#ff9a3c',       // Lighter orange
+  positive: '#16a34a',          // Keep green for success states
+  caution: '#f59e0b',           // Keep amber for warnings
+  critical: '#ef4444',          // Keep red for errors
 }
 
 export const spacing = {

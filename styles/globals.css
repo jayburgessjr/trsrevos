@@ -29,38 +29,38 @@ body {
 }
 
 /* =============================================================================
-   LIGHT THEME (Default)
+   LIGHT THEME (Default) - TRS Brand Colors
    ============================================================================= */
 :root,
 [data-theme="light"] {
-  /* Background Colors */
-  --color-background: 246 247 245; /* #f6f7f5 */
-  --color-foreground: 15 23 42; /* slate-900 */
+  /* Background Colors - TRS Green */
+  --color-background: 1 94 50; /* #015e32 - TRS Green */
+  --color-foreground: 255 255 255; /* white text on green */
 
-  /* Card/Surface Colors */
+  /* Card/Surface Colors - White cards on green background */
   --color-card: 255 255 255; /* white */
-  --color-card-foreground: 15 23 42; /* slate-900 */
+  --color-card-foreground: 1 94 50; /* TRS green text on white cards */
 
-  /* Primary Colors */
-  --color-primary: 37 99 235; /* blue-600 */
+  /* Primary Colors - TRS Orange */
+  --color-primary: 253 130 22; /* #fd8216 - TRS Orange */
   --color-primary-foreground: 255 255 255; /* white */
 
-  /* Secondary Colors */
-  --color-secondary: 241 245 249; /* slate-100 */
-  --color-secondary-foreground: 15 23 42; /* slate-900 */
+  /* Secondary Colors - Dark TRS Green */
+  --color-secondary: 0 77 40; /* #004d28 - Darker TRS Green */
+  --color-secondary-foreground: 255 255 255; /* white */
 
-  /* Muted Colors */
-  --color-muted: 241 245 249; /* slate-100 */
-  --color-muted-foreground: 100 116 139; /* slate-500 */
+  /* Muted Colors - Dark green for inputs/muted areas */
+  --color-muted: 0 77 40; /* #004d28 */
+  --color-muted-foreground: 248 248 246; /* #f8f8f6 - light text */
 
-  /* Accent Colors */
-  --color-accent: 241 245 249; /* slate-100 */
-  --color-accent-foreground: 15 23 42; /* slate-900 */
+  /* Accent Colors - TRS Orange */
+  --color-accent: 253 130 22; /* #fd8216 - TRS Orange */
+  --color-accent-foreground: 255 255 255; /* white */
 
   /* Border & Input */
-  --color-border: 226 232 240; /* slate-200 */
-  --color-input: 226 232 240; /* slate-200 */
-  --color-ring: 37 99 235; /* blue-600 */
+  --color-border: 253 130 22; /* #fd8216 - Orange borders */
+  --color-input: 0 77 40; /* #004d28 - Dark green inputs */
+  --color-ring: 253 130 22; /* #fd8216 - Orange focus ring */
 
   /* Destructive/Error */
   --color-destructive: 239 68 68; /* red-500 */
@@ -76,7 +76,7 @@ body {
 
   /* Semantic colors for status badges */
   --color-emerald: 16 185 129; /* emerald-500 */
-  --color-orange: 249 115 22; /* orange-500 */
+  --color-orange: 253 130 22; /* #fd8216 - TRS Orange */
   --color-blue: 59 130 246; /* blue-500 */
 
   /* Radius */
@@ -84,37 +84,37 @@ body {
 }
 
 /* =============================================================================
-   DARK THEME
+   DARK THEME - TRS Brand Colors (Darker variant)
    ============================================================================= */
 [data-theme="dark"] {
-  /* Background Colors */
-  --color-background: 10 10 10; /* #0a0a0a */
-  --color-foreground: 241 245 249; /* slate-100 */
+  /* Background Colors - Darker TRS Green */
+  --color-background: 0 47 26; /* Darker than #015e32 */
+  --color-foreground: 255 255 255; /* white */
 
-  /* Card/Surface Colors */
-  --color-card: 26 26 26; /* #1a1a1a */
-  --color-card-foreground: 241 245 249; /* slate-100 */
+  /* Card/Surface Colors - Dark green cards */
+  --color-card: 0 77 40; /* #004d28 - Dark TRS Green */
+  --color-card-foreground: 255 255 255; /* white */
 
-  /* Primary Colors */
-  --color-primary: 29 78 216; /* blue-700 */
+  /* Primary Colors - TRS Orange */
+  --color-primary: 253 130 22; /* #fd8216 - TRS Orange */
   --color-primary-foreground: 255 255 255; /* white */
 
-  /* Secondary Colors */
-  --color-secondary: 30 41 59; /* slate-800 */
-  --color-secondary-foreground: 241 245 249; /* slate-100 */
+  /* Secondary Colors - Even darker green */
+  --color-secondary: 0 38 20; /* Very dark green */
+  --color-secondary-foreground: 255 255 255; /* white */
 
   /* Muted Colors */
-  --color-muted: 30 41 59; /* slate-800 */
-  --color-muted-foreground: 148 163 184; /* slate-400 */
+  --color-muted: 0 38 20; /* Very dark green */
+  --color-muted-foreground: 248 248 246; /* #f8f8f6 */
 
-  /* Accent Colors */
-  --color-accent: 30 41 59; /* slate-800 */
-  --color-accent-foreground: 241 245 249; /* slate-100 */
+  /* Accent Colors - TRS Orange */
+  --color-accent: 253 130 22; /* #fd8216 - TRS Orange */
+  --color-accent-foreground: 255 255 255; /* white */
 
   /* Border & Input */
-  --color-border: 51 65 85; /* slate-700 */
-  --color-input: 51 65 85; /* slate-700 */
-  --color-ring: 96 165 250; /* blue-400 */
+  --color-border: 253 130 22; /* #fd8216 - Orange borders */
+  --color-input: 0 38 20; /* Very dark green inputs */
+  --color-ring: 253 130 22; /* #fd8216 - Orange focus ring */
 
   /* Destructive/Error */
   --color-destructive: 239 68 68; /* red-500 */
@@ -126,11 +126,11 @@ body {
 
   /* Warning */
   --color-warning: 251 146 60; /* orange-400 */
-  --color-warning-foreground: 15 23 42; /* slate-900 */
+  --color-warning-foreground: 255 255 255; /* white */
 
   /* Semantic colors for status badges */
   --color-emerald: 52 211 153; /* emerald-400 */
-  --color-orange: 251 146 60; /* orange-400 */
+  --color-orange: 253 130 22; /* #fd8216 - TRS Orange */
   --color-blue: 96 165 250; /* blue-400 */
 }
 
