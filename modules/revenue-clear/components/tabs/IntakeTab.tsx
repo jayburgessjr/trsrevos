@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import Image from 'next/image'
 
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
@@ -42,9 +43,21 @@ export default function IntakeTab({ client, value, status, onChange, onSummarize
 
   return (
     <div className="space-y-6">
+      {/* TRS Logo */}
+      <div className="mb-6">
+        <Image
+          src="/images/trs-logo.png"
+          alt="The Revenue Scientists - TRS"
+          width={400}
+          height={64}
+          className="h-16 w-auto"
+          priority
+        />
+      </div>
+
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-xl font-semibold text-[color:var(--color-text)]">Intake & Baseline</h3>
+          <h3 className="text-xl font-semibold text-[color:var(--color-text)]">Revenue Clarity - Future Client</h3>
           <p className="text-sm text-[color:var(--color-text-muted)]">
             Capture the client narrative, revenue picture, and growth objectives. Updates autosave into Supabase in real time.
           </p>
