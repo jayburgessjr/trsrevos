@@ -195,7 +195,7 @@ export default function PublicFormClient({ formConfig }: PublicFormClientProps) 
         <div className="mb-8 text-center">
           <div className="inline-flex items-center gap-2 mb-4 px-4 py-2 rounded-full bg-[#fd8216]/20 border-2 border-[#fd8216]">
             <Sparkles className="h-4 w-4 text-[#fd8216]" />
-            <span className="text-sm font-medium text-white">Let's Get to Revenue Engineering!</span>
+            <span className="text-sm font-medium text-white">Let&apos;s Get to Revenue Engineering!</span>
           </div>
           <h1 className="text-4xl font-bold text-white mb-2">{formConfig.title}</h1>
           <p className="text-white/90">{formConfig.description}</p>
