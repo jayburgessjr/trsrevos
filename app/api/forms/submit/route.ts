@@ -7,9 +7,26 @@ export const runtime = 'nodejs'
 // This API endpoint is PUBLIC - no auth required
 // It creates a document in Supabase from form submissions
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+const supabaseUrl =
+  process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || process.env.SUPABASE_URL?.trim() || ''
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || ''
 const defaultClientOwnerId = process.env.SUPABASE_DEFAULT_CLIENT_OWNER_ID?.trim()
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function getStringField(data: Record<string, unknown>, key: string): string | undefined {
+  const value = data[key]
+
+  if (typeof value !== 'string') {
+    return undefined
+  }
+
+  const trimmed = value.trim()
+
+  return trimmed.length > 0 ? trimmed : undefined
+}
 
 function parseCurrency(value: unknown): number {
   if (typeof value !== 'string' && typeof value !== 'number') {
@@ -25,9 +42,9 @@ function parseCurrency(value: unknown): number {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { formId, data } = body
+    const { formId, data } = body ?? {}
 
-    if (!formId || !data) {
+    if (!formId || !isRecord(data)) {
       return NextResponse.json({ error: 'Missing formId or data' }, { status: 400 })
     }
 
@@ -63,7 +80,9 @@ export async function POST(request: NextRequest) {
         : 'Proposal'
 
     // Create document title with client name
-    const clientName = data.clientName || data.companyName || 'Unknown Client'
+    const clientName =
+      getStringField(data, 'clientName') || getStringField(data, 'companyName') || 'Unknown Client'
+    const industry = getStringField(data, 'industry')
     const documentTitle = `${
       formId.includes('clarity') ? 'Clarity Intake' : 'Blueprint Intake'
     } - ${clientName}`
@@ -73,8 +92,8 @@ export async function POST(request: NextRequest) {
     const projectId = randomUUID()
 
     // Normalize revenue inputs for reuse
-    const monthlyRevenue = parseCurrency(data.monthlyRevenue)
-    const annualRevenue = parseCurrency(data.annualRevenue) || monthlyRevenue * 12
+    const monthlyRevenue = parseCurrency(data['monthlyRevenue'])
+    const annualRevenue = parseCurrency(data['annualRevenue']) || monthlyRevenue * 12
 
     // Step 1: Create client in clients table (requires an owner)
     let clientId: string | undefined
@@ -83,7 +102,7 @@ export async function POST(request: NextRequest) {
         .from('clients')
         .insert({
           name: clientName,
-          industry: data.industry || null,
+          industry: industry || null,
           arr: annualRevenue,
           phase: 'Discovery',
           status: 'active',
@@ -112,7 +131,7 @@ export async function POST(request: NextRequest) {
         client: clientName,
         type: 'Audit',
         team: [],
-        start_date: new Date().toISOString().split('T')[0],
+        start_date: new Date().toISOString(),
         status: 'Active',
         revenue_target: annualRevenue,
         documents: [],
