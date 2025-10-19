@@ -118,11 +118,18 @@ ${notes}`,
           })
       }
 
-      // Success! Reset form and navigate to client detail page
+      // Success! Show success message, reset form, and navigate
+      alert(`Client "${clientName}" created successfully! Redirecting to client page...`)
       resetForm()
       setOpen(false)
-      router.push(`/clients-revos/${encodeURIComponent(clientName)}`)
+
+      // Force refresh and navigate
       router.refresh()
+
+      // Small delay to allow router refresh to complete
+      setTimeout(() => {
+        router.push(`/clients-revos/${encodeURIComponent(clientName)}`)
+      }, 500)
     } catch (error) {
       console.error('Error creating client:', error)
       alert('Failed to create client. Please try again.')
