@@ -5,7 +5,7 @@ import PublicFormClient from './PublicFormClient'
 const publicForms = {
   'clarity-intake': {
     id: 'clarity-intake',
-    title: 'Clarity Audit - Client Intake',
+    title: 'Revenue Clarity - Future Client',
     description: 'Help us understand your revenue challenges so we can deliver maximum impact.',
     fields: [
       { name: 'clientName', label: 'Company Name', type: 'text', required: true, placeholder: 'Acme Corp' },
