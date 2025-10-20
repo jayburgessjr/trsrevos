@@ -13,7 +13,15 @@ import { Textarea } from '@/ui/textarea'
 import DocumentViewerModal from '@/components/documents/DocumentViewerModal'
 import type { Document } from '@/lib/revos/types'
 
-const documentTypes = ['Audit Report', 'Intervention Blueprint', 'Proposal', 'Enablement Asset']
+const documentTypes = [
+  'Audit Report',
+  'Intervention Blueprint',
+  'Proposal',
+  'Enablement Asset',
+  'Onboarding Resource',
+  'Framework Resource',
+  'Revenue Modeling Resource'
+]
 const documentStatuses = ['Draft', 'In Review', 'Final'] as const
 
 type FormState = {
@@ -23,15 +31,17 @@ type FormState = {
   description: string
   fileUrl: string
   tags: string
+  uploadedFile: File | null
 }
 
 const initialForm: FormState = {
   title: '',
-  projectId: '',
+  projectId: 'no-project',
   type: documentTypes[0],
   description: '',
   fileUrl: '',
   tags: '',
+  uploadedFile: null,
 }
 
 export default function DocumentsPageClient() {
@@ -45,15 +55,27 @@ export default function DocumentsPageClient() {
     return documents.filter((document) => document.status === filter)
   }, [documents, filter])
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!form.title.trim()) return
+
+    let fileContent = ''
+
+    // Read file content if a file was uploaded
+    if (form.uploadedFile) {
+      const reader = new FileReader()
+      fileContent = await new Promise((resolve) => {
+        reader.onload = () => resolve(reader.result as string)
+        reader.readAsText(form.uploadedFile!)
+      })
+    }
+
     createDocument({
       title: form.title.trim(),
-      description: form.description.trim(),
-      projectId: form.projectId || projects[0]?.id || 'unassigned',
+      description: form.uploadedFile ? fileContent : form.description.trim(),
+      projectId: form.projectId === 'no-project' ? 'unassigned' : form.projectId,
       type: form.type,
-      fileUrl: form.fileUrl || '#',
+      fileUrl: form.uploadedFile ? `#${form.uploadedFile.name}` : '#',
       tags: form.tags
         .split(',')
         .map((tag) => tag.trim())
@@ -102,9 +124,10 @@ export default function DocumentsPageClient() {
               <div className="space-y-2">
                 <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Project</label>
                 <Select
-                  value={form.projectId || projects[0]?.id || ''}
+                  value={form.projectId}
                   onChange={(event) => setForm((current) => ({ ...current, projectId: event.target.value }))}
                 >
+                  <option value="no-project">No Project (Resource)</option>
                   {projects.map((project) => (
                     <option key={project.id} value={project.id}>
                       {project.name}
@@ -126,12 +149,19 @@ export default function DocumentsPageClient() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">File URL</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Upload File (.md, .csv)</label>
                 <Input
-                  value={form.fileUrl}
-                  onChange={(event) => setForm((current) => ({ ...current, fileUrl: event.target.value }))}
-                  placeholder="https://storage.trs.dev/..."
+                  type="file"
+                  accept=".md,.csv"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0] || null
+                    setForm((current) => ({ ...current, uploadedFile: file }))
+                  }}
+                  className="cursor-pointer"
                 />
+                {form.uploadedFile && (
+                  <p className="text-xs text-emerald-600">Selected: {form.uploadedFile.name}</p>
+                )}
               </div>
               <div className="space-y-2 md:col-span-2">
                 <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tags</label>
