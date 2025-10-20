@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { getSupabaseClient } from '@/lib/supabaseClient';
 
 type AsyncState<T> = {
   data: T | null;
@@ -90,7 +90,12 @@ export function useDashboardSync<T = unknown>(userId?: string | null): Dashboard
 
     refresh();
 
-    const channel = supabase
+    const client = getSupabaseClient();
+    if (!client) {
+      return undefined;
+    }
+
+    const channel = client
       .channel(`dashboard-sync:${userId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'finance' }, () => {
         void refresh();
@@ -101,7 +106,7 @@ export function useDashboardSync<T = unknown>(userId?: string | null): Dashboard
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      client.removeChannel(channel);
     };
   }, [refresh, userId]);
 

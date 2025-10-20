@@ -4,8 +4,12 @@ import { cookies, headers } from 'next/headers'
 export function createServerClient() {
   const cookieStore = cookies()
   const headerStore = headers()
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!url || !anon) {
+    throw new Error('Supabase environment variables are not configured')
+  }
 
   return createSupabaseServerClient(url, anon, {
     cookies: {

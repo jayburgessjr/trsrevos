@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabaseClient';
+import { getSupabaseClient } from '@/lib/supabaseClient';
 
 export type AgentNotification<T = unknown> = {
   message: string;
@@ -34,7 +34,12 @@ export function useAgentNotifier<T = unknown>(options?: UseAgentNotifierOptions<
   }, []);
 
   useEffect(() => {
-    const channel = supabase
+    const client = getSupabaseClient();
+    if (!client) {
+      return;
+    }
+
+    const channel = client
       .channel(`agent-notifier:${userId ?? 'global'}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'agents' }, async (payload) => {
         try {
@@ -83,7 +88,7 @@ export function useAgentNotifier<T = unknown>(options?: UseAgentNotifierOptions<
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      client.removeChannel(channel);
     };
   }, [onNotify, userId]);
 

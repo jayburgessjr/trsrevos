@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { getSupabaseClient } from '@/lib/supabaseClient';
 
 type AsyncState<T> = {
   data: T | null;
@@ -92,7 +92,12 @@ export function useMorningBrief<T = unknown>(userId?: string | null): MorningBri
 
     fetchBrief();
 
-    const channel = supabase
+    const client = getSupabaseClient();
+    if (!client) {
+      return undefined;
+    }
+
+    const channel = client
       .channel(`morning-brief:${userId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'finance' }, () => {
         void fetchBrief();
@@ -108,7 +113,7 @@ export function useMorningBrief<T = unknown>(userId?: string | null): MorningBri
 
     return () => {
       window.clearInterval(intervalId);
-      supabase.removeChannel(channel);
+      client.removeChannel(channel);
     };
   }, [fetchBrief, userId]);
 

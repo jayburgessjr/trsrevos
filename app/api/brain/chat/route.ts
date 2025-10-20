@@ -1,14 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+const MISSING_API_KEY_RESPONSE = NextResponse.json(
+  { error: 'OpenAI API key is not configured' },
+  { status: 500 }
+)
 
 const ASSISTANT_ID = 'asst_i5vAHTLNd8ktgpUYPEEzGmDw'
 
 export async function POST(request: NextRequest) {
   try {
+    const apiKey = process.env.OPENAI_API_KEY
+    if (!apiKey) {
+      console.error('OpenAI API key missing during /api/brain/chat invocation')
+      return MISSING_API_KEY_RESPONSE
+    }
+
+    const openai = new OpenAI({
+      apiKey,
+    })
+
     const { message, threadId } = await request.json()
 
     if (!message) {

@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState } from 'react'
-import { supabase } from '@/lib/supabase-client'
+import { getSupabaseClient } from '@/lib/supabase-client'
 
 import {
   mockAgents,
@@ -282,9 +282,15 @@ function reducer(state: RevosState, action: Action): RevosState {
 export function RevosDataProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState)
   const [isLoading, setIsLoading] = useState(true)
+  const supabase = useMemo(() => getSupabaseClient(), [])
 
   // Load projects from Supabase
   const loadProjects = useCallback(async () => {
+    if (!supabase) {
+      console.warn('Supabase client is not configured; skipping project load')
+      return
+    }
+
     console.log('Loading projects from Supabase...')
     const { data: projects, error: projectsError } = await supabase
       .from('revos_projects')
@@ -314,10 +320,15 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
       console.log('Dispatching projects to state:', transformedProjects)
       dispatch({ type: 'setProjects', payload: transformedProjects })
     }
-  }, [])
+  }, [supabase])
 
   // Load documents from Supabase
   const loadDocuments = useCallback(async () => {
+    if (!supabase) {
+      console.warn('Supabase client is not configured; skipping document load')
+      return
+    }
+
     console.log('Loading documents from Supabase...')
     const { data: documents, error: documentsError } = await supabase
       .from('revos_documents')
@@ -345,10 +356,17 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
       console.log('Dispatching documents to state:', transformedDocuments)
       dispatch({ type: 'setDocuments', payload: transformedDocuments })
     }
-  }, [])
+  }, [supabase])
 
   // Load data from Supabase on mount and migrate localStorage if needed
   useEffect(() => {
+    if (!supabase) {
+      setIsLoading(false)
+      return
+    }
+
+    const client = supabase
+
     async function loadFromSupabase() {
       try {
         const hasMigrated = localStorage.getItem(MIGRATION_KEY)
@@ -369,14 +387,14 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
 
               for (const project of parsed.projects) {
                 // Check if project already exists in Supabase
-                const { data: existing } = await supabase
+                const { data: existing } = await client
                   .from('revos_projects')
                   .select('id')
                   .eq('id', project.id)
                   .single()
 
                 if (!existing) {
-                  await supabase.from('revos_projects').insert({
+                  await client.from('revos_projects').insert({
                     id: project.id,
                     name: project.name,
                     client: project.client,
@@ -409,10 +427,14 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
     }
 
     loadFromSupabase()
-  }, [loadProjects, loadDocuments])
+  }, [loadProjects, loadDocuments, supabase])
 
   // Subscribe to realtime changes for projects
   useEffect(() => {
+    if (!supabase) {
+      return
+    }
+
     const channel = supabase
       .channel('revos_projects_changes')
       .on(
@@ -433,10 +455,14 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [loadProjects])
+  }, [loadProjects, supabase])
 
   // Subscribe to realtime changes for documents
   useEffect(() => {
+    if (!supabase) {
+      return
+    }
+
     const channel = supabase
       .channel('revos_documents_changes')
       .on(
@@ -457,7 +483,7 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [loadDocuments])
+  }, [loadDocuments, supabase])
 
   // Keep localStorage as backup (but Supabase is source of truth)
   useEffect(() => {
@@ -492,6 +518,11 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'createProject', payload: input })
 
     // Save to Supabase
+    if (!supabase) {
+      console.warn('Supabase client is not configured; project stored locally only')
+      return
+    }
+
     try {
       const { error } = await supabase.from('revos_projects').insert({
         id: projectId,
@@ -515,13 +546,18 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error saving project:', error)
     }
-  }, [])
+  }, [supabase])
 
   const updateProjectStatus = useCallback(async (input: UpdateProjectStatusInput) => {
     // Optimistic update
     dispatch({ type: 'updateProjectStatus', payload: input })
 
     // Save to Supabase
+    if (!supabase) {
+      console.warn('Supabase client is not configured; project status updated locally only')
+      return
+    }
+
     try {
       const { error } = await supabase
         .from('revos_projects')
@@ -534,7 +570,7 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error updating project status:', error)
     }
-  }, [])
+  }, [supabase])
 
   const createDocument = useCallback(async (input: CreateDocumentInput) => {
     const documentId = randomId()
@@ -543,6 +579,11 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'createDocument', payload: input })
 
     // Save to Supabase
+    if (!supabase) {
+      console.warn('Supabase client is not configured; document stored locally only')
+      return
+    }
+
     try {
       const { error } = await supabase.from('revos_documents').insert({
         id: documentId,
@@ -564,13 +605,18 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error saving document:', error)
     }
-  }, [])
+  }, [supabase])
 
   const updateDocumentStatus = useCallback(async (input: UpdateDocumentStatusInput) => {
     // Optimistic update
     dispatch({ type: 'updateDocumentStatus', payload: input })
 
     // Save to Supabase
+    if (!supabase) {
+      console.warn('Supabase client is not configured; document status updated locally only')
+      return
+    }
+
     try {
       const { error } = await supabase
         .from('revos_documents')
@@ -583,13 +629,18 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error updating document status:', error)
     }
-  }, [])
+  }, [supabase])
 
   const updateDocumentProject = useCallback(async (input: { id: string; projectId: string }) => {
     // Optimistic update
     dispatch({ type: 'updateDocumentProject', payload: input })
 
     // Save to Supabase
+    if (!supabase) {
+      console.warn('Supabase client is not configured; document project updated locally only')
+      return
+    }
+
     try {
       const { error } = await supabase
         .from('revos_documents')
@@ -602,7 +653,7 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error updating document project:', error)
     }
-  }, [])
+  }, [supabase])
 
   const createContent = useCallback((input: CreateContentInput) => {
     dispatch({ type: 'createContent', payload: input })
