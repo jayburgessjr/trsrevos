@@ -9,7 +9,6 @@ import { useRevosData } from '@/app/providers/RevosDataProvider'
 import { MAIN_NAV } from '@/lib/navigation'
 import { cn } from '@/lib/utils'
 import { Button } from '@/ui/button'
-import { ThemeToggle } from '@/components/ThemeToggle'
 import GlobalSearch from '@/components/search/GlobalSearch'
 import MobileBottomNav from '@/components/layout/MobileBottomNav'
 import { PageContainer } from '@/components/layout/Page'
@@ -45,7 +44,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-neutral-50 text-slate-900">
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
       <div className="flex flex-1">
         <aside className="relative hidden w-64 flex-col border-r border-neutral-200 bg-white/80 backdrop-blur md:flex">
           <div className="flex h-16 items-center border-b border-neutral-200 px-6">
@@ -114,7 +113,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <div className="hidden md:flex">
                   <GlobalSearch />
                 </div>
-                <ThemeToggle />
                 <Button
                   onClick={handleLogout}
                   variant="outline"
@@ -129,7 +127,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <div className={cn('flex items-center justify-between gap-3 border-t border-neutral-200 py-3 md:hidden', containerClass)}>
               <GlobalSearch />
               <div className="flex items-center gap-2">
-                <ThemeToggle />
                 <Button
                   onClick={handleLogout}
                   variant="ghost"

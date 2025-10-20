@@ -19,10 +19,10 @@ type RootLayoutProps = {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" suppressHydrationWarning className="h-full">
-      <body className="flex min-h-screen flex-col bg-neutral-50 text-slate-900 antialiased">
-        <ThemeProvider defaultTheme="system" storageKey="trs-theme">
+      <body className="flex min-h-screen flex-col bg-background text-foreground antialiased">
+        <ThemeProvider defaultTheme="light" storageKey="trs-theme">
           <RevosDataProvider>
-            <Suspense fallback={<div className="min-h-screen bg-neutral-50" />}>
+            <Suspense fallback={<div className="min-h-screen bg-background text-foreground" />}>
               <AppShell>{children}</AppShell>
             </Suspense>
           </RevosDataProvider>
