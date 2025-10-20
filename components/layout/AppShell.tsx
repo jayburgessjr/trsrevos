@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import * as Icons from 'lucide-react'
@@ -8,21 +8,20 @@ import * as Icons from 'lucide-react'
 import { useRevosData } from '@/app/providers/RevosDataProvider'
 import { MAIN_NAV } from '@/lib/navigation'
 import { cn } from '@/lib/utils'
-import { Badge } from '@/ui/badge'
 import { Button } from '@/ui/button'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import GlobalSearch from '@/components/search/GlobalSearch'
 import MobileBottomNav from '@/components/layout/MobileBottomNav'
+import { PageContainer } from '@/components/layout/Page'
+
+const containerClass = 'mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8'
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? '/'
   const router = useRouter()
-  const [mobileOpen, setMobileOpen] = useState(false)
   const { projects, documents, automationLogs } = useRevosData()
 
   const handleLogout = async () => {
-    // Clear any auth tokens/session data
-    // For now, just redirect to login
     router.push('/login')
   }
 
@@ -38,7 +37,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, [projects, documents, automationLogs])
 
-  // Don't show sidebar/header on login page or public forms
   const isLoginPage = pathname === '/login'
   const isPublicFormPage = pathname.startsWith('/forms/')
 
@@ -47,88 +45,110 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#015e32] dark:bg-[#004d28] text-white" style={{ width: '100vw', margin: 0, padding: 0 }}>
-      {/* Desktop Sidebar - hidden on mobile */}
-      <aside
-        className={cn(
-          'hidden md:block fixed inset-y-0 z-40 w-64 border-r border-gray-700 dark:border-gray-700 bg-[#004d28] dark:bg-[#003320] px-4 py-6 shadow-lg md:static',
-        )}
-        style={{ left: 0, margin: 0 }}
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#fd8216]">TRS</p>
-            <p className="text-lg font-semibold text-white">RevOS</p>
+    <div className="flex min-h-screen flex-col bg-neutral-50 text-slate-900">
+      <div className="flex flex-1">
+        <aside className="relative hidden w-64 flex-col border-r border-neutral-200 bg-white/80 backdrop-blur md:flex">
+          <div className="flex h-16 items-center border-b border-neutral-200 px-6">
+            <Link href="/" className="flex flex-col">
+              <span className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-600">TRS</span>
+              <span className="text-lg font-semibold text-slate-900">RevOS</span>
+            </Link>
           </div>
-        </div>
-        <nav className="mt-6 space-y-1 text-sm">
-          {MAIN_NAV.map((item) => {
-            const Icon = (Icons[item.icon as keyof typeof Icons] ?? Icons.Circle) as Icons.LucideIcon
-            const active = pathname === item.href
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 font-medium transition-colors',
-                  active ? 'bg-[#fd8216] text-white shadow-lg shadow-[#fd8216]/30' : 'text-white/80 hover:bg-[#015e32] hover:text-white',
-                )}
-              >
-                <Icon className="h-4 w-4" aria-hidden="true" />
-                <span>{item.label}</span>
-              </Link>
-            )
-          })}
-        </nav>
-      </aside>
 
-      <div className="flex w-full flex-1 flex-col">
-        {/* Desktop Header - hidden on mobile */}
-        <header className="hidden md:flex sticky top-0 z-30 items-center justify-between border-b border-gray-700 bg-[#004d28]/95 backdrop-blur px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-widest text-[#fd8216]">Execution Layer</p>
-              <p className="text-base font-semibold text-white">TRS-RevOS</p>
+          <nav className="flex-1 overflow-y-auto px-4 py-6">
+            <ul className="space-y-1 text-sm">
+              {MAIN_NAV.map((item) => {
+                const Icon = (Icons[item.icon as keyof typeof Icons] ?? Icons.Circle) as Icons.LucideIcon
+                const active = pathname === item.href
+
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        'flex items-center gap-3 rounded-lg px-3 py-2 font-medium transition-colors',
+                        active
+                          ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200/60'
+                          : 'text-neutral-600 hover:bg-neutral-100 hover:text-slate-900',
+                      )}
+                    >
+                      <Icon className="h-4 w-4" aria-hidden="true" />
+                      <span>{item.label}</span>
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          </nav>
+
+          <div className="border-t border-neutral-200 px-6 py-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-neutral-400">Snapshot</p>
+            <dl className="mt-4 space-y-4 text-sm text-neutral-600">
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-neutral-400">Active projects</dt>
+                <dd className="mt-1 text-lg font-semibold text-slate-900">{kpis.activeProjects}</dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-neutral-400">In-flight deliverables</dt>
+                <dd className="mt-1 text-lg font-semibold text-slate-900">{kpis.deliverablesInProgress}</dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-neutral-400">Automation hours</dt>
+                <dd className="mt-1 text-lg font-semibold text-slate-900">{kpis.automationHours}</dd>
+              </div>
+            </dl>
+          </div>
+        </aside>
+
+        <div className="flex flex-1 flex-col">
+          <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white/80 backdrop-blur">
+            <div className={cn('flex h-16 items-center justify-between gap-4', containerClass)}>
+              <div className="flex items-center gap-3">
+                <Link href="/" className="flex flex-col">
+                  <span className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-600">TRS</span>
+                  <span className="text-base font-semibold text-slate-900">RevOS</span>
+                </Link>
+                <span className="hidden text-sm font-medium text-neutral-400 md:inline-flex">Execution Layer</span>
+              </div>
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="hidden md:flex">
+                  <GlobalSearch />
+                </div>
+                <ThemeToggle />
+                <Button
+                  onClick={handleLogout}
+                  variant="outline"
+                  size="sm"
+                  className="hidden border-neutral-200 text-slate-600 hover:bg-neutral-100 md:inline-flex"
+                >
+                  <Icons.LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </Button>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-3 text-xs">
-            <GlobalSearch />
-            <Button
-              onClick={handleLogout}
-              variant="outline"
-              size="sm"
-              className="border-[#fd8216] text-white hover:bg-[#fd8216] hover:text-white"
-            >
-              <Icons.LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
-          </div>
-        </header>
+            <div className={cn('flex items-center justify-between gap-3 border-t border-neutral-200 py-3 md:hidden', containerClass)}>
+              <GlobalSearch />
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+                <Button
+                  onClick={handleLogout}
+                  variant="ghost"
+                  size="icon"
+                  className="text-slate-500 hover:text-slate-900"
+                >
+                  <Icons.LogOut className="h-5 w-5" />
+                  <span className="sr-only">Logout</span>
+                </Button>
+              </div>
+            </div>
+          </header>
 
-        {/* Mobile Header - only shown on mobile */}
-        <header className="md:hidden sticky top-0 z-30 flex items-center justify-between border-b-2 border-[#fd8216] bg-[#004d28] backdrop-blur px-4 py-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#fd8216]">TRS</p>
-            <p className="text-base font-semibold text-white">RevOS</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <GlobalSearch />
-            <Button
-              onClick={handleLogout}
-              variant="ghost"
-              size="sm"
-              className="text-white hover:bg-[#fd8216] hover:text-white p-2"
-            >
-              <Icons.LogOut className="h-4 w-4" />
-            </Button>
-          </div>
-        </header>
+          <main className="flex-1">
+            <PageContainer className="pb-32 md:pb-12">{children}</PageContainer>
+          </main>
 
-        {/* Main Content - extra padding on mobile for bottom nav */}
-        <main className="flex-1 px-3 sm:px-4 md:px-6 pb-20 md:pb-8 pt-4 md:pt-8">{children}</main>
-
-        {/* Mobile Bottom Navigation */}
-        <MobileBottomNav />
+          <MobileBottomNav />
+        </div>
       </div>
     </div>
   )

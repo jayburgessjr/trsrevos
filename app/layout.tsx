@@ -18,11 +18,11 @@ type RootLayoutProps = {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en" suppressHydrationWarning style={{ margin: 0, padding: 0, width: '100%' }}>
-      <body className="min-h-screen bg-background text-foreground" style={{ margin: 0, padding: 0, width: '100%' }}>
+    <html lang="en" suppressHydrationWarning className="h-full">
+      <body className="flex min-h-screen flex-col bg-neutral-50 text-slate-900 antialiased">
         <ThemeProvider defaultTheme="system" storageKey="trs-theme">
           <RevosDataProvider>
-            <Suspense fallback={<div className="min-h-screen bg-background" />}>
+            <Suspense fallback={<div className="min-h-screen bg-neutral-50" />}>
               <AppShell>{children}</AppShell>
             </Suspense>
           </RevosDataProvider>
