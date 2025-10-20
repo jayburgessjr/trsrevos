@@ -1,20 +1,23 @@
-import { createClient } from '@supabase/supabase-js';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: { persistSession: false }
-});
+function ensureSupabaseEnv() {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Supabase environment variables are not configured')
+  }
+}
 
 async function callEdge<T>(name: string, body?: any): Promise<T> {
+  ensureSupabaseEnv()
+
   const res = await fetch(`${supabaseUrl}/functions/v1/${name}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      apikey: supabaseAnonKey
+      apikey: supabaseAnonKey!,
     },
-    body: body ? JSON.stringify(body) : undefined
-  });
+    body: body ? JSON.stringify(body) : undefined,
+  })
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || `Edge call failed: ${name}`);
   return data;

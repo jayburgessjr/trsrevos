@@ -6,11 +6,8 @@ import type { PostgrestError } from '@supabase/supabase-js'
 import { listClients } from '@/core/clients/store'
 import type { Client } from '@/core/clients/types'
 import { reportClientError } from '@/lib/telemetry'
-import { supabase } from '@/lib/supabaseClient'
-
-const HAS_SUPABASE_CREDENTIALS = Boolean(
-  process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-)
+import { getSupabaseClient, hasSupabaseCredentials } from '@/lib/supabaseClient'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type WorkspaceClient = {
   id: string
@@ -84,8 +81,8 @@ const mapSupabaseRow = (row: SupabaseClientRow): WorkspaceClient => {
   }
 }
 
-async function fetchWorkspaceClients(limit: number): Promise<WorkspaceClient[]> {
-  const { data, error } = await supabase
+async function fetchWorkspaceClients(client: SupabaseClient, limit: number): Promise<WorkspaceClient[]> {
+  const { data, error } = await client
     .from('clients')
     .select(
       'id, name, status, phase, owner_id, arr, health, churn_risk, qbr_date, is_expansion, owner:users!clients_owner_id_fkey(name)',
@@ -106,28 +103,41 @@ export function useWorkspaceClients({
 }: UseWorkspaceClientsOptions = {}): UseWorkspaceClientsState {
   const fallbackClients = useMemo(() => listClients().map(mapStoreClient), [])
   const lastGoodClientsRef = useRef<WorkspaceClient[] | null>(
-    HAS_SUPABASE_CREDENTIALS ? null : fallbackClients,
+    hasSupabaseCredentials ? null : fallbackClients,
   )
 
   const [state, setState] = useState<UseWorkspaceClientsState>({
-    clients: HAS_SUPABASE_CREDENTIALS ? [] : fallbackClients,
-    isLoading: HAS_SUPABASE_CREDENTIALS,
+    clients: hasSupabaseCredentials ? [] : fallbackClients,
+    isLoading: hasSupabaseCredentials,
     error: null,
-    usingFallback: !HAS_SUPABASE_CREDENTIALS,
+    usingFallback: !hasSupabaseCredentials,
   })
 
   useEffect(() => {
-    if (!HAS_SUPABASE_CREDENTIALS) {
+    if (!hasSupabaseCredentials) {
       return
     }
 
     let aborted = false
+    const client = getSupabaseClient()
+
+    if (!client) {
+      setState((prev) => ({
+        ...prev,
+        isLoading: false,
+        usingFallback: true,
+        clients: fallbackClients,
+      }))
+      return
+    }
+
+    const supabaseClient = client
 
     async function load() {
       setState((prev) => ({ ...prev, isLoading: true }))
 
       try {
-        const clients = await fetchWorkspaceClients(limit)
+        const clients = await fetchWorkspaceClients(supabaseClient, limit)
         if (aborted) {
           return
         }
