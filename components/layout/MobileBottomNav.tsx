@@ -37,8 +37,8 @@ export default function MobileBottomNav() {
   const pathname = usePathname() ?? '/'
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#004d28] border-t-2 border-[#fd8216] md:hidden safe-area-bottom">
-      <div className="grid grid-cols-5 h-16">
+    <nav className="safe-area-bottom fixed bottom-0 left-0 right-0 z-50 border-t border-neutral-200 bg-white/90 backdrop-blur md:hidden">
+      <div className="grid h-16 grid-cols-5">
         {mobileNavItems.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
@@ -48,14 +48,14 @@ export default function MobileBottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex flex-col items-center justify-center gap-1 transition-all',
+                'flex flex-col items-center justify-center gap-1 text-xs font-medium transition-colors',
                 isActive
-                  ? 'bg-[#015e32] text-[#fd8216]'
-                  : 'text-white/70 hover:text-white hover:bg-[#015e32]/50'
+                  ? 'text-emerald-600'
+                  : 'text-neutral-500 hover:text-slate-900'
               )}
             >
-              <Icon className={cn('h-5 w-5', isActive && 'scale-110')} />
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <Icon className={cn('h-5 w-5', isActive ? 'text-emerald-600' : 'text-neutral-400')} />
+              <span className="text-[10px]">{item.label}</span>
             </Link>
           )
         })}
