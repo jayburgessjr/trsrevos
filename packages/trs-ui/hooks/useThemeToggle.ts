@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import type { ThemeMode } from '../theme/theme';
 
 const THEME_STORAGE_KEY = 'trs-ui-theme';
@@ -113,7 +113,7 @@ export function ThemeGuard({ children }: { children: React.ReactNode }) {
     return null;
   }
 
-  return <>{children}</>;
+  return React.createElement(React.Fragment, null, children);
 }
 
 export default useThemeToggle;

@@ -94,7 +94,7 @@ export function useScrollMotion<T extends HTMLElement = HTMLDivElement>(
     } = options;
 
     // Get animation preset
-    const preset = animations[animation];
+    const preset = animations[animation] as any;
     if (!preset) {
       console.warn(`Animation preset "${animation}" not found`);
       return;
@@ -110,10 +110,26 @@ export function useScrollMotion<T extends HTMLElement = HTMLDivElement>(
     const targets = staggerConfig ? element.children : element;
 
     // Create animation
-    animationRef.current = gsap.fromTo(
-      targets,
-      preset.from,
-      {
+    // Check if preset has 'from' property (for fromTo animations)
+    if (preset.from) {
+      animationRef.current = gsap.fromTo(
+        targets,
+        preset.from,
+        {
+          ...preset.to,
+          delay,
+          stagger: staggerConfig,
+          scrollTrigger: {
+            trigger: trigger || element,
+            ...scrollConfig,
+            onEnter: onStart,
+            onComplete,
+          },
+        }
+      );
+    } else {
+      // For animations without 'from' (like hover effects), use .to()
+      animationRef.current = gsap.to(targets, {
         ...preset.to,
         delay,
         stagger: staggerConfig,
@@ -123,8 +139,8 @@ export function useScrollMotion<T extends HTMLElement = HTMLDivElement>(
           onEnter: onStart,
           onComplete,
         },
-      }
-    );
+      });
+    }
 
     // Cleanup
     return () => {

@@ -130,45 +130,6 @@ export {
 } from './animations/gsap.config';
 
 // ========================================
-// Default Export
+// Note: All exports are named exports.
+// Import like: import { theme, TRSLayout } from '@trs/ui'
 // ========================================
-export default {
-  // Theme
-  theme,
-  darkTheme,
-  lightTheme,
-
-  // Layout
-  TRSLayout,
-  PageHeader,
-
-  // Navigation
-  Sidebar,
-  defaultNavItems,
-
-  // Metrics
-  MetricCard,
-  MetricCardGrid,
-
-  // Dashboard
-  DashboardGrid,
-  DashboardCard,
-  ChartPlaceholder,
-  ChartCard,
-
-  // Hooks
-  useThemeToggle,
-  useScrollMotion,
-  useStaggerChildren,
-  useFadeIn,
-  useSlideIn,
-  useCountUp,
-
-  // Animation
-  gsap,
-  ScrollTrigger,
-
-  // Config
-  trsUITailwindExtend,
-  generateThemeCSS,
-};
