@@ -199,157 +199,168 @@ export default function CalculatorsPageClient() {
   )
 
   return (
-    <div className="space-y-8">
-      {!activeCalculator ? (
-        <section className="grid gap-4 lg:grid-cols-3">
-          <Card className="lg:col-span-2">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-semibold">Revenue Calculators</CardTitle>
-              <CardDescription>Client-facing and internal calculators for revenue science</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 pt-4 md:grid-cols-2">
-              {filteredCalculators.map((calc) => {
-                const isForm = calc.category === 'forms'
-                const formUrl = isForm ? `/forms/${calc.id.replace('-form', '')}` : null
+    <div className="min-h-screen bg-white text-black">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4">
+        <header className="space-y-1">
+          <h1 className="text-2xl font-semibold text-black">Calculators</h1>
+          <p className="text-sm text-gray-600">
+            Forecast revenue impact, share ROI stories, and prep client forms from one toolkit.
+          </p>
+        </header>
 
-                const cardContent = (
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-foreground">{calc.name}</p>
-                        {isForm && <ExternalLink className="h-3 w-3 text-muted-foreground" />}
+        <div className="space-y-8">
+          {!activeCalculator ? (
+            <section className="grid gap-4 lg:grid-cols-3">
+              <Card className="lg:col-span-2">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg font-semibold">Revenue Calculators</CardTitle>
+                  <CardDescription>Client-facing and internal calculators for revenue science</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4 pt-4 md:grid-cols-2">
+                  {filteredCalculators.map((calc) => {
+                    const isForm = calc.category === 'forms'
+                    const formUrl = isForm ? `/forms/${calc.id.replace('-form', '')}` : null
+
+                    const cardContent = (
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-foreground">{calc.name}</p>
+                            {isForm && <ExternalLink className="h-3 w-3 text-muted-foreground" />}
+                          </div>
+                          <p className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">{calc.category}</p>
+                        </div>
+                        <Badge
+                          variant="outline"
+                          className={
+                            calc.category === 'client-facing'
+                              ? 'border-emerald-500 text-emerald-600'
+                              : calc.category === 'forms'
+                              ? 'border-[#fd8216] text-[#fd8216]'
+                              : 'border-blue-500 text-blue-600'
+                          }
+                        >
+                          {calc.category === 'client-facing' ? 'Client' : calc.category === 'forms' ? 'Form' : 'Internal'}
+                        </Badge>
                       </div>
-                      <p className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">{calc.category}</p>
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className={
-                        calc.category === 'client-facing'
-                          ? 'border-emerald-500 text-emerald-600'
-                          : calc.category === 'forms'
-                          ? 'border-[#fd8216] text-[#fd8216]'
-                          : 'border-blue-500 text-blue-600'
-                      }
-                    >
-                      {calc.category === 'client-facing' ? 'Client' : calc.category === 'forms' ? 'Form' : 'Internal'}
-                    </Badge>
-                  </div>
-                )
+                    )
 
-                return isForm && formUrl ? (
-                  <Link
-                    key={calc.id}
-                    href={formUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex cursor-pointer flex-col rounded-lg border border-border bg-card p-4 shadow-sm transition-all hover:border-[#fd8216] hover:shadow-md"
-                  >
-                    {cardContent}
-                    <p className="mt-2 text-sm text-muted-foreground">{calc.description}</p>
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      <span className="font-medium">Used in:</span> {calc.stages}
-                    </div>
-                  </Link>
-                ) : (
+                    return isForm && formUrl ? (
+                      <Link
+                        key={calc.id}
+                        href={formUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex cursor-pointer flex-col rounded-lg border border-border bg-card p-4 shadow-sm transition-all hover:border-[#fd8216] hover:shadow-md"
+                      >
+                        {cardContent}
+                        <p className="mt-2 text-sm text-muted-foreground">{calc.description}</p>
+                        <div className="mt-2 text-xs text-muted-foreground">
+                          <span className="font-medium">Used in:</span> {calc.stages}
+                        </div>
+                      </Link>
+                    ) : (
+                      <div
+                        key={calc.id}
+                        className="flex cursor-pointer flex-col rounded-lg border border-border bg-card p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
+                        onClick={() => setActiveCalculator(calc.id)}
+                      >
+                        {cardContent}
+                        <p className="mt-2 text-sm text-muted-foreground">{calc.description}</p>
+                        <div className="mt-2 text-xs text-muted-foreground">
+                          <span className="font-medium">Used in:</span> {calc.stages}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </CardContent>
+              </Card>
+
+              <Card className="border-border">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg font-semibold">Category Filter</CardTitle>
+                  <CardDescription>Filter calculators by category</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3 pt-4">
                   <div
-                    key={calc.id}
-                    className="flex cursor-pointer flex-col rounded-lg border border-border bg-card p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
-                    onClick={() => setActiveCalculator(calc.id)}
+                    className={`cursor-pointer rounded-lg border-2 p-3 transition-all ${
+                      category === 'all'
+                        ? 'border-[#fd8216] bg-[#015e32] text-white'
+                        : 'border-[#fd8216] bg-[#004d28] hover:bg-[#015e32]'
+                    }`}
+                    onClick={() => setCategory('all')}
                   >
-                    {cardContent}
-                    <p className="mt-2 text-sm text-muted-foreground">{calc.description}</p>
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      <span className="font-medium">Used in:</span> {calc.stages}
-                    </div>
+                    <p className={`text-sm font-medium ${category === 'all' ? 'text-white' : 'text-white'}`}>All Calculators</p>
+                    <p className={`mt-1 text-xs ${category === 'all' ? 'text-white/80' : 'text-white/70'}`}>{calculators.length} calculators</p>
                   </div>
-                )
-              })}
-            </CardContent>
-          </Card>
 
-          <Card className="border-border">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-semibold">Category Filter</CardTitle>
-              <CardDescription>Filter calculators by category</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 pt-4">
-              <div
-                className={`cursor-pointer rounded-lg border-2 p-3 transition-all ${
-                  category === 'all'
-                    ? 'border-[#fd8216] bg-[#015e32] text-white'
-                    : 'border-[#fd8216] bg-[#004d28] hover:bg-[#015e32]'
-                }`}
-                onClick={() => setCategory('all')}
-              >
-                <p className={`text-sm font-medium ${category === 'all' ? 'text-white' : 'text-white'}`}>All Calculators</p>
-                <p className={`mt-1 text-xs ${category === 'all' ? 'text-white/80' : 'text-white/70'}`}>{calculators.length} calculators</p>
-              </div>
+                  <div
+                    className={`cursor-pointer rounded-lg border-2 p-3 transition-all ${
+                      category === 'client-facing'
+                        ? 'border-[#fd8216] bg-[#015e32] text-white'
+                        : 'border-[#fd8216] bg-[#004d28] hover:bg-[#015e32]'
+                    }`}
+                    onClick={() => setCategory('client-facing')}
+                  >
+                    <p className={`text-sm font-medium ${category === 'client-facing' ? 'text-white' : 'text-white'}`}>Client-Facing</p>
+                    <p className={`mt-1 text-xs ${category === 'client-facing' ? 'text-white/80' : 'text-white/70'}`}>
+                      {calculators.filter((c) => c.category === 'client-facing').length} calculators
+                    </p>
+                  </div>
 
-              <div
-                className={`cursor-pointer rounded-lg border-2 p-3 transition-all ${
-                  category === 'client-facing'
-                    ? 'border-[#fd8216] bg-[#015e32] text-white'
-                    : 'border-[#fd8216] bg-[#004d28] hover:bg-[#015e32]'
-                }`}
-                onClick={() => setCategory('client-facing')}
-              >
-                <p className={`text-sm font-medium ${category === 'client-facing' ? 'text-white' : 'text-white'}`}>Client-Facing</p>
-                <p className={`mt-1 text-xs ${category === 'client-facing' ? 'text-white/80' : 'text-white/70'}`}>
-                  {calculators.filter((c) => c.category === 'client-facing').length} calculators
-                </p>
-              </div>
+                  <div
+                    className={`cursor-pointer rounded-lg border-2 p-3 transition-all ${
+                      category === 'internal'
+                        ? 'border-[#fd8216] bg-[#015e32] text-white'
+                        : 'border-[#fd8216] bg-[#004d28] hover:bg-[#015e32]'
+                    }`}
+                    onClick={() => setCategory('internal')}
+                  >
+                    <p className={`text-sm font-medium ${category === 'internal' ? 'text-white' : 'text-white'}`}>Internal TRS</p>
+                    <p className={`mt-1 text-xs ${category === 'internal' ? 'text-white/80' : 'text-white/70'}`}>
+                      {calculators.filter((c) => c.category === 'internal').length} calculators
+                    </p>
+                  </div>
 
-              <div
-                className={`cursor-pointer rounded-lg border-2 p-3 transition-all ${
-                  category === 'internal'
-                    ? 'border-[#fd8216] bg-[#015e32] text-white'
-                    : 'border-[#fd8216] bg-[#004d28] hover:bg-[#015e32]'
-                }`}
-                onClick={() => setCategory('internal')}
+                  <div
+                    className={`cursor-pointer rounded-lg border-2 p-3 transition-all ${
+                      category === 'forms'
+                        ? 'border-[#fd8216] bg-[#015e32] text-white'
+                        : 'border-[#fd8216] bg-[#004d28] hover:bg-[#015e32]'
+                    }`}
+                    onClick={() => setCategory('forms')}
+                  >
+                    <p className={`text-sm font-medium ${category === 'forms' ? 'text-white' : 'text-white'}`}>Client Forms</p>
+                    <p className={`mt-1 text-xs ${category === 'forms' ? 'text-white/80' : 'text-white/70'}`}>
+                      {calculators.filter((c) => c.category === 'forms').length} forms
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
+          ) : (
+            <div className="space-y-6">
+              <Button
+                variant="outline"
+                onClick={() => setActiveCalculator(null)}
+                className="w-fit"
               >
-                <p className={`text-sm font-medium ${category === 'internal' ? 'text-white' : 'text-white'}`}>Internal TRS</p>
-                <p className={`mt-1 text-xs ${category === 'internal' ? 'text-white/80' : 'text-white/70'}`}>
-                  {calculators.filter((c) => c.category === 'internal').length} calculators
-                </p>
-              </div>
-
-              <div
-                className={`cursor-pointer rounded-lg border-2 p-3 transition-all ${
-                  category === 'forms'
-                    ? 'border-[#fd8216] bg-[#015e32] text-white'
-                    : 'border-[#fd8216] bg-[#004d28] hover:bg-[#015e32]'
-                }`}
-                onClick={() => setCategory('forms')}
-              >
-                <p className={`text-sm font-medium ${category === 'forms' ? 'text-white' : 'text-white'}`}>Client Forms</p>
-                <p className={`mt-1 text-xs ${category === 'forms' ? 'text-white/80' : 'text-white/70'}`}>
-                  {calculators.filter((c) => c.category === 'forms').length} forms
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-      ) : (
-        <div>
-          <Button
-            variant="outline"
-            onClick={() => setActiveCalculator(null)}
-            className="mb-4"
-          >
-            ← Back to All Calculators
-          </Button>
-          {activeCalculator === 'audit-roi' && <AuditROICalculator />}
-          {activeCalculator === 'pricing-scenario' && <PricingScenarioCalculator />}
-          {activeCalculator === 'activation-funnel' && <ActivationFunnelCalculator />}
-          {activeCalculator === 'retention-ltv' && <RetentionLTVCalculator />}
-          {activeCalculator === 'cac-payback' && <CACPaybackCalculator />}
-          {activeCalculator === 'offer-roi' && <OfferROICalculator />}
-          {activeCalculator === 'revenue-planner' && <RevenuePlannerCalculator />}
-          {activeCalculator === 'volume-targets' && <VolumeTargetsCalculator />}
-          {activeCalculator === 'revenueos-recognition' && <RevenueOSRecognitionCalculator />}
-          {activeCalculator === 'compensation' && <CompensationCalculator />}
+                ← Back to All Calculators
+              </Button>
+              {activeCalculator === 'audit-roi' && <AuditROICalculator />}
+              {activeCalculator === 'pricing-scenario' && <PricingScenarioCalculator />}
+              {activeCalculator === 'activation-funnel' && <ActivationFunnelCalculator />}
+              {activeCalculator === 'retention-ltv' && <RetentionLTVCalculator />}
+              {activeCalculator === 'cac-payback' && <CACPaybackCalculator />}
+              {activeCalculator === 'offer-roi' && <OfferROICalculator />}
+              {activeCalculator === 'revenue-planner' && <RevenuePlannerCalculator />}
+              {activeCalculator === 'volume-targets' && <VolumeTargetsCalculator />}
+              {activeCalculator === 'revenueos-recognition' && <RevenueOSRecognitionCalculator />}
+              {activeCalculator === 'compensation' && <CompensationCalculator />}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   )
 }
