@@ -199,11 +199,11 @@ export default function CalculatorsPageClient() {
   )
 
   return (
-    <div className="min-h-screen bg-white text-black">
+    <div className="min-h-screen bg-[#004d28] text-white">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4">
         <header className="space-y-1">
-          <h1 className="text-2xl font-semibold text-black">Calculators</h1>
-          <p className="text-sm text-gray-600">
+          <h1 className="text-2xl font-semibold text-white">Calculators</h1>
+          <p className="text-sm text-white/80">
             Forecast revenue impact, share ROI stories, and prep client forms from one toolkit.
           </p>
         </header>
@@ -211,35 +211,35 @@ export default function CalculatorsPageClient() {
         <div className="space-y-8">
           {!activeCalculator ? (
             <section className="grid gap-4 lg:grid-cols-3">
-              <Card className="lg:col-span-2">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg font-semibold">Revenue Calculators</CardTitle>
-                  <CardDescription>Client-facing and internal calculators for revenue science</CardDescription>
+              <Card className="lg:col-span-2 border-[#fd8216] bg-[#015e32] text-white">
+                <CardHeader className="pb-4 text-white">
+                  <CardTitle className="text-lg font-semibold text-white">Revenue Calculators</CardTitle>
+                  <CardDescription className="text-white/80">Client-facing and internal calculators for revenue science</CardDescription>
                 </CardHeader>
-                <CardContent className="grid gap-4 pt-4 md:grid-cols-2">
+                <CardContent className="grid gap-4 pt-4 text-white md:grid-cols-2">
                   {filteredCalculators.map((calc) => {
                     const isForm = calc.category === 'forms'
                     const formUrl = isForm ? `/forms/${calc.id.replace('-form', '')}` : null
 
                     const cardContent = (
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold text-foreground">{calc.name}</p>
-                            {isForm && <ExternalLink className="h-3 w-3 text-muted-foreground" />}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-semibold text-white">{calc.name}</p>
+                              {isForm && <ExternalLink className="h-3 w-3 text-white/70" />}
+                            </div>
+                            <p className="mt-1 text-xs uppercase tracking-widest text-white/70">{calc.category}</p>
                           </div>
-                          <p className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">{calc.category}</p>
-                        </div>
-                        <Badge
-                          variant="outline"
-                          className={
-                            calc.category === 'client-facing'
-                              ? 'border-emerald-500 text-emerald-600'
-                              : calc.category === 'forms'
-                              ? 'border-[#fd8216] text-[#fd8216]'
-                              : 'border-blue-500 text-blue-600'
-                          }
-                        >
+                          <Badge
+                            variant="outline"
+                            className={
+                              calc.category === 'client-facing'
+                                ? 'border-emerald-200 text-emerald-100'
+                                : calc.category === 'forms'
+                                ? 'border-[#fbc79d] text-[#fbc79d]'
+                                : 'border-blue-200 text-blue-100'
+                            }
+                          >
                           {calc.category === 'client-facing' ? 'Client' : calc.category === 'forms' ? 'Form' : 'Internal'}
                         </Badge>
                       </div>
@@ -251,23 +251,23 @@ export default function CalculatorsPageClient() {
                         href={formUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex cursor-pointer flex-col rounded-lg border border-border bg-card p-4 shadow-sm transition-all hover:border-[#fd8216] hover:shadow-md"
+                        className="flex cursor-pointer flex-col rounded-lg border border-[#fd8216] bg-[#004d28] p-4 text-white shadow-sm transition-all hover:bg-[#015e32] hover:shadow-md"
                       >
                         {cardContent}
-                        <p className="mt-2 text-sm text-muted-foreground">{calc.description}</p>
-                        <div className="mt-2 text-xs text-muted-foreground">
+                        <p className="mt-2 text-sm text-white/80">{calc.description}</p>
+                        <div className="mt-2 text-xs text-white/70">
                           <span className="font-medium">Used in:</span> {calc.stages}
                         </div>
                       </Link>
                     ) : (
                       <div
                         key={calc.id}
-                        className="flex cursor-pointer flex-col rounded-lg border border-border bg-card p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
+                        className="flex cursor-pointer flex-col rounded-lg border border-[#fd8216] bg-[#004d28] p-4 text-white shadow-sm transition-all hover:bg-[#015e32] hover:shadow-md"
                         onClick={() => setActiveCalculator(calc.id)}
                       >
                         {cardContent}
-                        <p className="mt-2 text-sm text-muted-foreground">{calc.description}</p>
-                        <div className="mt-2 text-xs text-muted-foreground">
+                        <p className="mt-2 text-sm text-white/80">{calc.description}</p>
+                        <div className="mt-2 text-xs text-white/70">
                           <span className="font-medium">Used in:</span> {calc.stages}
                         </div>
                       </div>
@@ -276,10 +276,10 @@ export default function CalculatorsPageClient() {
                 </CardContent>
               </Card>
 
-              <Card className="border-border">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg font-semibold">Category Filter</CardTitle>
-                  <CardDescription>Filter calculators by category</CardDescription>
+              <Card className="border-[#fd8216] bg-[#015e32] text-white">
+                <CardHeader className="pb-4 text-white">
+                  <CardTitle className="text-lg font-semibold text-white">Category Filter</CardTitle>
+                  <CardDescription className="text-white/80">Filter calculators by category</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 pt-4">
                   <div
@@ -343,7 +343,7 @@ export default function CalculatorsPageClient() {
               <Button
                 variant="outline"
                 onClick={() => setActiveCalculator(null)}
-                className="w-fit"
+                className="w-fit border-white/40 text-white hover:bg-white/10"
               >
                 ← Back to All Calculators
               </Button>
@@ -383,6 +383,9 @@ function AuditROICalculator() {
 
   const [results, setResults] = useState<any>(null)
 
+  const inputClassName =
+    'border-[#1b8f50] bg-[#013c21] text-white placeholder:text-white/50 focus:border-blue-200 focus:ring-blue-200'
+
   const calculate = () => {
     // Price uplift
     const deltaP = inputs.priceIncrease / 100
@@ -415,165 +418,175 @@ function AuditROICalculator() {
 
   return (
     <section className="grid gap-4 lg:grid-cols-3">
-      <Card className="lg:col-span-2">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-semibold">Audit ROI Quick Estimator</CardTitle>
-          <CardDescription>Prove the $3,500 audit pays for itself fast</CardDescription>
+      <Card className="lg:col-span-2 border-[#fd8216] bg-[#015e32] text-white">
+        <CardHeader className="pb-4 text-white">
+          <CardTitle className="text-lg font-semibold text-white">Audit ROI Quick Estimator</CardTitle>
+          <CardDescription className="text-white/80">Prove the $3,500 audit pays for itself fast</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 pt-4">
+        <CardContent className="space-y-4 pt-4 text-white">
           <div className="space-y-2">
-            <Label>ARPA/ASP ($)</Label>
+            <Label className="text-white/80">ARPA/ASP ($)</Label>
             <Input
               type="number"
               value={inputs.arpa}
               onChange={(e) => setInputs({ ...inputs, arpa: Number(e.target.value) })}
+              className={inputClassName}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Monthly Leads</Label>
+            <Label className="text-white/80">Monthly Leads</Label>
             <Input
               type="number"
               value={inputs.monthlyLeads}
               onChange={(e) => setInputs({ ...inputs, monthlyLeads: Number(e.target.value) })}
+              className={inputClassName}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Current Close %</Label>
+            <Label className="text-white/80">Current Close %</Label>
             <Input
               type="number"
               step="0.1"
               value={inputs.currentClose}
               onChange={(e) => setInputs({ ...inputs, currentClose: Number(e.target.value) })}
+              className={inputClassName}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Current Churn % (monthly)</Label>
+            <Label className="text-white/80">Current Churn % (monthly)</Label>
             <Input
               type="number"
               step="0.1"
               value={inputs.currentChurn}
               onChange={(e) => setInputs({ ...inputs, currentChurn: Number(e.target.value) })}
+              className={inputClassName}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Traffic/Lead Volume</Label>
+            <Label className="text-white/80">Traffic/Lead Volume</Label>
             <Input
               type="number"
               value={inputs.traffic}
               onChange={(e) => setInputs({ ...inputs, traffic: Number(e.target.value) })}
+              className={inputClassName}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Gross Margin %</Label>
+            <Label className="text-white/80">Gross Margin %</Label>
             <Input
               type="number"
               value={inputs.grossMargin}
               onChange={(e) => setInputs({ ...inputs, grossMargin: Number(e.target.value) })}
+              className={inputClassName}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Proposed Price Increase %</Label>
+            <Label className="text-white/80">Proposed Price Increase %</Label>
             <Input
               type="number"
               step="0.1"
               value={inputs.priceIncrease}
               onChange={(e) => setInputs({ ...inputs, priceIncrease: Number(e.target.value) })}
+              className={inputClassName}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Proposed Activation Increase (pp)</Label>
+            <Label className="text-white/80">Proposed Activation Increase (pp)</Label>
             <Input
               type="number"
               step="0.1"
               value={inputs.activationIncrease}
               onChange={(e) => setInputs({ ...inputs, activationIncrease: Number(e.target.value) })}
+              className={inputClassName}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Proposed Churn Reduction (pp)</Label>
+            <Label className="text-white/80">Proposed Churn Reduction (pp)</Label>
             <Input
               type="number"
               step="0.1"
               value={inputs.churnReduction}
               onChange={(e) => setInputs({ ...inputs, churnReduction: Number(e.target.value) })}
+              className={inputClassName}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Audit Cost ($)</Label>
+            <Label className="text-white/80">Audit Cost ($)</Label>
             <Input
               type="number"
               value={inputs.auditCost}
               onChange={(e) => setInputs({ ...inputs, auditCost: Number(e.target.value) })}
+              className={inputClassName}
             />
           </div>
 
-          <Button onClick={calculate} className="w-full">
+          <Button onClick={calculate} className="w-full bg-[#fd8216] text-white hover:bg-[#f27403]">
             Calculate ROI
           </Button>
         </CardContent>
       </Card>
 
-      <Card className="border-border">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-semibold">Results</CardTitle>
-          <CardDescription>Calculate to see ROI breakdown</CardDescription>
+      <Card className="border-[#fd8216] bg-[#015e32] text-white">
+        <CardHeader className="pb-4 text-white">
+          <CardTitle className="text-lg font-semibold text-white">Results</CardTitle>
+          <CardDescription className="text-white/80">Calculate to see ROI breakdown</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3 pt-4">
+        <CardContent className="space-y-3 pt-4 text-white">
           {results ? (
             <>
-              <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
-                <p className="text-xs uppercase tracking-widest text-muted-foreground">Price Uplift</p>
-                <p className="mt-1 text-2xl font-semibold text-foreground">
+              <div className="rounded-lg border border-[#fd8216] bg-[#004d28] p-3 shadow-sm">
+                <p className="text-xs uppercase tracking-widest text-white/70">Price Uplift</p>
+                <p className="mt-1 text-2xl font-semibold text-white">
                   ${results.priceUplift.toLocaleString()}/mo
                 </p>
               </div>
 
-              <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
-                <p className="text-xs uppercase tracking-widest text-muted-foreground">Activation Uplift</p>
-                <p className="mt-1 text-2xl font-semibold text-foreground">
+              <div className="rounded-lg border border-[#fd8216] bg-[#004d28] p-3 shadow-sm">
+                <p className="text-xs uppercase tracking-widest text-white/70">Activation Uplift</p>
+                <p className="mt-1 text-2xl font-semibold text-white">
                   ${results.activationUplift.toLocaleString()}/mo
                 </p>
               </div>
 
-              <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
-                <p className="text-xs uppercase tracking-widest text-muted-foreground">Churn Uplift</p>
-                <p className="mt-1 text-2xl font-semibold text-foreground">
+              <div className="rounded-lg border border-[#fd8216] bg-[#004d28] p-3 shadow-sm">
+                <p className="text-xs uppercase tracking-widest text-white/70">Churn Uplift</p>
+                <p className="mt-1 text-2xl font-semibold text-white">
                   ${results.churnUplift.toLocaleString()}/mo
                 </p>
               </div>
 
-              <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
-                <p className="text-xs uppercase tracking-widest text-muted-foreground">Total Monthly Uplift</p>
-                <p className="mt-1 text-2xl font-semibold text-foreground">
+              <div className="rounded-lg border border-[#fd8216] bg-[#004d28] p-3 shadow-sm">
+                <p className="text-xs uppercase tracking-widest text-white/70">Total Monthly Uplift</p>
+                <p className="mt-1 text-2xl font-semibold text-white">
                   ${results.totalMonthlyUplift.toLocaleString()}/mo
                 </p>
               </div>
 
-              <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
-                <p className="text-xs uppercase tracking-widest text-muted-foreground">Payback Period</p>
-                <p className="mt-1 text-2xl font-semibold text-foreground">
+              <div className="rounded-lg border border-[#fd8216] bg-[#004d28] p-3 shadow-sm">
+                <p className="text-xs uppercase tracking-widest text-white/70">Payback Period</p>
+                <p className="mt-1 text-2xl font-semibold text-white">
                   {results.paybackDays} days
                 </p>
               </div>
 
-              <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
-                <p className="text-xs uppercase tracking-widest text-muted-foreground">90-Day ROI Multiple</p>
-                <p className="mt-1 text-2xl font-semibold text-foreground">
+              <div className="rounded-lg border border-[#fd8216] bg-[#004d28] p-3 shadow-sm">
+                <p className="text-xs uppercase tracking-widest text-white/70">90-Day ROI Multiple</p>
+                <p className="mt-1 text-2xl font-semibold text-white">
                   {results.roi90Days}x
                 </p>
               </div>
             </>
           ) : (
-            <div className="flex h-full items-center justify-center py-12 text-sm text-muted-foreground">
+            <div className="flex h-full items-center justify-center py-12 text-sm text-white/70">
               <p>Enter inputs and click Calculate ROI</p>
             </div>
           )}
@@ -622,16 +635,16 @@ function CompensationCalculator() {
 
 function CalculatorPlaceholder({ name }: { name: string }) {
   return (
-    <Card className="border-border">
-      <CardHeader className="border-b border-border/60">
-        <CardTitle>{name}</CardTitle>
-        <CardDescription>Calculator implementation in progress</CardDescription>
+    <Card className="border-[#fd8216] bg-[#015e32] text-white">
+      <CardHeader className="border-b border-[#fd8216]/60 text-white">
+        <CardTitle className="text-white">{name}</CardTitle>
+        <CardDescription className="text-white/80">Calculator implementation in progress</CardDescription>
       </CardHeader>
-      <CardContent className="pt-6">
-        <div className="flex h-64 items-center justify-center rounded-lg border-2 border-dashed border-border text-sm text-muted-foreground">
+      <CardContent className="pt-6 text-white">
+        <div className="flex h-64 items-center justify-center rounded-lg border-2 border-dashed border-white/40 text-sm text-white/70">
           <div className="text-center">
-            <p className="font-medium">Coming Soon</p>
-            <p className="mt-1 text-xs">This calculator will be implemented next</p>
+            <p className="font-medium text-white">Coming Soon</p>
+            <p className="mt-1 text-xs text-white/70">This calculator will be implemented next</p>
           </div>
         </div>
       </CardContent>
