@@ -110,16 +110,36 @@ export default function LoginScreen() {
   }
 
   return (
-    <div className="w-full min-h-screen flex">
-      <div className="flex-1 bg-gradient-to-br from-slate-900 via-blue-900 to-orange-600 flex items-center justify-center p-12">
-        <div className="text-white max-w-lg">
-          <h1 className="text-6xl font-bold mb-8 leading-tight">
+    <div className="w-full min-h-screen flex bg-[#015e32]">
+      {/* Left side - Hero section with green background */}
+      <div className="flex-1 bg-gradient-to-br from-[#004d28] via-[#015e32] to-[#124f2e] flex items-center justify-center p-12 relative">
+        {/* Background image with 30% opacity */}
+        <div className="absolute inset-0 pointer-events-none">
+          <Image
+            src="/images/data-science-background.png"
+            alt=""
+            fill
+            className="object-cover opacity-30"
+            priority
+          />
+        </div>
+
+        <div className="text-white max-w-lg relative z-10">
+          <div className="mb-6">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#fd8216]">TRS</p>
+            <p className="text-2xl font-semibold text-white mt-1">RevOS</p>
+          </div>
+          <h1 className="text-5xl font-bold mb-6 leading-tight">
             &ldquo;The secret of getting ahead is getting started.&rdquo;
           </h1>
+          <p className="text-white/80 text-lg">
+            Revenue Operations Execution Layer
+          </p>
         </div>
       </div>
 
-      <div className="flex-1 bg-gray-50 flex items-center justify-center p-12">
+      {/* Right side - Login form with green background */}
+      <div className="flex-1 bg-[#004d28] flex items-center justify-center p-12">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <Image
@@ -130,15 +150,14 @@ export default function LoginScreen() {
               className="h-[175px] w-[175px] mx-auto mb-4"
               priority
             />
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            <h2 className="text-3xl font-bold text-white mb-2">
               {isLogin ? "Welcome Back" : "Join Us Today"}
             </h2>
-
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-2">
                 Your email
               </label>
               <input
@@ -147,14 +166,14 @@ export default function LoginScreen() {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                className="w-full px-4 py-3 border border-[#1b8f50] bg-[#013c21] text-white placeholder:text-white/50 rounded-lg focus:ring-2 focus:ring-[#fd8216] focus:border-[#fd8216] outline-none transition-all"
                 placeholder="Enter your email"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-white/80 mb-2">
                 {isLogin ? "Password" : "Create new password"}
               </label>
               <div className="relative">
@@ -164,14 +183,14 @@ export default function LoginScreen() {
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                  className="w-full px-4 py-3 pr-12 border border-[#1b8f50] bg-[#013c21] text-white placeholder:text-white/50 rounded-lg focus:ring-2 focus:ring-[#fd8216] focus:border-[#fd8216] outline-none transition-all"
                   placeholder={isLogin ? "Enter your password" : "Create a secure password"}
                   required
                 />
                 <button
                   type="button"
                   onClick={togglePasswordVisibility}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 focus:outline-none"
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-white/60 hover:text-white focus:outline-none"
                 >
                   {showPassword ? (
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -198,13 +217,13 @@ export default function LoginScreen() {
             </div>
 
             {authError && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              <div className="rounded-lg border border-red-400 bg-red-900/20 px-3 py-2 text-sm text-red-200">
                 {authError}
               </div>
             )}
 
             {authMessage && (
-              <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+              <div className="rounded-lg border border-[#fd8216] bg-[#fd8216]/20 px-3 py-2 text-sm text-white">
                 {authMessage}
               </div>
             )}
@@ -214,13 +233,13 @@ export default function LoginScreen() {
                 <label className="flex items-center">
                   <input
                     type="checkbox"
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="w-4 h-4 text-[#fd8216] border-[#1b8f50] bg-[#013c21] rounded focus:ring-[#fd8216]"
                   />
-                  <span className="ml-2 text-sm text-gray-600">Remember me</span>
+                  <span className="ml-2 text-sm text-white/80">Remember me</span>
                 </label>
                 <button
                   type="button"
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  className="text-sm text-[#fd8216] hover:text-[#f27403] font-medium"
                   onClick={() => router.push("/forgot-password")}
                 >
                   Forgot password?
@@ -230,7 +249,7 @@ export default function LoginScreen() {
 
             <button
               type="submit"
-              className="w-full bg-black hover:bg-gray-800 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 focus:ring-2 focus:ring-black focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full bg-[#fd8216] hover:bg-[#f27403] text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 focus:ring-2 focus:ring-[#fd8216] focus:ring-offset-2 focus:ring-offset-[#004d28] disabled:opacity-60 disabled:cursor-not-allowed"
               disabled={isSubmitting}
             >
               {isSubmitting
@@ -241,13 +260,13 @@ export default function LoginScreen() {
             </button>
 
             <div className="text-center">
-              <span className="text-gray-600">
+              <span className="text-white/80">
                 {isLogin ? "Don't have an account?" : "Already have account?"}
               </span>{" "}
               <button
                 type="button"
                 onClick={toggleMode}
-                className="text-blue-600 hover:text-blue-700 font-semibold"
+                className="text-[#fd8216] hover:text-[#f27403] font-semibold"
               >
                 {isLogin ? "Sign Up" : "Login"}
               </button>
@@ -257,10 +276,10 @@ export default function LoginScreen() {
           <div className="mt-8 mb-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
+                <div className="w-full border-t border-[#1b8f50]" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gray-50 text-gray-500">Or continue with</span>
+                <span className="px-2 bg-[#004d28] text-white/60">Or continue with</span>
               </div>
             </div>
           </div>
@@ -269,7 +288,7 @@ export default function LoginScreen() {
             <button
               type="button"
               onClick={handleGoogleSignIn}
-              className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              className="flex items-center justify-center px-4 py-2 border border-[#1b8f50] bg-[#013c21] text-white rounded-lg hover:bg-[#015e32] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               disabled={isSubmitting}
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -294,7 +313,7 @@ export default function LoginScreen() {
             </button>
             <button
               type="button"
-              className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center justify-center px-4 py-2 border border-[#1b8f50] bg-[#013c21] text-white/50 rounded-lg transition-colors"
               disabled
             >
               <svg className="w-5 h-5 mr-2" fill="#1877f2" viewBox="0 0 24 24">

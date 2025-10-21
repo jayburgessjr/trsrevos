@@ -253,14 +253,14 @@ export default function PublicFormClient({ formConfig }: PublicFormClientProps) 
         </div>
 
         {/* Form Card */}
-        <Card className="border-[#fd8216] bg-white shadow-2xl overflow-hidden" style={{ borderWidth: '5px', borderColor: '#fd8216' }}>
-          <CardContent className="p-8 bg-white">
+        <Card className="border-[#fd8216] bg-[#004d28] shadow-2xl overflow-hidden" style={{ borderWidth: '5px', borderColor: '#fd8216' }}>
+          <CardContent className="p-8 bg-[#004d28]">
             {/* Step Header */}
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-[#015e32] mb-1">
+              <h2 className="text-2xl font-bold text-white mb-1">
                 Step {currentStep}: {currentStepData.title}
               </h2>
-              <p className="text-[#015e32]/70">{currentStepData.description}</p>
+              <p className="text-white/70">{currentStepData.description}</p>
             </div>
 
             {/* Form Fields */}
@@ -274,7 +274,7 @@ export default function PublicFormClient({ formConfig }: PublicFormClientProps) 
             }} className="space-y-6">
               {currentFields.map((field) => (
                 <div key={field.name} className="space-y-2 animate-in fade-in slide-in-from-right-4 duration-500">
-                  <Label htmlFor={field.name} className="text-[#015e32] text-base font-semibold">
+                  <Label htmlFor={field.name} className="text-white text-base font-semibold">
                     {field.label}
                     {field.required && <span className="text-[#fd8216] ml-1">*</span>}
                   </Label>
@@ -286,18 +286,18 @@ export default function PublicFormClient({ formConfig }: PublicFormClientProps) 
                       onChange={(e) => handleChange(field.name, e.target.value)}
                       placeholder={field.placeholder}
                       rows={4}
-                      className="w-full px-4 py-3 rounded-lg border-2 border-[#015e32]/30 bg-[#004d28] text-[#f8f8f6] placeholder:text-[#f8f8f6]/50 focus:border-[#fd8216] focus:ring-2 focus:ring-[#fd8216]/20 transition-all outline-none"
+                      className="w-full px-4 py-3 rounded-lg border-2 border-[#1b8f50] bg-[#013c21] text-white placeholder:text-white/50 focus:border-[#fd8216] focus:ring-2 focus:ring-[#fd8216]/20 transition-all outline-none"
                     />
                   ) : field.type === 'select' && field.options ? (
                     <select
                       id={field.name}
                       value={(formData[field.name] as string) || ''}
                       onChange={(e) => handleChange(field.name, e.target.value)}
-                      className="w-full px-4 py-3 rounded-lg border-2 border-[#015e32]/30 bg-[#004d28] text-[#f8f8f6] focus:border-[#fd8216] focus:ring-2 focus:ring-[#fd8216]/20 transition-all outline-none"
+                      className="w-full px-4 py-3 rounded-lg border-2 border-[#1b8f50] bg-[#013c21] text-white focus:border-[#fd8216] focus:ring-2 focus:ring-[#fd8216]/20 transition-all outline-none"
                     >
-                      <option value="" className="bg-[#004d28]">Select an option...</option>
+                      <option value="" className="bg-[#013c21]">Select an option...</option>
                       {field.options.map((option) => (
-                        <option key={option} value={option} className="bg-[#004d28]">
+                        <option key={option} value={option} className="bg-[#013c21]">
                           {option}
                         </option>
                       ))}
@@ -309,8 +309,8 @@ export default function PublicFormClient({ formConfig }: PublicFormClientProps) 
                           key={option}
                           className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
                             formData[field.name] === option
-                              ? 'border-[#fd8216] bg-[#fd8216]/10'
-                              : 'border-[#015e32]/30 hover:border-[#fd8216]/50 bg-white'
+                              ? 'border-[#fd8216] bg-[#fd8216]/20'
+                              : 'border-[#1b8f50] hover:border-[#fd8216]/50 bg-[#013c21]'
                           }`}
                         >
                           <input
@@ -321,7 +321,7 @@ export default function PublicFormClient({ formConfig }: PublicFormClientProps) 
                             onChange={(e) => handleChange(field.name, e.target.value)}
                             className="w-5 h-5 text-[#fd8216] focus:ring-[#fd8216]"
                           />
-                          <span className="text-[#015e32] font-medium">{option}</span>
+                          <span className="text-white font-medium">{option}</span>
                         </label>
                       ))}
                     </div>
@@ -334,8 +334,8 @@ export default function PublicFormClient({ formConfig }: PublicFormClientProps) 
                             key={option}
                             className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
                               isChecked
-                                ? 'border-[#fd8216] bg-[#fd8216]/10'
-                                : 'border-[#015e32]/30 hover:border-[#fd8216]/50 bg-white'
+                                ? 'border-[#fd8216] bg-[#fd8216]/20'
+                                : 'border-[#1b8f50] hover:border-[#fd8216]/50 bg-[#013c21]'
                             }`}
                           >
                             <input
@@ -345,7 +345,7 @@ export default function PublicFormClient({ formConfig }: PublicFormClientProps) 
                               onChange={() => handleMultiSelect(field.name, option)}
                               className="w-5 h-5 text-[#fd8216] rounded focus:ring-[#fd8216]"
                             />
-                            <span className="text-[#015e32] font-medium">{option}</span>
+                            <span className="text-white font-medium">{option}</span>
                           </label>
                         )
                       })}
@@ -359,14 +359,14 @@ export default function PublicFormClient({ formConfig }: PublicFormClientProps) 
                       placeholder={field.placeholder}
                       min={field.min}
                       max={field.max}
-                      className="w-full px-4 py-3 rounded-lg border-2 border-[#015e32]/30 bg-[#004d28] text-[#f8f8f6] placeholder:text-[#f8f8f6]/50 focus:border-[#fd8216] focus:ring-2 focus:ring-[#fd8216]/20 transition-all outline-none"
+                      className="w-full px-4 py-3 rounded-lg border-2 border-[#1b8f50] bg-[#013c21] text-white placeholder:text-white/50 focus:border-[#fd8216] focus:ring-2 focus:ring-[#fd8216]/20 transition-all outline-none"
                     />
                   )}
                 </div>
               ))}
 
               {error && (
-                <div className="rounded-lg border-2 border-[#fd8216] bg-[#fd8216]/10 p-4 text-sm text-[#015e32] font-medium animate-in shake">
+                <div className="rounded-lg border-2 border-[#fd8216] bg-[#fd8216]/20 p-4 text-sm text-white font-medium animate-in shake">
                   {error}
                 </div>
               )}
@@ -378,7 +378,7 @@ export default function PublicFormClient({ formConfig }: PublicFormClientProps) 
                     type="button"
                     onClick={handleBack}
                     variant="outline"
-                    className="flex-1 py-6 text-[#015e32] border-2 border-[#015e32]/20 hover:bg-[#015e32]/5 font-semibold text-lg"
+                    className="flex-1 py-6 text-white border-2 border-[#1b8f50] hover:bg-[#015e32] font-semibold text-lg"
                   >
                     <ChevronLeft className="mr-2 h-5 w-5" />
                     Back
@@ -407,7 +407,7 @@ export default function PublicFormClient({ formConfig }: PublicFormClientProps) 
                 </Button>
               </div>
 
-              <p className="text-xs text-center text-[#015e32]/60 pt-4">
+              <p className="text-xs text-center text-white/60 pt-4">
                 Your information is secure and will only be used to provide you with our services.
               </p>
             </form>
