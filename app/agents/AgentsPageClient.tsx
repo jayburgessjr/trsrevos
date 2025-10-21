@@ -6,6 +6,7 @@ import { useRevosData } from '@/app/providers/RevosDataProvider'
 import { Badge } from '@/ui/badge'
 import { Button } from '@/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
 import { Select } from '@/ui/select'
 import { Textarea } from '@/ui/textarea'
 
@@ -17,12 +18,15 @@ type AgentFormState = {
   industry?: string
   monthly_revenue?: string
   team_size?: string
+  selectedDocuments?: string[] // Array of document IDs
 }
 
 export default function AgentsPageClient() {
-  const { agents, projects, automationLogs, runAgent } = useRevosData()
+  const { agents, projects, documents, automationLogs, runAgent } = useRevosData()
   const [formState, setFormState] = useState<Record<string, AgentFormState>>({})
   const [expandedAgent, setExpandedAgent] = useState<string | null>(null)
+  const [showContextDialog, setShowContextDialog] = useState(false)
+  const [contextDialogAgent, setContextDialogAgent] = useState<string | null>(null)
 
   const categoryBreakdown = useMemo(() => {
     return agents.reduce<Record<string, number>>((acc, agent) => {
@@ -51,11 +55,25 @@ export default function AgentsPageClient() {
       payload.monthly_revenue = parseInt(state.monthly_revenue || selectedProject?.revenueTarget?.toString() || '100000')
       payload.team_size = parseInt(state.team_size || selectedProject?.team?.length?.toString() || '15')
       payload.crm_data = true
-      payload.files = state.notes ? [{ name: 'notes.txt', description: state.notes }] : []
+
+      // Add selected documents
+      const selectedDocs = (state.selectedDocuments || []).map(docId => {
+        const doc = documents.find(d => d.id === docId)
+        return doc ? {
+          id: doc.id,
+          title: doc.title,
+          type: doc.type,
+          summary: doc.summary || '',
+          fileUrl: doc.fileUrl
+        } : null
+      }).filter(Boolean)
+
+      payload.documents = selectedDocs
+      payload.files = state.notes ? [{ name: 'context.txt', description: state.notes }] : []
     }
 
     runAgent({ agentId, projectId: state.projectId, notes: state.notes })
-    setFormState((current) => ({ ...current, [agentId]: { projectId: state.projectId, notes: '' } }))
+    setFormState((current) => ({ ...current, [agentId]: { projectId: state.projectId, notes: '', selectedDocuments: [] } }))
   }
 
   const isClarityBot = (agentId: string) => agentId === 'agent-clarity-bot'
@@ -202,20 +220,77 @@ export default function AgentsPageClient() {
                             </div>
 
                             <div className="space-y-2">
-                              <label className="text-xs font-semibold uppercase tracking-wide text-white/70">Files & Context</label>
-                              <Textarea
-                                value={state.notes}
-                                onChange={(event) =>
-                                  setFormState((current) => ({
-                                    ...current,
-                                    [agent.id]: { ...state, notes: event.target.value },
-                                  }))
-                                }
-                                placeholder="Paste data, add context, describe files uploaded..."
-                                rows={3}
-                                className="border-[#1b8f50] bg-[#013c21] text-white placeholder:text-white/50 focus:border-blue-200 focus:ring-blue-200"
-                              />
-                              <p className="text-[10px] text-white/60">Tip: Upload CSV/XLSX exports, CRM data, or paste relevant context</p>
+                              <label className="text-xs font-semibold uppercase tracking-wide text-white/70">Select Documents</label>
+                              <div className="rounded-lg border-2 border-[#1b8f50] bg-[#013c21] p-3">
+                                {state.projectId ? (
+                                  (() => {
+                                    const projectDocs = documents.filter(doc => doc.projectId === state.projectId)
+                                    return projectDocs.length > 0 ? (
+                                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                                        {projectDocs.map((doc) => {
+                                          const isSelected = (state.selectedDocuments || []).includes(doc.id)
+                                          return (
+                                            <label
+                                              key={doc.id}
+                                              className={`flex items-start gap-2 p-2 rounded cursor-pointer transition-colors ${
+                                                isSelected ? 'bg-[#fd8216]/20 border border-[#fd8216]' : 'hover:bg-[#015e32]'
+                                              }`}
+                                            >
+                                              <input
+                                                type="checkbox"
+                                                checked={isSelected}
+                                                onChange={(e) => {
+                                                  const currentDocs = state.selectedDocuments || []
+                                                  const newDocs = e.target.checked
+                                                    ? [...currentDocs, doc.id]
+                                                    : currentDocs.filter(id => id !== doc.id)
+                                                  setFormState((current) => ({
+                                                    ...current,
+                                                    [agent.id]: { ...state, selectedDocuments: newDocs },
+                                                  }))
+                                                }}
+                                                className="mt-1 w-4 h-4 text-[#fd8216] rounded focus:ring-[#fd8216]"
+                                              />
+                                              <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-white truncate">{doc.title}</p>
+                                                <p className="text-xs text-white/60">{doc.type} • v{doc.version}</p>
+                                              </div>
+                                            </label>
+                                          )
+                                        })}
+                                      </div>
+                                    ) : (
+                                      <p className="text-xs text-white/60 text-center py-2">No documents for this project yet</p>
+                                    )
+                                  })()
+                                ) : (
+                                  <p className="text-xs text-white/60 text-center py-2">Select a project first</p>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-white/60">
+                                {(state.selectedDocuments || []).length} document(s) selected
+                              </p>
+                            </div>
+
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <label className="text-xs font-semibold uppercase tracking-wide text-white/70">Additional Context</label>
+                                <Button
+                                  type="button"
+                                  onClick={() => {
+                                    setContextDialogAgent(agent.id)
+                                    setShowContextDialog(true)
+                                  }}
+                                  className="text-xs bg-[#015e32] hover:bg-[#1b8f50] text-white px-3 py-1 h-auto"
+                                >
+                                  Add Context
+                                </Button>
+                              </div>
+                              {state.notes && (
+                                <div className="rounded-lg border border-[#1b8f50] bg-[#015e32]/50 p-2">
+                                  <p className="text-xs text-white/80 line-clamp-2">{state.notes}</p>
+                                </div>
+                              )}
                             </div>
                           </>
                         ) : (
@@ -368,6 +443,52 @@ export default function AgentsPageClient() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Context Dialog */}
+        <Dialog open={showContextDialog} onOpenChange={setShowContextDialog}>
+          <DialogContent className="bg-[#004d28] text-white border-2 border-[#fd8216]">
+            <DialogHeader>
+              <DialogTitle className="text-white">Add Additional Context</DialogTitle>
+              <DialogDescription className="text-white/70">
+                Provide any additional context, notes, or instructions for the agent to consider.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Textarea
+                value={contextDialogAgent ? (formState[contextDialogAgent]?.notes || '') : ''}
+                onChange={(e) => {
+                  if (contextDialogAgent) {
+                    setFormState((current) => ({
+                      ...current,
+                      [contextDialogAgent]: {
+                        ...(current[contextDialogAgent] || { notes: '' }),
+                        notes: e.target.value,
+                      },
+                    }))
+                  }
+                }}
+                placeholder="Enter additional context, data, or special instructions..."
+                rows={6}
+                className="border-[#1b8f50] bg-[#013c21] text-white placeholder:text-white/50 focus:border-[#fd8216] focus:ring-[#fd8216]"
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                onClick={() => setShowContextDialog(false)}
+                variant="outline"
+                className="border-[#1b8f50] text-white hover:bg-[#015e32]"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => setShowContextDialog(false)}
+                className="bg-[#fd8216] hover:bg-[#f27403] text-white"
+              >
+                Save Context
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )

@@ -259,22 +259,35 @@ export function createScrollAnimation(
     scroll?: keyof typeof scrollDefaults;
   }
 ) {
-  const preset = animations[animation];
+  const preset = animations[animation] as any;
   const scrollConfig = options?.scroll ? scrollDefaults[options.scroll] : scrollDefaults.base;
   const staggerConfig = options?.stagger ? staggers[options.stagger] : undefined;
 
-  return gsap.fromTo(
-    element,
-    preset.from,
-    {
+  // Check if preset has 'from' property (for fromTo animations)
+  if (preset.from) {
+    return gsap.fromTo(
+      element,
+      preset.from,
+      {
+        ...preset.to,
+        stagger: staggerConfig,
+        scrollTrigger: {
+          trigger: options?.trigger || element,
+          ...scrollConfig,
+        },
+      }
+    );
+  } else {
+    // For animations without 'from' (like hover effects), use .to()
+    return gsap.to(element, {
       ...preset.to,
       stagger: staggerConfig,
       scrollTrigger: {
         trigger: options?.trigger || element,
         ...scrollConfig,
       },
-    }
-  );
+    });
+  }
 }
 
 // Initialize on import (client-side only)
