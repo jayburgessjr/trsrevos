@@ -63,25 +63,25 @@ export default function AgentsPageClient() {
     ['agent-clarity-bot', 'agent-blueprint-engine', 'agent-offer-desk', 'agent-data-gate', 'agent-qra-forecaster', 'agent-revos-orchestrator'].includes(agentId)
 
   return (
-    <div className="min-h-screen bg-white text-black">
+    <div className="min-h-screen bg-[#004d28] text-white">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4">
         <header className="space-y-1">
-          <h1 className="text-2xl font-semibold text-black">Agents</h1>
-          <p className="text-sm text-gray-600">
+          <h1 className="text-2xl font-semibold text-white">Agents</h1>
+          <p className="text-sm text-white/80">
             Reusable playbooks that orchestrate revenue science tasks across every client.
           </p>
         </header>
 
         <div className="space-y-8">
           <section className="grid gap-4 lg:grid-cols-3">
-            <Card className="lg:col-span-2">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg font-semibold">Automation Agents</CardTitle>
-                <CardDescription>
+            <Card className="lg:col-span-2 border-[#fd8216] bg-[#015e32] text-white">
+              <CardHeader className="pb-4 text-white">
+                <CardTitle className="text-lg font-semibold text-white">Automation Agents</CardTitle>
+                <CardDescription className="text-white/80">
                   Launch orchestrated workflows, review inputs, and capture the context agents need to run.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="grid gap-4 pt-4 md:grid-cols-2">
+              <CardContent className="grid gap-4 pt-4 text-white md:grid-cols-2">
                 {agents.map((agent) => {
                   const state = formState[agent.id] ?? { projectId: projects[0]?.id, notes: '', client_name: '', industry: '', monthly_revenue: '', team_size: '' }
                   const isClarity = isClarityBot(agent.id)
@@ -90,32 +90,32 @@ export default function AgentsPageClient() {
                   return (
                     <div
                       key={agent.id}
-                      className={`flex flex-col rounded-lg border-2 border-[#fd8216] p-4 shadow-sm ${
-                        isSpecialized
-                          ? 'bg-[#004d28]'
-                          : 'bg-[#004d28]'
-                      }`}
+                      className="flex flex-col rounded-lg border-2 border-[#fd8216] bg-[#004d28] p-4 text-white shadow-sm"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-sm font-semibold text-foreground">{agent.name}</p>
-                          <p className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">{agent.category}</p>
+                          <p className="text-sm font-semibold text-white">{agent.name}</p>
+                          <p className="mt-1 text-xs uppercase tracking-widest text-white/70">{agent.category}</p>
                         </div>
                         <Badge
                           variant="outline"
-                          className={isSpecialized ? "border-blue-500 text-blue-700" : "border-emerald-500 text-emerald-600"}
+                          className={
+                            isSpecialized
+                              ? 'border-blue-200 text-blue-100'
+                              : 'border-emerald-200 text-emerald-100'
+                          }
                         >
                           {agent.defaultOutputType}
                         </Badge>
                       </div>
-                      <p className="mt-2 text-sm text-muted-foreground">{agent.description}</p>
+                      <p className="mt-2 text-sm text-white/80">{agent.description}</p>
 
                       <div className="mt-4 space-y-3 text-sm">
                         {isClarity ? (
                           // ClarityBot specialized inputs
                           <>
                             <div className="space-y-2">
-                              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Select Project / Client*</label>
+                              <label className="text-xs font-semibold uppercase tracking-wide text-white/70">Select Project / Client*</label>
                               <Select
                                 value={state.projectId || projects[0]?.id || ''}
                                 onChange={(event) => {
@@ -131,7 +131,7 @@ export default function AgentsPageClient() {
                                     },
                                   }))
                                 }}
-                                className="border-blue-300 focus:border-blue-500 focus:ring-blue-500"
+                                className="border-blue-300 bg-[#013c21] text-white focus:border-blue-200 focus:ring-blue-200"
                               >
                                 <option value="">Select a project...</option>
                                 {projects.map((project) => (
@@ -167,7 +167,7 @@ export default function AgentsPageClient() {
 
                             <div className="grid grid-cols-2 gap-3">
                               <div className="space-y-2">
-                                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Industry</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide text-white/70">Industry</label>
                                 <input
                                   type="text"
                                   value={state.industry || ''}
@@ -178,11 +178,11 @@ export default function AgentsPageClient() {
                                     }))
                                   }
                                   placeholder="B2B SaaS"
-                                  className="w-full rounded-md border border-border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  className="w-full rounded-md border border-[#1b8f50] bg-[#013c21] px-3 py-2 text-sm text-white placeholder:text-white/50 focus:border-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-200"
                                 />
                               </div>
                               <div className="space-y-2">
-                                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                <label className="text-xs font-semibold uppercase tracking-wide text-white/70">
                                   Monthly Revenue
                                   <span className="ml-1 text-[10px] text-slate-400">(override)</span>
                                 </label>
@@ -196,13 +196,13 @@ export default function AgentsPageClient() {
                                     }))
                                   }
                                   placeholder="Auto from project"
-                                  className="w-full rounded-md border border-border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  className="w-full rounded-md border border-[#1b8f50] bg-[#013c21] px-3 py-2 text-sm text-white placeholder:text-white/50 focus:border-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-200"
                                 />
                               </div>
                             </div>
 
                             <div className="space-y-2">
-                              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Files & Context</label>
+                              <label className="text-xs font-semibold uppercase tracking-wide text-white/70">Files & Context</label>
                               <Textarea
                                 value={state.notes}
                                 onChange={(event) =>
@@ -213,15 +213,16 @@ export default function AgentsPageClient() {
                                 }
                                 placeholder="Paste data, add context, describe files uploaded..."
                                 rows={3}
+                                className="border-[#1b8f50] bg-[#013c21] text-white placeholder:text-white/50 focus:border-blue-200 focus:ring-blue-200"
                               />
-                              <p className="text-[10px] text-muted-foreground">Tip: Upload CSV/XLSX exports, CRM data, or paste relevant context</p>
+                              <p className="text-[10px] text-white/60">Tip: Upload CSV/XLSX exports, CRM data, or paste relevant context</p>
                             </div>
                           </>
                         ) : (
                           // Standard agent inputs
                           <>
                             <div className="space-y-2">
-                              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Project Context</label>
+                              <label className="text-xs font-semibold uppercase tracking-wide text-white/70">Project Context</label>
                               <Select
                                 value={state.projectId || projects[0]?.id || ''}
                                 onChange={(event) =>
@@ -230,6 +231,7 @@ export default function AgentsPageClient() {
                                     [agent.id]: { ...state, projectId: event.target.value },
                                   }))
                                 }
+                                className="border-[#1b8f50] bg-[#013c21] text-white focus:border-blue-200 focus:ring-blue-200"
                               >
                                 <option value="">Unassigned</option>
                                 {projects.map((project) => (
@@ -240,7 +242,7 @@ export default function AgentsPageClient() {
                               </Select>
                             </div>
                             <div className="space-y-2">
-                              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Notes</label>
+                              <label className="text-xs font-semibold uppercase tracking-wide text-white/70">Notes</label>
                               <Textarea
                                 value={state.notes}
                                 onChange={(event) =>
@@ -251,6 +253,7 @@ export default function AgentsPageClient() {
                                 }
                                 placeholder="Add context or desired outcome"
                                 rows={3}
+                                className="border-[#1b8f50] bg-[#013c21] text-white placeholder:text-white/50 focus:border-blue-200 focus:ring-blue-200"
                               />
                             </div>
                           </>
@@ -259,7 +262,11 @@ export default function AgentsPageClient() {
                         <Button
                           type="button"
                           onClick={() => handleRun(agent.id)}
-                          className={isSpecialized ? "bg-blue-600 hover:bg-blue-700" : ""}
+                          className={
+                            isSpecialized
+                              ? 'bg-blue-600 text-white hover:bg-blue-500'
+                              : 'bg-[#fd8216] text-white hover:bg-[#f27403]'
+                          }
                         >
                           {isClarity ? 'Run Clarity Audit' : isSpecialized ? 'Run Agent' : 'Run Agent'}
                         </Button>
@@ -274,40 +281,40 @@ export default function AgentsPageClient() {
                 })}
               </CardContent>
             </Card>
-            <Card className="border-border">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg font-semibold">Category Snapshot</CardTitle>
-                <CardDescription>Ensure balanced automation coverage.</CardDescription>
+            <Card className="border-[#fd8216] bg-[#015e32] text-white">
+              <CardHeader className="pb-4 text-white">
+                <CardTitle className="text-lg font-semibold text-white">Category Snapshot</CardTitle>
+                <CardDescription className="text-white/80">Ensure balanced automation coverage.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3 pt-4 text-sm text-muted-foreground">
+              <CardContent className="space-y-3 pt-4 text-sm text-white">
                 {Object.entries(categoryBreakdown).map(([category, count]) => (
-                  <div key={category} className="flex items-center justify-between rounded-lg border border-border bg-card p-3 shadow-sm">
-                    <span className="font-medium text-muted-foreground">{category}</span>
-                    <Badge variant="outline" className="border-border text-muted-foreground">
+                  <div key={category} className="flex items-center justify-between rounded-lg border border-[#fd8216] bg-[#004d28] p-3 text-white shadow-sm">
+                    <span className="font-medium text-white">{category}</span>
+                    <Badge variant="outline" className="border-white/40 text-white">
                       {count}
                     </Badge>
                   </div>
                 ))}
-                <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
-                  <p className="text-xs uppercase tracking-widest text-muted-foreground">Total Runs</p>
-                  <p className="mt-1 text-2xl font-semibold text-foreground">{automationLogs.length}</p>
+                <div className="rounded-lg border border-[#fd8216] bg-[#004d28] p-3 shadow-sm">
+                  <p className="text-xs uppercase tracking-widest text-white/70">Total Runs</p>
+                  <p className="mt-1 text-2xl font-semibold text-white">{automationLogs.length}</p>
                 </div>
-                <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
-                  <p className="text-xs uppercase tracking-widest text-muted-foreground">Hours Saved</p>
-                  <p className="mt-1 text-2xl font-semibold text-foreground">{(automationLogs.length * 1.5).toFixed(1)}</p>
+                <div className="rounded-lg border border-[#fd8216] bg-[#004d28] p-3 shadow-sm">
+                  <p className="text-xs uppercase tracking-widest text-white/70">Hours Saved</p>
+                  <p className="mt-1 text-2xl font-semibold text-white">{(automationLogs.length * 1.5).toFixed(1)}</p>
                 </div>
               </CardContent>
             </Card>
           </section>
 
-          <Card className="border-border">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-semibold">Automation Activity</CardTitle>
-              <CardDescription>Latest agent executions and outcomes.</CardDescription>
+          <Card className="border-[#fd8216] bg-[#015e32] text-white">
+            <CardHeader className="pb-4 text-white">
+              <CardTitle className="text-lg font-semibold text-white">Automation Activity</CardTitle>
+              <CardDescription className="text-white/80">Latest agent executions and outcomes.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4 pt-4">
+            <CardContent className="space-y-4 pt-4 text-white">
               {automationLogs.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No automation runs recorded yet.</p>
+                <p className="text-sm text-white/70">No automation runs recorded yet.</p>
               ) : (
                 automationLogs
                   .slice()
@@ -323,29 +330,33 @@ export default function AgentsPageClient() {
                     return (
                       <div
                         key={log.id}
-                        className="rounded-lg border-2 border-[#fd8216] bg-[#004d28] p-4 shadow-sm"
+                        className="rounded-lg border-2 border-[#fd8216] bg-[#004d28] p-4 text-white shadow-sm"
                       >
-                        <div className="flex items-center justify-between text-sm font-medium text-foreground">
+                        <div className="flex items-center justify-between text-sm font-medium text-white">
                           <div className="flex items-center gap-2">
                             <span>{agent?.name ?? log.agentId}</span>
                             {isClarity && (
-                              <Badge variant="outline" className="border-blue-500 text-blue-700 text-[10px]">
+                              <Badge variant="outline" className="border-blue-200 text-blue-100 text-[10px]">
                                 AUDIT
                               </Badge>
                             )}
                           </div>
-                          <span className="text-xs text-muted-foreground suppress-hydration-warning">
+                          <span className="text-xs text-white/70 suppress-hydration-warning">
                             {new Date(log.createdAt).toLocaleString()}
                           </span>
                         </div>
-                        <p className="mt-2 text-sm text-muted-foreground">{log.summary}</p>
-                        <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                          <Badge variant="outline" className="border-border text-muted-foreground">
+                        <p className="mt-2 text-sm text-white/80">{log.summary}</p>
+                        <div className="mt-2 flex items-center gap-2 text-xs text-white/70">
+                          <Badge variant="outline" className="border-white/40 text-white">
                             {project ?? 'Unassigned'}
                           </Badge>
                           <Badge
                             variant="outline"
-                            className={isSpecialized ? 'border-blue-500 text-blue-600' : 'border-emerald-500 text-emerald-600'}
+                            className={
+                              isSpecialized
+                                ? 'border-blue-200 text-blue-100'
+                                : 'border-emerald-200 text-emerald-100'
+                            }
                           >
                             {log.outputType}
                           </Badge>
