@@ -369,7 +369,12 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
 
     async function loadFromSupabase() {
       try {
-        const hasMigrated = localStorage.getItem(MIGRATION_KEY)
+        let hasMigrated = false
+        try {
+          hasMigrated = window.localStorage.getItem(MIGRATION_KEY) === 'true'
+        } catch (error) {
+          console.warn('Unable to read migration flag from localStorage:', error)
+        }
 
         // Load projects and documents from Supabase
         await loadProjects()
@@ -377,7 +382,13 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
 
         // If not migrated yet and there's localStorage data, migrate it
         if (!hasMigrated) {
-          const localData = localStorage.getItem(STORAGE_KEY)
+          let localData: string | null = null
+          try {
+            localData = window.localStorage.getItem(STORAGE_KEY)
+          } catch (error) {
+            console.warn('Unable to read stored RevOS data from localStorage:', error)
+          }
+
           if (localData) {
             const parsed = JSON.parse(localData)
 
@@ -417,7 +428,11 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
           }
 
           // Mark as migrated
-          localStorage.setItem(MIGRATION_KEY, 'true')
+          try {
+            window.localStorage.setItem(MIGRATION_KEY, 'true')
+          } catch (error) {
+            console.warn('Unable to mark RevOS data as migrated:', error)
+          }
         }
       } catch (error) {
         console.error('Error loading from Supabase:', error)
