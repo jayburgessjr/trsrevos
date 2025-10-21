@@ -148,6 +148,12 @@ body {
     min-height: 100vh;
   }
 
+  body *,
+  body *::before,
+  body *::after {
+    color: rgb(var(--color-foreground)) !important;
+  }
+
   ::selection {
     background: rgba(var(--color-primary), 0.2);
   }
