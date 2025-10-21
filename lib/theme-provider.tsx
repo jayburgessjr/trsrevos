@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react"
+import { createContext, useContext, useEffect, useState } from "react"
 
 type Theme = "light" | "dark" | "system"
 type ResolvedTheme = "light" | "dark"
@@ -31,100 +31,76 @@ export function ThemeProvider({
   storageKey = "trs-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<Theme>(defaultTheme)
+  const [theme, setTheme] = useState<Theme>(defaultTheme)
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>("light")
   const [mounted, setMounted] = useState(false)
 
+  // Initialize theme from localStorage or system preference
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return
-    }
+    setMounted(true)
 
-    try {
-      const stored = window.localStorage.getItem(storageKey) as Theme | null
-      if (stored === "light" || stored === "dark" || stored === "system") {
-        setThemeState(stored)
-      } else {
-        setThemeState(defaultTheme)
-      }
-    } catch (error) {
-      console.warn("Unable to read stored theme preference:", error)
-      setThemeState(defaultTheme)
-    } finally {
-      setMounted(true)
+    const stored = localStorage.getItem(storageKey) as Theme | null
+    if (stored === "light" || stored === "dark" || stored === "system") {
+      setTheme(stored)
+    } else {
+      setTheme(defaultTheme)
     }
   }, [storageKey, defaultTheme])
 
+  // Handle system preference changes and apply theme to HTML
   useEffect(() => {
-    if (!mounted || typeof window === "undefined") {
-      return
-    }
+    if (!mounted) return
 
     const root = window.document.documentElement
-    const resolveTheme = (): ResolvedTheme => {
-      if (theme === "system") {
-        if (typeof window.matchMedia === "function") {
-          return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
-        }
-        return "light"
-      }
-      return theme
+
+    // Determine the actual theme to apply
+    let effectiveTheme: ResolvedTheme
+
+    if (theme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light"
+      effectiveTheme = systemTheme
+    } else {
+      effectiveTheme = theme
     }
 
-    const applyTheme = (nextTheme: ResolvedTheme) => {
-      setResolvedTheme(nextTheme)
-      root.setAttribute("data-theme", nextTheme)
-      root.classList.remove("light", "dark")
-      root.classList.add(nextTheme)
-      root.style.colorScheme = nextTheme
-    }
+    // Update resolved theme state
+    setResolvedTheme(effectiveTheme)
 
-    const effectiveTheme = resolveTheme()
-    applyTheme(effectiveTheme)
+    // Apply theme to HTML element via data attribute
+    root.setAttribute("data-theme", effectiveTheme)
 
-    if (theme !== "system" || typeof window.matchMedia !== "function") {
-      return
-    }
+    // Also set class for Tailwind dark: variants (belt and suspenders)
+    root.classList.remove("light", "dark")
+    root.classList.add(effectiveTheme)
 
+    // Listen for system theme changes
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
-    const handleChange = (event: MediaQueryListEvent) => {
-      applyTheme(event.matches ? "dark" : "light")
+    const handleChange = (e: MediaQueryListEvent) => {
+      if (theme === "system") {
+        const newTheme = e.matches ? "dark" : "light"
+        setResolvedTheme(newTheme)
+        root.setAttribute("data-theme", newTheme)
+        root.classList.remove("light", "dark")
+        root.classList.add(newTheme)
+      }
     }
 
-    if (typeof mediaQuery.addEventListener === "function") {
-      mediaQuery.addEventListener("change", handleChange)
-      return () => mediaQuery.removeEventListener("change", handleChange)
-    }
-
-    if (typeof mediaQuery.addListener === "function") {
-      mediaQuery.addListener(handleChange)
-      return () => mediaQuery.removeListener(handleChange)
-    }
-
-    return undefined
+    mediaQuery.addEventListener("change", handleChange)
+    return () => mediaQuery.removeEventListener("change", handleChange)
   }, [theme, mounted])
 
-  const value = useMemo(
-    () => ({
-      theme,
-      resolvedTheme,
-      setTheme: (newTheme: Theme) => {
-        setThemeState(newTheme)
+  const value = {
+    theme,
+    resolvedTheme,
+    setTheme: (newTheme: Theme) => {
+      localStorage.setItem(storageKey, newTheme)
+      setTheme(newTheme)
+    },
+  }
 
-        if (typeof window === "undefined") {
-          return
-        }
-
-        try {
-          window.localStorage.setItem(storageKey, newTheme)
-        } catch (error) {
-          console.warn("Unable to persist theme preference:", error)
-        }
-      },
-    }),
-    [theme, resolvedTheme, storageKey],
-  )
-
+  // Prevent flash of wrong theme
   if (!mounted) {
     return <>{children}</>
   }

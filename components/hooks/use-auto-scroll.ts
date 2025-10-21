@@ -1,5 +1,3 @@
-"use client"
-
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { ReactNode } from "react"
 
@@ -100,7 +98,7 @@ export function useAutoScroll(options: UseAutoScrollOptions = {}) {
 
   useEffect(() => {
     const element = scrollRef.current
-    if (!element || typeof ResizeObserver === "undefined") return
+    if (!element) return
 
     const resizeObserver = new ResizeObserver(() => {
       if (scrollState.autoScrollEnabled) {

@@ -16,40 +16,21 @@ export function ThemeCard({ className }: ThemeCardProps) {
   const [accent, setAccent] = useState("#2563eb")
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return
-    }
-
-    try {
-      const stored = window.localStorage.getItem(ACCENT_STORAGE_KEY)
-      if (stored) {
-        setAccent(stored)
-        document.documentElement.style.setProperty("--color-accent", stored)
-        return
-      }
-
-      const current = window
-        .getComputedStyle(document.documentElement)
-        .getPropertyValue("--color-accent")
+    const stored = localStorage.getItem(ACCENT_STORAGE_KEY)
+    if (stored) {
+      setAccent(stored)
+      document.documentElement.style.setProperty("--color-accent", stored)
+    } else {
+      const current = getComputedStyle(document.documentElement).getPropertyValue("--color-accent")
       if (current) {
         setAccent(current.trim())
       }
-    } catch (error) {
-      console.warn("Unable to load accent color preference:", error)
     }
   }, [])
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return
-    }
-
     document.documentElement.style.setProperty("--color-accent", accent)
-    try {
-      window.localStorage.setItem(ACCENT_STORAGE_KEY, accent)
-    } catch (error) {
-      console.warn("Unable to persist accent color preference:", error)
-    }
+    localStorage.setItem(ACCENT_STORAGE_KEY, accent)
   }, [accent])
 
   const previewGradient = useMemo(
