@@ -4,13 +4,11 @@ import Link from 'next/link'
 import { useMemo, useEffect, useState } from 'react'
 
 import { useRevosData } from '@/app/providers/RevosDataProvider'
-import { cn } from '@/lib/utils'
 import { Badge } from '@/ui/badge'
 import { Button } from '@/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table'
 import { FileText, Users, Plus, TrendingUp, ArrowUp, ArrowDown, Filter } from 'lucide-react'
-import { PageBody, PageHeader } from '@/components/layout/Page'
 
 type TimePeriod = '7d' | '30d' | '90d' | 'year'
 
@@ -21,13 +19,6 @@ type NewsArticle = {
   publishedAt: string
   source: string
 }
-
-const timePeriodOptions: { label: string; value: TimePeriod }[] = [
-  { label: 'Last 7 Days', value: '7d' },
-  { label: 'Last 30 Days', value: '30d' },
-  { label: 'Last 90 Days', value: '90d' },
-  { label: 'This Year', value: 'year' },
-]
 
 export default function DashboardScreen() {
   const { projects, documents, content } = useRevosData()
@@ -181,35 +172,35 @@ export default function DashboardScreen() {
   }, [projects, documents, content])
 
   return (
-    <PageBody>
-      <PageHeader
-        title="Dashboard overview"
-        description="Track your revenue operations metrics."
-        actions={
-          <div className="flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 py-2 shadow-sm">
-            <Filter className="h-4 w-4 text-neutral-400" />
-            <div className="flex items-center gap-1">
-              {timePeriodOptions.map(({ label, value }) => (
-                <button
-                  key={value}
-                  onClick={() => setTimePeriod(value)}
-                  className={cn(
-                    'rounded-full px-3 py-1 text-xs font-medium transition-colors',
-                    timePeriod === value
-                      ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-200/60'
-                      : 'text-neutral-500 hover:text-slate-900',
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+    <div className="space-y-8">
+      {/* Time Period Filter */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Dashboard Overview</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Track your revenue operations metrics</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-slate-500" />
+          <div className="flex gap-2">
+            {(['7d', '30d', '90d', 'year'] as TimePeriod[]).map((period) => (
+              <button
+                key={period}
+                onClick={() => setTimePeriod(period)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  timePeriod === period
+                    ? 'bg-[#015e32] text-white'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                }`}
+              >
+                {period === '7d' ? 'Last 7 Days' : period === '30d' ? 'Last 30 Days' : period === '90d' ? 'Last 90 Days' : 'This Year'}
+              </button>
+            ))}
           </div>
-        }
-      />
+        </div>
+      </div>
 
       {/* 6 Enhanced KPI Cards */}
-      <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <MetricCard
           label="Annual Revenue"
           value={`$${metrics.totalAnnualRevenue.toLocaleString()}`}
@@ -689,7 +680,7 @@ export default function DashboardScreen() {
           </CardContent>
         </Card>
       </section>
-    </PageBody>
+    </div>
   )
 }
 

@@ -7,7 +7,6 @@ import { Button } from '@/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card'
 import { Input } from '@/ui/input'
 import { Textarea } from '@/ui/textarea'
-import { PageBody, PageHeader } from '@/components/layout/Page'
 
 type SourceCard = {
   id: string
@@ -186,67 +185,74 @@ export default function BrainPageClient() {
   }
 
   return (
-    <PageBody>
-      <PageHeader
-        title="TRS Brain"
-        description="Your knowledge layer. Ask about frameworks, past audits, offers, calculators, and SOPs."
-      />
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">TRS Brain</h1>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+          Your knowledge layer. Ask about frameworks, past audits, offers, calculators, and SOPs.
+        </p>
+      </div>
 
-      <div className="grid flex-1 gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-3">
         {/* Main Chat Area */}
-        <Card className="flex min-h-[520px] flex-col border-slate-200 dark:border-slate-800 lg:col-span-2">
+        <Card className="border-slate-200 dark:border-slate-800 lg:col-span-2">
           <CardHeader className="border-b border-slate-200/60 dark:border-slate-800/60 pb-4">
             <CardTitle className="text-lg font-semibold">Chat</CardTitle>
             <CardDescription>Ask questions, get answers with citations.</CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-1 flex-col gap-4 pt-4">
+          <CardContent className="space-y-4 pt-4">
             {/* Messages */}
-            <div className="flex-1 space-y-4 overflow-y-auto rounded-xl border border-neutral-200/80 bg-white/70 p-4 dark:border-slate-800/60 dark:bg-slate-900/40">
+            <div className="space-y-4 min-h-[400px] max-h-[500px] overflow-y-auto">
               {messages.length === 0 ? (
-                <div className="flex h-full flex-col items-center justify-center text-sm text-neutral-500 dark:text-slate-400">
-                  <p className="font-medium">No messages yet</p>
-                  <p className="mt-2 text-xs text-neutral-400 dark:text-slate-500">
-                    Try asking about TRS frameworks, offers, or past audits.
-                  </p>
+                <div className="flex items-center justify-center h-[400px] text-sm text-slate-500 dark:text-slate-400">
+                  <div className="text-center space-y-2">
+                    <p className="font-medium">No messages yet</p>
+                    <p className="text-xs">Try asking about TRS frameworks, offers, or past audits</p>
+                  </div>
                 </div>
               ) : (
                 messages.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex w-full ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm shadow-sm ${
+                      className={`max-w-[80%] rounded-lg p-4 ${
                         message.role === 'user'
-                          ? 'bg-emerald-600 text-white'
-                          : 'bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100'
+                          ? 'bg-blue-600 dark:bg-blue-700 text-white'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100'
                       }`}
                     >
+                      {/* Message content with formatting */}
                       {message.role === 'user' ? (
-                        <p className="whitespace-pre-wrap">{message.content}</p>
+                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                       ) : (
                         <FormattedText content={message.content} />
                       )}
 
+                      {/* Sources */}
                       {message.sources && message.sources.length > 0 && (
                         <div className="mt-3 space-y-2">
-                          <p className="text-xs font-semibold text-neutral-500 dark:text-slate-300">Sources</p>
+                          <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">Sources:</p>
                           {message.sources.map((source) => (
                             <div
                               key={source.id}
-                              className="rounded-lg border border-neutral-200/70 bg-white/90 p-3 text-xs dark:border-slate-800/70 dark:bg-slate-900/60"
+                              className="rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 text-xs"
                             >
-                              <div className="flex items-center justify-between gap-4">
+                              <div className="flex items-center justify-between">
                                 <span className="font-medium text-slate-900 dark:text-slate-100">{source.title}</span>
                                 <Badge variant="outline" className="text-[10px]">
                                   {source.type}
                                 </Badge>
                               </div>
-                              <p className="mt-1 text-neutral-600 dark:text-slate-400">{source.excerpt}</p>
-                              <div className="mt-2 flex items-center gap-3 text-[11px] text-neutral-500 dark:text-slate-400">
-                                <span>Relevance: {Math.round(source.relevance * 100)}%</span>
+                              <p className="mt-1 text-slate-600 dark:text-slate-400">{source.excerpt}</p>
+                              <div className="mt-1 flex items-center gap-2">
+                                <span className="text-slate-500 dark:text-slate-400">
+                                  Relevance: {Math.round(source.relevance * 100)}%
+                                </span>
                                 {source.url && (
-                                  <a href={source.url} className="font-medium text-emerald-600 hover:underline dark:text-emerald-400">
+                                  <a href={source.url} className="text-blue-600 dark:text-blue-400 hover:underline">
                                     View →
                                   </a>
                                 )}
@@ -256,6 +262,7 @@ export default function BrainPageClient() {
                         </div>
                       )}
 
+                      {/* Copy button for assistant messages */}
                       {message.role === 'assistant' && (
                         <div className="mt-3 flex items-center gap-2">
                           <Button
@@ -266,12 +273,12 @@ export default function BrainPageClient() {
                           >
                             {copiedMessageId === message.id ? (
                               <>
-                                <Check className="mr-1 h-3 w-3" />
+                                <Check className="h-3 w-3 mr-1" />
                                 Copied
                               </>
                             ) : (
                               <>
-                                <Copy className="mr-1 h-3 w-3" />
+                                <Copy className="h-3 w-3 mr-1" />
                                 Copy
                               </>
                             )}
@@ -279,7 +286,7 @@ export default function BrainPageClient() {
                         </div>
                       )}
 
-                      <p className="mt-2 text-[10px] text-neutral-400 dark:text-slate-500">
+                      <p className="mt-2 text-[10px] opacity-70 suppress-hydration-warning">
                         {message.timestamp.toLocaleTimeString()}
                       </p>
                     </div>
@@ -287,13 +294,14 @@ export default function BrainPageClient() {
                 ))
               )}
 
+              {/* Loading indicator */}
               {isLoading && (
                 <div className="flex justify-start">
-                  <div className="max-w-[80%] rounded-2xl bg-white/80 p-4 shadow-sm dark:bg-slate-800/80">
+                  <div className="max-w-[80%] rounded-lg bg-slate-100 dark:bg-slate-800 p-4">
                     <div className="flex items-center gap-2">
-                      <div className="h-2 w-2 animate-bounce rounded-full bg-neutral-400 dark:bg-slate-500"></div>
-                      <div className="h-2 w-2 animate-bounce rounded-full bg-neutral-400 dark:bg-slate-500 delay-100"></div>
-                      <div className="h-2 w-2 animate-bounce rounded-full bg-neutral-400 dark:bg-slate-500 delay-200"></div>
+                      <div className="h-2 w-2 animate-bounce rounded-full bg-slate-400 dark:bg-slate-500"></div>
+                      <div className="h-2 w-2 animate-bounce rounded-full bg-slate-400 dark:bg-slate-500 delay-100"></div>
+                      <div className="h-2 w-2 animate-bounce rounded-full bg-slate-400 dark:bg-slate-500 delay-200"></div>
                     </div>
                   </div>
                 </div>
@@ -397,6 +405,6 @@ export default function BrainPageClient() {
           </Card>
         </div>
       </div>
-    </PageBody>
+    </div>
   )
 }
