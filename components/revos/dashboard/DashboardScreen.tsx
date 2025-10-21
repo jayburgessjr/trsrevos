@@ -175,12 +175,12 @@ export default function DashboardScreen() {
     <div className="space-y-8">
       {/* Time Period Filter */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Dashboard Overview</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Track your revenue operations metrics</p>
+        <div className="text-white">
+          <h2 className="text-2xl font-bold text-white">Dashboard Overview</h2>
+          <p className="text-sm text-white">Track your revenue operations metrics</p>
         </div>
         <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-slate-500" />
+          <Filter className="h-4 w-4 text-white" />
           <div className="flex gap-2">
             {(['7d', '30d', '90d', 'year'] as TimePeriod[]).map((period) => (
               <button
@@ -189,7 +189,7 @@ export default function DashboardScreen() {
                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                   timePeriod === period
                     ? 'bg-[#015e32] text-white'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                    : 'bg-white/10 text-white hover:bg-white/20'
                 }`}
               >
                 {period === '7d' ? 'Last 7 Days' : period === '30d' ? 'Last 30 Days' : period === '90d' ? 'Last 90 Days' : 'This Year'}
