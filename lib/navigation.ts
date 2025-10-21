@@ -9,10 +9,10 @@ export const MAIN_NAV: NavItem[] = [
   { label: 'Clients', href: '/clients-revos', icon: 'Building2' },
   { label: 'Projects', href: '/projects', icon: 'Kanban' },
   { label: 'Documents', href: '/documents', icon: 'Files' },
+  { label: 'Content', href: '/content', icon: 'FileText' },
   { label: 'Agents', href: '/agents', icon: 'Bot' },
   { label: 'TRS Brain', href: '/brain', icon: 'Brain' },
   { label: 'Calculators', href: '/calculators', icon: 'Calculator' },
-  { label: 'Content', href: '/content', icon: 'FileText' },
   { label: 'Resources', href: '/resources', icon: 'BookOpen' },
 ]
 

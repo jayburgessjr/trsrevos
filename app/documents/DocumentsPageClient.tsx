@@ -104,6 +104,14 @@ export default function DocumentsPageClient() {
 
   return (
     <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Documents</h1>
+          <p className="text-muted-foreground mt-1">Attach deliverables, blueprints, and playbooks to projects</p>
+        </div>
+      </div>
+
       <section className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader className="pb-4">

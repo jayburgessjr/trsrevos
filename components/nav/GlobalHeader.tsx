@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Bell, Search } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 
 export default function GlobalHeader() {
   const router = useRouter()
@@ -11,21 +12,20 @@ export default function GlobalHeader() {
   const handleSignOut = useCallback(async () => {
     setIsSigningOut(true)
     try {
-      const response = await fetch("/auth/signout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
+      const supabase = createClient()
 
-      if (!response.ok) {
-        throw new Error("Failed to sign out")
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut()
+
+      if (error) {
+        throw error
       }
 
-      router.replace("/login")
+      // Force a hard navigation to login page to clear all state
+      window.location.href = "/login"
     } catch (error) {
-      console.error("Failed to sign out", error)
-    } finally {
+      console.error("Failed to sign out:", error)
+      alert("Failed to log out. Please try again.")
       setIsSigningOut(false)
     }
   }, [router])

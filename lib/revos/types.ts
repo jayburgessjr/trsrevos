@@ -56,6 +56,7 @@ export type ContentItem = {
   id: string
   title: string
   type: 'Case Study' | 'Post' | 'Email' | 'Slide'
+  client?: string
   sourceProjectId?: string
   draft: string
   finalText?: string
@@ -129,6 +130,7 @@ export type UpdateDocumentStatusInput = {
 export type CreateContentInput = {
   title: string
   type: ContentItem['type']
+  client?: string
   sourceProjectId?: string
   draft: string
   finalText?: string

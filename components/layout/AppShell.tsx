@@ -13,6 +13,7 @@ import { Button } from '@/ui/button'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import GlobalSearch from '@/components/search/GlobalSearch'
 import MobileBottomNav from '@/components/layout/MobileBottomNav'
+import { createClient } from '@/lib/supabase/client'
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? '/'
@@ -21,9 +22,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const { projects, documents, automationLogs } = useRevosData()
 
   const handleLogout = async () => {
-    // Clear any auth tokens/session data
-    // For now, just redirect to login
-    router.push('/login')
+    try {
+      const supabase = createClient()
+
+      // Sign out from Supabase
+      await supabase.auth.signOut()
+
+      // Force a hard navigation to clear all state
+      window.location.href = '/login'
+    } catch (error) {
+      console.error('Failed to sign out:', error)
+      alert('Failed to log out. Please try again.')
+    }
   }
 
   const kpis = useMemo(() => {

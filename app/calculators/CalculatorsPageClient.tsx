@@ -200,7 +200,7 @@ export default function CalculatorsPageClient() {
 
   return (
     <div className="min-h-screen bg-[#004d28] text-white">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4">
+      <div className="mx-auto flex w-full flex-col gap-6 p-4">
         <header className="space-y-1">
           <h1 className="text-2xl font-semibold text-white">Calculators</h1>
           <p className="text-sm text-white/80">

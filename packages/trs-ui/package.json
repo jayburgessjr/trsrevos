@@ -1,0 +1,61 @@
+{
+  "name": "@trs/ui",
+  "version": "2.0.0",
+  "description": "TRS UI Design System - Complete theme and component library with dark/light modes and GSAP animations",
+  "main": "index.ts",
+  "types": "index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./theme": "./theme/theme.ts",
+    "./theme/dark": "./theme/dark.ts",
+    "./theme/light": "./theme/light.ts",
+    "./tailwind": "./tailwind.config.extend.ts",
+    "./layout": "./layout/TRSLayout.tsx",
+    "./components/*": "./components/*.tsx",
+    "./hooks/*": "./hooks/*.ts",
+    "./animations": "./animations/gsap.config.ts"
+  },
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "keywords": [
+    "trs",
+    "ui",
+    "design-system",
+    "react",
+    "nextjs",
+    "tailwindcss",
+    "typescript",
+    "gsap",
+    "dark-mode",
+    "light-mode",
+    "animations"
+  ],
+  "author": "The Revenue Scientists",
+  "license": "MIT",
+  "peerDependencies": {
+    "gsap": "^3.12.0",
+    "next": "^14.0.0 || ^15.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "tailwindcss": "^3.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "typescript": "^5.0.0"
+  },
+  "files": [
+    "index.ts",
+    "theme",
+    "tailwind.config.extend.ts",
+    "components",
+    "layout",
+    "hooks",
+    "animations",
+    "examples"
+  ]
+}

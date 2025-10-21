@@ -125,6 +125,7 @@ export default function ContentPageClient() {
       createContent({
         title: form.title.trim(),
         type: form.type,
+        client: form.client.trim() || undefined,
         sourceProjectId: form.sourceProjectId || undefined,
         draft: form.draft.trim(),
         finalText: data.content,
@@ -171,6 +172,14 @@ export default function ContentPageClient() {
 
   return (
     <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Content</h1>
+          <p className="text-muted-foreground mt-1">Draft case studies, emails, and marketing assets from delivery outputs</p>
+        </div>
+      </div>
+
       <section className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader className="pb-4">
