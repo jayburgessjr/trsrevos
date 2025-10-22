@@ -5,8 +5,13 @@ import { randomUUID } from 'crypto'
 // This API endpoint is PUBLIC - no auth required
 // It creates a document in Supabase from form submissions
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+function getSupabaseConfig() {
+  const supabaseUrl =
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? ''
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
+
+  return { supabaseUrl, supabaseServiceKey }
+}
 
 export async function POST(request: NextRequest) {
   console.log('📝 Form submission API called')
@@ -15,14 +20,17 @@ export async function POST(request: NextRequest) {
     const { formId, data } = body
 
     console.log('📋 Form ID:', formId)
-    console.log('📊 Form data keys:', Object.keys(data))
 
-    if (!formId || !data) {
+    if (!formId || !data || typeof data !== 'object' || data === null || Array.isArray(data)) {
       console.error('❌ Missing formId or data')
       return NextResponse.json({ error: 'Missing formId or data' }, { status: 400 })
     }
 
+    console.log('📊 Form data keys:', Object.keys(data as Record<string, unknown>))
+
     // Validate environment variables
+    const { supabaseUrl, supabaseServiceKey } = getSupabaseConfig()
+
     if (!supabaseUrl || !supabaseServiceKey) {
       console.error('Missing Supabase environment variables')
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
