@@ -226,4 +226,10 @@ body {
   .ring-ring {
     --tw-ring-color: rgb(var(--color-ring));
   }
+
+  /* Safe area utilities */
+  .safe-area-bottom {
+    padding-bottom: 1rem;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
 }
