@@ -593,7 +593,7 @@ export default function DashboardScreen() {
                         ${(project.revenueTarget && project.revenueTarget >= 1000) ? Math.round(project.revenueTarget / 1000) + 'k' : project.revenueTarget?.toLocaleString() || 0}
                       </TableCell>
                       <TableCell className="text-xs text-slate-500 dark:text-slate-400">
-                        {new Date(project.updatedAt).toLocaleDateString()}
+                        {new Date(project.startDate).toLocaleDateString()}
                       </TableCell>
                     </TableRow>
                   ))

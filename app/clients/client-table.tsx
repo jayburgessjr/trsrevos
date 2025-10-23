@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 const PHASES: RevOSPhase[] = ["Discovery", "Data", "Algorithm", "Architecture", "Compounding"];
 const SEGMENTS: Client["segment"][] = ["SMB", "Mid", "Enterprise"];
 
-type SortField = "name" | "segment" | "arr" | "owner" | "phase" | "health" | "updated_at";
+type SortField = "name" | "segment" | "arr" | "owner" | "phase" | "health";
 type SortDirection = "asc" | "desc";
 
 export function ClientsTable({ data }: { data: Client[] }) {
@@ -20,8 +20,8 @@ export function ClientsTable({ data }: { data: Client[] }) {
   const [search, setSearch] = useState("");
   const [segment, setSegment] = useState<string>("all");
   const [phase, setPhase] = useState<string>("all");
-  const [sortField, setSortField] = useState<SortField>("updated_at");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [sortField, setSortField] = useState<SortField>("name");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -65,10 +65,6 @@ export function ClientsTable({ data }: { data: Client[] }) {
         case "health":
           aValue = a.health ?? 0;
           bValue = b.health ?? 0;
-          break;
-        case "updated_at":
-          aValue = a.updated_at ? new Date(a.updated_at).getTime() : 0;
-          bValue = b.updated_at ? new Date(b.updated_at).getTime() : 0;
           break;
         default:
           return 0;
@@ -213,15 +209,6 @@ export function ClientsTable({ data }: { data: Client[] }) {
               </TableHead>
               <TableHead>Open Opps</TableHead>
               <TableHead>AR</TableHead>
-              <TableHead>
-                <button
-                  onClick={() => toggleSort("updated_at")}
-                  className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
-                >
-                  Last Modified
-                  <ArrowUpDown className="h-3 w-3" />
-                </button>
-              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -253,15 +240,12 @@ export function ClientsTable({ data }: { data: Client[] }) {
                   <TableCell>{Math.round(client.health)}</TableCell>
                   <TableCell>{openOpps}</TableCell>
                   <TableCell>{formatCurrency(outstanding)}</TableCell>
-                  <TableCell className="text-xs text-gray-500 dark:text-neutral-400">
-                    {client.updated_at ? new Date(client.updated_at).toLocaleDateString() : "—"}
-                  </TableCell>
                 </TableRow>
               );
             })}
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="text-center text-sm text-gray-500 dark:text-neutral-400">
+                <TableCell colSpan={8} className="text-center text-sm text-gray-500 dark:text-neutral-400">
                   No clients match the current filters.
                 </TableCell>
               </TableRow>
