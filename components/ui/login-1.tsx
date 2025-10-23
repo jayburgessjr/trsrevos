@@ -143,7 +143,7 @@ export default function LoginScreen() {
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <Image
-              src="/images/trs_main_logo.png"
+              src="/images/trs-logo.png"
               alt="TRS Logo"
               width={175}
               height={175}
