@@ -88,7 +88,7 @@ export default async function ProjectDetailPage({
   const content = contentResult.data || []
 
   return (
-    <div className="min-h-screen bg-[#004d29] text-white">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-6 py-6">
         <ProjectWorkspace
           project={project}
