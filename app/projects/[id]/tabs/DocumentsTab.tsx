@@ -2,7 +2,10 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { FileText, Plus, Search, Filter, ExternalLink, Eye, Download } from 'lucide-react'
+import { FileText, Plus, Search, Eye, Download } from 'lucide-react'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table'
+import { Badge } from '@/ui/badge'
+import { Button } from '@/ui/button'
 import type { ProjectWorkspaceProject, ProjectDocument } from '../ProjectWorkspace'
 
 interface DocumentsTabProps {
@@ -22,25 +25,12 @@ export default function DocumentsTab({ project, documents }: DocumentsTabProps) 
   const filteredDocuments = documents.filter((doc) => {
     const matchesSearch =
       doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.description.toLowerCase().includes(searchTerm.toLowerCase())
+      doc.type.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = filterStatus === 'all' || doc.status === filterStatus
     const matchesType = filterType === 'all' || doc.type === filterType
 
     return matchesSearch && matchesStatus && matchesType
   })
-
-  const getStatusColor = (status: ProjectDocument['status']) => {
-    switch (status) {
-      case 'Draft':
-        return 'border border-orange-500 bg-green-700 text-white'
-      case 'Review':
-        return 'border border-orange-500 bg-green-800 text-white'
-      case 'Approved':
-        return 'border border-orange-500 bg-green-600 text-white'
-      default:
-        return 'border border-orange-500 bg-green-800 text-white'
-    }
-  }
 
   const handleCreateDocument = () => {
     // Redirect to documents page with project context
@@ -48,35 +38,34 @@ export default function DocumentsTab({ project, documents }: DocumentsTabProps) 
   }
 
   return (
-    <div className="space-y-6 text-white">
+    <div className="space-y-4">
       {/* Header with Actions */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-white">Project Documents</h2>
-          <p className="mt-1 text-sm text-green-200">
+          <p className="text-sm text-muted-foreground">
             {filteredDocuments.length} of {documents.length} document{documents.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <button
+        <Button
           onClick={handleCreateDocument}
-          className="group flex items-center gap-2 rounded-lg border border-orange-500 bg-green-800 px-4 py-2 font-medium text-white transition-colors hover:bg-orange-500"
+          className="bg-[#015e32] hover:bg-[#01753d]"
         >
-          <Plus className="h-5 w-5 text-white transition-colors group-hover:text-green-900" />
+          <Plus className="h-4 w-4 mr-2" />
           New Document
-        </button>
+        </Button>
       </div>
 
       {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col sm:flex-row gap-3">
         {/* Search */}
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-200" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             type="text"
             placeholder="Search documents..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-lg border border-orange-500 bg-green-950 pl-10 pr-4 py-2 text-white placeholder:text-green-200 focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-300"
+            className="w-full rounded-lg border border-input bg-background pl-9 pr-4 py-2 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
 
@@ -84,7 +73,7 @@ export default function DocumentsTab({ project, documents }: DocumentsTabProps) 
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value as any)}
-          className="rounded-lg border border-orange-500 bg-green-950 px-4 py-2 text-white focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-300"
+          className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="all">All Statuses</option>
           <option value="Draft">Draft</option>
@@ -96,7 +85,7 @@ export default function DocumentsTab({ project, documents }: DocumentsTabProps) 
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
-          className="rounded-lg border border-orange-500 bg-green-950 px-4 py-2 text-white focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-300"
+          className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="all">All Types</option>
           {documentTypes.map((type) => (
@@ -107,117 +96,101 @@ export default function DocumentsTab({ project, documents }: DocumentsTabProps) 
         </select>
       </div>
 
-      {/* Documents List */}
+      {/* Documents Table */}
       {filteredDocuments.length === 0 ? (
-        <div className="rounded-lg border-2 border-dashed border-orange-500 bg-green-900 py-12 text-center">
-          <FileText className="mx-auto mb-4 h-12 w-12 text-white" />
-          <h3 className="mb-2 text-lg font-medium text-white">No documents found</h3>
-          <p className="mb-4 text-green-200">
+        <div className="rounded-lg border-2 border-dashed border-border py-12 text-center">
+          <FileText className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+          <h3 className="mb-2 text-lg font-medium">No documents found</h3>
+          <p className="mb-4 text-sm text-muted-foreground">
             {documents.length === 0
               ? 'Get started by creating your first document'
               : 'Try adjusting your search or filters'}
           </p>
           {documents.length === 0 && (
-            <button
+            <Button
               onClick={handleCreateDocument}
-              className="group inline-flex items-center gap-2 rounded-lg border border-orange-500 bg-green-800 px-4 py-2 font-medium text-white transition-colors hover:bg-orange-500"
+              className="bg-[#015e32] hover:bg-[#01753d]"
             >
-              <Plus className="h-5 w-5 text-white transition-colors group-hover:text-green-900" />
+              <Plus className="h-4 w-4 mr-2" />
               Create Document
-            </button>
+            </Button>
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {filteredDocuments.map((doc) => (
-            <div
-              key={doc.id}
-              className="rounded-lg border border-orange-500 bg-green-800 p-6 transition-shadow hover:bg-orange-500"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="mb-2 flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-white" />
-                    <h3 className="text-lg font-semibold text-white">{doc.title}</h3>
-                    <span className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(doc.status)}`}>
-                      {doc.status}
-                    </span>
-                  </div>
-
-                  <p className="mb-3 text-green-100">{doc.description}</p>
-
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-green-100">
-                    <span className="flex items-center gap-1">
-                      <span className="font-medium text-white">Type:</span> {doc.type}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="font-medium text-white">Version:</span> {doc.version}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="font-medium text-white">Updated:</span>{' '}
-                      {new Date(doc.updated_at).toLocaleDateString()}
-                    </span>
-                  </div>
-
-                  {doc.tags && doc.tags.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {doc.tags.map((tag, idx) => (
-                        <span
-                          key={idx}
-                          className="rounded border border-orange-500 bg-green-700 px-2 py-1 text-xs text-white"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-2 ml-4">
-                  <Link
-                    href={`/documents/${doc.id}`}
-                    className="group flex items-center gap-2 rounded-lg border border-orange-500 bg-green-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500"
-                  >
-                    <Eye className="h-4 w-4 text-white transition-colors group-hover:text-green-900" />
-                    View
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Version</TableHead>
+              <TableHead>Updated</TableHead>
+              <TableHead>Tags</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredDocuments.map((doc) => (
+              <TableRow key={doc.id}>
+                <TableCell className="font-medium">
+                  <Link href={`/documents/${doc.id}`} className="hover:underline flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    {doc.title}
                   </Link>
-                  {doc.file_url && (
-                    <a
-                      href={doc.file_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group flex items-center gap-2 rounded-lg border border-orange-500 bg-green-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500"
-                    >
-                      <Download className="h-4 w-4 text-white transition-colors group-hover:text-green-900" />
-                      File
-                    </a>
+                </TableCell>
+                <TableCell>{doc.type}</TableCell>
+                <TableCell>
+                  <Badge variant={doc.status === 'Approved' ? 'default' : 'outline'}>
+                    {doc.status}
+                  </Badge>
+                </TableCell>
+                <TableCell>v{doc.version}</TableCell>
+                <TableCell>{new Date(doc.updated_at).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  {doc.tags && doc.tags.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {doc.tags.slice(0, 2).map((tag, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                      {doc.tags.length > 2 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{doc.tags.length - 2}
+                        </Badge>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">—</span>
                   )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    <Link
+                      href={`/documents/${doc.id}`}
+                      className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+                    >
+                      <Eye className="h-4 w-4" />
+                      View
+                    </Link>
+                    {doc.file_url && (
+                      <a
+                        href={doc.file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+                      >
+                        <Download className="h-4 w-4" />
+                        File
+                      </a>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       )}
-
-      {/* Document Statistics */}
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-lg border border-orange-500 bg-green-800 p-4">
-          <div className="mb-1 text-sm text-green-200">Total Documents</div>
-          <div className="text-2xl font-bold text-white">{documents.length}</div>
-        </div>
-        <div className="rounded-lg border border-orange-500 bg-green-800 p-4">
-          <div className="mb-1 text-sm text-green-200">Approved</div>
-          <div className="text-2xl font-bold text-white">
-            {documents.filter((d) => d.status === 'Approved').length}
-          </div>
-        </div>
-        <div className="rounded-lg border border-orange-500 bg-green-800 p-4">
-          <div className="mb-1 text-sm text-green-200">In Review</div>
-          <div className="text-2xl font-bold text-white">
-            {documents.filter((d) => d.status === 'Review').length}
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
