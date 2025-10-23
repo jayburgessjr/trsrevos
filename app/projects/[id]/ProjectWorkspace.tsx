@@ -137,55 +137,53 @@ export default function ProjectWorkspace({
   }
 
   return (
-    <div className="flex flex-col gap-6 text-white">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+    <div className="flex flex-col gap-6">
+      {/* Header - White Card */}
+      <div className="rounded-2xl border border-orange-500 bg-white px-6 py-5 shadow-sm">
+        <div className="flex items-center gap-4 mb-4">
           <Link
             href="/projects"
-            className="group flex h-10 w-10 items-center justify-center rounded-lg border border-orange-500 bg-green-800 text-white transition-colors hover:bg-orange-500"
+            className="group flex h-10 w-10 items-center justify-center rounded-lg border border-orange-500 bg-[#004d29] text-white transition-colors hover:bg-orange-500"
           >
-            <ArrowLeft className="h-5 w-5 text-white transition-colors group-hover:text-green-900" />
+            <ArrowLeft className="h-5 w-5 text-white" />
           </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-white">{project.name}</h1>
-            <p className="text-sm text-green-200">Client: {project.client}</p>
+          <div className="flex-1">
+            <h1 className="text-2xl font-semibold text-gray-900">{project.name}</h1>
+            <p className="text-sm text-gray-600">Client: {project.client}</p>
           </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className={`px-3 py-1 rounded-full text-sm font-medium ${getTypeColor(project.type)}`}>
-            {project.type}
-          </span>
-          <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(project.status)}`}>
-            {project.status}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="px-3 py-1 rounded-full text-sm font-medium bg-orange-500 text-white border border-orange-500">
+              {project.type}
+            </span>
+            <span className="px-3 py-1 rounded-full text-sm font-medium bg-[#004d29] text-white border border-orange-500">
+              {project.status}
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-orange-500 pb-2">
-        <nav className="-mb-px flex flex-wrap gap-3">
-          {tabs.map((tab) => {
-            const Icon = tab.icon
-            return (
-              <button
-                key={tab.key}
-                onClick={() => handleTabChange(tab.key)}
-                className={`
-                  group flex items-center gap-2 whitespace-nowrap rounded-lg border border-orange-500 px-4 py-2 text-sm font-medium transition-colors
-                  ${
-                    activeTab === tab.key
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-green-800 text-white hover:bg-orange-500 hover:text-white'
-                  }
-                `}
-              >
-                <Icon className="h-5 w-5 text-white transition-colors group-hover:text-green-900" />
-                {tab.label}
-              </button>
-            )
-          })}
-        </nav>
+      <div className="flex flex-wrap gap-3">
+        {tabs.map((tab) => {
+          const Icon = tab.icon
+          return (
+            <button
+              key={tab.key}
+              onClick={() => handleTabChange(tab.key)}
+              className={`
+                flex items-center gap-2 whitespace-nowrap rounded-lg border border-orange-500 px-4 py-2 text-sm font-medium transition-colors
+                ${
+                  activeTab === tab.key
+                    ? 'bg-orange-500 text-white'
+                    : 'bg-white text-gray-900 hover:bg-orange-500 hover:text-white'
+                }
+              `}
+            >
+              <Icon className={`h-5 w-5 ${activeTab === tab.key ? 'text-white' : 'text-gray-600'}`} />
+              {tab.label}
+            </button>
+          )
+        })}
       </div>
 
       {/* Tab Content */}
