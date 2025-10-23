@@ -254,6 +254,49 @@ const publicForms = {
       { name: 'testimonialAvailable', label: 'Client Testimonial Available?', type: 'select', required: true, options: ['Yes', 'No', 'Requested'] },
     ],
   },
+  'revfoundry-intake': {
+    id: 'revfoundry-intake',
+    title: 'RevFoundry Intake - Launch Your Startup',
+    description: 'Launch or scale your startup with The Revenue Scientists. Get revenue systems, CRM setup, and growth infrastructure in 90 days.',
+    fields: [
+      // Section 1: Basic Info
+      { name: 'contactName', label: 'Your Name', type: 'text', required: true, placeholder: 'John Smith' },
+      { name: 'contactEmail', label: 'Email Address', type: 'email', required: true, placeholder: 'john@company.com' },
+      { name: 'contactPhone', label: 'Phone Number', type: 'tel', required: true, placeholder: '+1 (555) 123-4567' },
+      { name: 'companyName', label: 'Company Name (if exists)', type: 'text', required: false, placeholder: 'Your Company Inc.' },
+      { name: 'website', label: 'Website', type: 'url', required: false, placeholder: 'https://yourcompany.com' },
+      { name: 'socialLinks', label: 'Social Links (LinkedIn, Twitter, etc.)', type: 'textarea', required: false, placeholder: 'LinkedIn: linkedin.com/in/yourprofile\nTwitter: @yourhandle', rows: 2 },
+
+      // Section 2: Idea Snapshot
+      { name: 'productDescription', label: 'Describe your product or service in one sentence', type: 'text', required: true, placeholder: 'We help small businesses automate their invoicing and get paid faster' },
+      { name: 'problemSolved', label: 'What problem does it solve?', type: 'textarea', required: true, placeholder: 'Describe the specific pain point your product addresses...', rows: 3 },
+      { name: 'idealCustomer', label: 'Who is your ideal customer?', type: 'textarea', required: true, placeholder: 'Be specific: industry, company size, role, location, budget, etc.', rows: 3 },
+      { name: 'deliveryMethod', label: 'How do you plan to deliver it?', type: 'select', required: true, options: ['Digital (SaaS, software, online service)', 'Physical (product, retail, hardware)', 'Hybrid (combination of digital and physical)', 'Service-based (consulting, agency, professional services)'] },
+
+      // Section 3: Current Stage
+      { name: 'businessStage', label: 'Current Stage', type: 'select', required: true, options: ['Idea Only — Concept stage, no product built yet', 'Prototype / MVP — Built something, testing with early users', 'Already Selling — Making sales, but inconsistent', 'Generating Consistent Revenue — Predictable sales, ready to scale'] },
+      { name: 'currentRevenue', label: 'Current Monthly Revenue (if any)', type: 'text', required: false, placeholder: '$0, $500, $5,000, etc.' },
+      { name: 'teamSize', label: 'Team Size (including you)', type: 'select', required: true, options: ['Solo founder', '2-3 people', '4-5 people', '6-10 people', '10+ people'] },
+
+      // Section 4: Goals
+      { name: 'ninetyDayOutcome', label: 'Desired outcome in 90 days', type: 'textarea', required: true, placeholder: 'Example: Launch MVP and get first 10 paying customers, or Scale from $5K to $15K MRR with systems in place', rows: 3 },
+      { name: 'targetRevenue', label: 'Target Monthly Revenue (90 days from now)', type: 'text', required: true, placeholder: '$5,000, $10,000, $25,000, etc.' },
+      { name: 'biggestChallenge', label: 'Biggest challenge right now', type: 'textarea', required: true, placeholder: 'What\'s blocking your growth? Be specific about obstacles, gaps, or bottlenecks...', rows: 3 },
+      { name: 'triedBefore', label: 'What have you tried so far?', type: 'textarea', required: false, placeholder: 'Any tools, strategies, or approaches you\'ve tested? What worked or didn\'t work?', rows: 2 },
+
+      // Section 5: Systems & Data
+      { name: 'currentTools', label: 'Current CRM, ad platforms, or analytics tools', type: 'textarea', required: false, placeholder: 'Examples: HubSpot, Salesforce, Google Analytics, Facebook Ads, Mailchimp, etc.', rows: 3 },
+      { name: 'dataAccess', label: 'Can you provide access or links to relevant data?', type: 'textarea', required: false, placeholder: 'Share links to dashboards, reports, or indicate if you can grant access to tools. Not required but helps us understand your current state.', rows: 2 },
+      { name: 'techComfort', label: 'Technical Comfort Level', type: 'select', required: true, options: ['Non-technical — Need full setup and training', 'Somewhat technical — Can learn new tools with guidance', 'Very technical — Comfortable with SaaS and automation'] },
+
+      // Section 6: Engagement Preference
+      { name: 'engagementModel', label: 'Preferred Engagement Model (select all that apply)', type: 'textarea', required: true, placeholder: 'Cash Build ($15K), Equity Advisory (3-5%), RevAdvance Financing, or Not sure yet', rows: 2 },
+      { name: 'budget', label: 'Available Budget (if choosing Cash Build)', type: 'text', required: false, placeholder: 'e.g., $15K, $20K, flexible' },
+      { name: 'timeline', label: 'When do you want to start?', type: 'select', required: true, options: ['Immediately — Ready to start within 1-2 weeks', 'This month — Ready within 2-4 weeks', 'Next month — Planning ahead', 'Just exploring — Gathering information'] },
+      { name: 'additionalNotes', label: 'Anything else we should know?', type: 'textarea', required: false, placeholder: 'Additional context, questions, or specific needs...', rows: 3 },
+      { name: 'referralSource', label: 'Where did you hear about us?', type: 'select', required: false, options: ['Google Search', 'LinkedIn', 'Referral from friend/colleague', 'Twitter/X', 'Podcast', 'Conference/Event', 'Blog/Article', 'Other'] },
+    ],
+  },
 }
 
 type PublicFormPageProps = {

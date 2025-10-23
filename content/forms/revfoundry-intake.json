@@ -1,0 +1,317 @@
+{
+  "id": "revfoundry-intake",
+  "title": "RevFoundry Intake",
+  "description": "Launch or scale your startup with The Revenue Scientists. Get revenue systems, CRM setup, and growth infrastructure in 90 days.",
+  "sections": [
+    {
+      "id": "basic-info",
+      "title": "Basic Info",
+      "description": "Let's start with your contact information",
+      "fields": [
+        {
+          "id": "contactName",
+          "label": "Your Name",
+          "type": "text",
+          "required": true,
+          "placeholder": "John Smith"
+        },
+        {
+          "id": "contactEmail",
+          "label": "Email Address",
+          "type": "email",
+          "required": true,
+          "placeholder": "john@company.com"
+        },
+        {
+          "id": "contactPhone",
+          "label": "Phone Number",
+          "type": "tel",
+          "required": true,
+          "placeholder": "+1 (555) 123-4567"
+        },
+        {
+          "id": "companyName",
+          "label": "Company Name (if exists)",
+          "type": "text",
+          "required": false,
+          "placeholder": "Your Company Inc."
+        },
+        {
+          "id": "website",
+          "label": "Website",
+          "type": "url",
+          "required": false,
+          "placeholder": "https://yourcompany.com"
+        },
+        {
+          "id": "socialLinks",
+          "label": "Social Links (LinkedIn, Twitter, etc.)",
+          "type": "textarea",
+          "required": false,
+          "placeholder": "LinkedIn: linkedin.com/in/yourprofile\nTwitter: @yourhandle",
+          "rows": 3
+        }
+      ]
+    },
+    {
+      "id": "idea-snapshot",
+      "title": "Idea Snapshot",
+      "description": "Help us understand your product or service",
+      "fields": [
+        {
+          "id": "productDescription",
+          "label": "Describe your product or service in one sentence",
+          "type": "text",
+          "required": true,
+          "placeholder": "We help small businesses automate their invoicing and get paid faster"
+        },
+        {
+          "id": "problemSolved",
+          "label": "What problem does it solve?",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Describe the specific pain point your product addresses...",
+          "rows": 4
+        },
+        {
+          "id": "idealCustomer",
+          "label": "Who is your ideal customer?",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Be specific: industry, company size, role, location, budget, etc.",
+          "rows": 4
+        },
+        {
+          "id": "deliveryMethod",
+          "label": "How do you plan to deliver it?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            {
+              "value": "digital",
+              "label": "Digital (SaaS, software, online service)"
+            },
+            {
+              "value": "physical",
+              "label": "Physical (product, retail, hardware)"
+            },
+            {
+              "value": "hybrid",
+              "label": "Hybrid (combination of digital and physical)"
+            },
+            {
+              "value": "service",
+              "label": "Service-based (consulting, agency, professional services)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "current-stage",
+      "title": "Current Stage",
+      "description": "Where are you in your journey?",
+      "fields": [
+        {
+          "id": "businessStage",
+          "label": "Current Stage",
+          "type": "radio",
+          "required": true,
+          "options": [
+            {
+              "value": "idea-only",
+              "label": "Idea Only — Concept stage, no product built yet"
+            },
+            {
+              "value": "prototype-mvp",
+              "label": "Prototype / MVP — Built something, testing with early users"
+            },
+            {
+              "value": "already-selling",
+              "label": "Already Selling — Making sales, but inconsistent"
+            },
+            {
+              "value": "consistent-revenue",
+              "label": "Generating Consistent Revenue — Predictable sales, ready to scale"
+            }
+          ]
+        },
+        {
+          "id": "currentRevenue",
+          "label": "Current Monthly Revenue (if any)",
+          "type": "text",
+          "required": false,
+          "placeholder": "$0, $500, $5,000, etc."
+        },
+        {
+          "id": "teamSize",
+          "label": "Team Size (including you)",
+          "type": "select",
+          "required": true,
+          "options": [
+            { "value": "solo", "label": "Solo founder" },
+            { "value": "2-3", "label": "2-3 people" },
+            { "value": "4-5", "label": "4-5 people" },
+            { "value": "6-10", "label": "6-10 people" },
+            { "value": "10+", "label": "10+ people" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "goals",
+      "title": "Goals & Outcomes",
+      "description": "What does success look like for you?",
+      "fields": [
+        {
+          "id": "ninetyDayOutcome",
+          "label": "Desired outcome in 90 days",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Example: Launch MVP and get first 10 paying customers, or Scale from $5K to $15K MRR with systems in place",
+          "rows": 4
+        },
+        {
+          "id": "targetRevenue",
+          "label": "Target Monthly Revenue (90 days from now)",
+          "type": "text",
+          "required": true,
+          "placeholder": "$5,000, $10,000, $25,000, etc."
+        },
+        {
+          "id": "biggestChallenge",
+          "label": "Biggest challenge right now",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "What's blocking your growth? Be specific about obstacles, gaps, or bottlenecks...",
+          "rows": 4
+        },
+        {
+          "id": "triedBefore",
+          "label": "What have you tried so far?",
+          "type": "textarea",
+          "required": false,
+          "placeholder": "Any tools, strategies, or approaches you've tested? What worked or didn't work?",
+          "rows": 3
+        }
+      ]
+    },
+    {
+      "id": "systems-data",
+      "title": "Systems & Data",
+      "description": "What tools and data are you working with?",
+      "fields": [
+        {
+          "id": "currentTools",
+          "label": "Do you currently use any CRM, ad platforms, or analytics tools?",
+          "type": "textarea",
+          "required": false,
+          "placeholder": "Examples: HubSpot, Salesforce, Google Analytics, Facebook Ads, Mailchimp, etc.",
+          "rows": 4
+        },
+        {
+          "id": "dataAccess",
+          "label": "Can you provide access or links to relevant data?",
+          "type": "textarea",
+          "required": false,
+          "placeholder": "Share links to dashboards, reports, or indicate if you can grant access to tools. Not required but helps us understand your current state.",
+          "rows": 3
+        },
+        {
+          "id": "techComfort",
+          "label": "Technical Comfort Level",
+          "type": "radio",
+          "required": true,
+          "options": [
+            {
+              "value": "non-technical",
+              "label": "Non-technical — Need full setup and training"
+            },
+            {
+              "value": "somewhat-technical",
+              "label": "Somewhat technical — Can learn new tools with guidance"
+            },
+            {
+              "value": "very-technical",
+              "label": "Very technical — Comfortable with SaaS and automation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "engagement-preference",
+      "title": "Engagement Preference",
+      "description": "How would you like to work with us?",
+      "fields": [
+        {
+          "id": "engagementModel",
+          "label": "Preferred Engagement Model",
+          "type": "checkbox",
+          "required": true,
+          "options": [
+            {
+              "value": "cash-build",
+              "label": "Cash Build — $15K upfront, 90-day sprint to build revenue systems"
+            },
+            {
+              "value": "equity-advisory",
+              "label": "Equity Advisory — 3-5% equity, ongoing strategic guidance and execution"
+            },
+            {
+              "value": "revadvance",
+              "label": "RevAdvance Financing — We fund your growth, you pay back from future revenue"
+            },
+            {
+              "value": "not-sure",
+              "label": "Not sure yet — Want to discuss options"
+            }
+          ]
+        },
+        {
+          "id": "budget",
+          "label": "Available Budget (if choosing Cash Build)",
+          "type": "text",
+          "required": false,
+          "placeholder": "e.g., $15K, $20K, flexible"
+        },
+        {
+          "id": "timeline",
+          "label": "When do you want to start?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            {
+              "value": "immediately",
+              "label": "Immediately — Ready to start within 1-2 weeks"
+            },
+            {
+              "value": "this-month",
+              "label": "This month — Ready within 2-4 weeks"
+            },
+            {
+              "value": "next-month",
+              "label": "Next month — Planning ahead"
+            },
+            {
+              "value": "exploring",
+              "label": "Just exploring — Gathering information"
+            }
+          ]
+        },
+        {
+          "id": "additionalNotes",
+          "label": "Anything else we should know?",
+          "type": "textarea",
+          "required": false,
+          "placeholder": "Additional context, questions, or specific needs...",
+          "rows": 4
+        }
+      ]
+    }
+  ],
+  "submitButton": "Submit RevFoundry Application",
+  "successMessage": "Thank you for your RevFoundry application! We'll review your submission and reach out within 24-48 hours to discuss next steps.",
+  "industry": "startup",
+  "type": "RevFoundry Build"
+}
