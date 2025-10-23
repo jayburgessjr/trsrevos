@@ -171,12 +171,6 @@ export default function DocumentsTab({ project, documents }: DocumentsTabProps) 
                       ))}
                     </div>
                   )}
-
-                  {doc.summary && (
-                    <div className="mt-3 rounded-lg border border-orange-500 bg-green-900 p-3">
-                      <p className="text-sm text-green-100">{doc.summary}</p>
-                    </div>
-                  )}
                 </div>
 
                 <div className="flex flex-col gap-2 ml-4">
