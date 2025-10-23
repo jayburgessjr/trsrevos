@@ -311,8 +311,8 @@ export default function ProjectsPageClient() {
               {sortedProjects.map((project) => (
                 <TableRow key={project.id}>
                   <TableCell className="px-6">
-                    <Link href={`/projects/${project.id}`} className="block hover:bg-gray-50 -m-2 p-2 rounded">
-                      <div className="font-medium text-foreground hover:text-[#fd8216] hover:underline">{project.name}</div>
+                    <Link href={`/projects/${project.id}`}>
+                      <div className="font-medium text-foreground hover:underline">{project.name}</div>
                       <div className="text-xs text-muted-foreground">{project.id}</div>
                     </Link>
                   </TableCell>
