@@ -43,8 +43,8 @@ export default function DocumentsTab({ project, documents }: DocumentsTabProps) 
   }
 
   const handleCreateDocument = () => {
-    // TODO: Implement document creation
-    alert('Document creation coming soon!')
+    // Redirect to documents page with project context
+    window.location.href = `/documents?project=${project.id}`
   }
 
   return (

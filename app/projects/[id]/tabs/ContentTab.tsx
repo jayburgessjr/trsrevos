@@ -41,8 +41,8 @@ export default function ContentTab({ project, content }: ContentTabProps) {
   }
 
   const handleCreateContent = () => {
-    // TODO: Implement content creation
-    alert('Content creation coming soon!')
+    // Redirect to content page with project context
+    window.location.href = `/content?project=${project.id}`
   }
 
   return (

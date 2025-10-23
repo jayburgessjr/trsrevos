@@ -29,8 +29,8 @@ export default function ResourcesTab({ project, resources }: ResourcesTabProps) 
   })
 
   const handleCreateResource = () => {
-    // TODO: Implement resource creation
-    alert('Resource creation coming soon!')
+    // Redirect to resources page with project context
+    window.location.href = `/resources?project=${project.id}`
   }
 
   return (

@@ -88,17 +88,15 @@ export default async function ProjectDetailPage({
   const content = contentResult.data || []
 
   return (
-    <div className="min-h-screen bg-green-950 text-white">
+    <div className="min-h-screen bg-white text-black">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-6 py-6">
-        <div className="rounded-2xl border border-orange-500 bg-green-900 p-6 shadow-xl">
-          <ProjectWorkspace
-            project={project}
-            documents={documents}
-            resources={resources}
-            content={content}
-            initialTab={initialTab}
-          />
-        </div>
+        <ProjectWorkspace
+          project={project}
+          documents={documents}
+          resources={resources}
+          content={content}
+          initialTab={initialTab}
+        />
       </div>
     </div>
   )
