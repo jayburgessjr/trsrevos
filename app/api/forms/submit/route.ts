@@ -89,11 +89,13 @@ export async function POST(request: NextRequest) {
     if (existingClient) {
       console.log('✅ Found existing client:', existingClient.id)
     } else {
+      // Calculate ARR from monthly revenue (clients table uses 'arr' not 'monthly_recurring_revenue')
+      const annualRevenue = (Number(data.monthlyRevenue) || 0) * 12
+
       console.log('Creating new client with data:', {
         name: clientName,
         industry: data.industry || null,
-        monthly_recurring_revenue: Number(data.monthlyRevenue) || 0,
-        primary_goal: data.goals || null,
+        arr: annualRevenue, // Using 'arr' column as per schema
         phase: 'Discovery',
         status: 'active',
       })
@@ -103,19 +105,23 @@ export async function POST(request: NextRequest) {
         .insert({
           name: clientName,
           industry: data.industry || null,
-          monthly_recurring_revenue: Number(data.monthlyRevenue) || 0,
-          primary_goal: data.goals || null,
+          arr: annualRevenue, // Fixed: Use 'arr' instead of 'monthly_recurring_revenue'
           phase: 'Discovery',
           status: 'active',
-          user_id: null,  // Public form submission - no user associated
-          owner_id: null, // Public form submission - no owner yet
+          notes: data.goals ? `Primary Goal: ${data.goals}` : null,
+          owner_id: null, // Public form submission - no owner assigned yet
         })
         .select('id, name')
         .single()
 
       if (clientError) {
         console.error('❌ Error creating client:', JSON.stringify(clientError, null, 2))
-        // Continue anyway - we'll create an unlinked project
+        // Return error immediately - client creation is critical for form flow
+        return NextResponse.json({
+          error: 'Failed to create client record',
+          details: clientError.message,
+          hint: 'Please ensure the database migration for public form submissions has been applied.'
+        }, { status: 500 })
       } else {
         console.log('✅ Client created successfully:', newClient)
         client = newClient

@@ -4,21 +4,15 @@
 BEGIN;
 
 -- Ensure clients have the metadata referenced by the Revenue Clear workflow
+-- Note: owner_id, phase, status, updated_at already exist in base schema
 ALTER TABLE public.clients
-  ADD COLUMN IF NOT EXISTS owner_id uuid REFERENCES public.users(id) ON DELETE SET NULL,
-  ADD COLUMN IF NOT EXISTS phase text DEFAULT 'Discovery',
-  ADD COLUMN IF NOT EXISTS status text DEFAULT 'active',
   ADD COLUMN IF NOT EXISTS revenue_model text,
-  ADD COLUMN IF NOT EXISTS monthly_recurring_revenue numeric(14,2) DEFAULT 0,
   ADD COLUMN IF NOT EXISTS profit_margin numeric(5,2) DEFAULT 0,
   ADD COLUMN IF NOT EXISTS target_growth numeric(5,2) DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS primary_goal text,
-  ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT timezone('utc', now());
+  ADD COLUMN IF NOT EXISTS primary_goal text;
 
--- Promote legacy mrr column values into the new monthly_recurring_revenue field
-UPDATE public.clients
-SET monthly_recurring_revenue = COALESCE(monthly_recurring_revenue, mrr)
-WHERE mrr IS NOT NULL;
+-- No need to promote legacy mrr - schema uses 'arr' (Annual Recurring Revenue)
+-- monthly_recurring_revenue column was never added as it conflicts with existing 'arr' column
 
 -- Core revenue pipeline table surfaced in onboarding flows
 CREATE TABLE IF NOT EXISTS public.opportunities (
