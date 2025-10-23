@@ -5,6 +5,7 @@ import * as Icons from 'lucide-react'
 
 import { BOTTOM_NAV_ITEMS } from '@/lib/navigation'
 import { cn, isActivePath } from '@/lib/utils'
+import { useNotifications } from '@/hooks/useNotifications'
 
 type MobileBottomNavProps = {
   currentPath: string
@@ -16,6 +17,21 @@ type MobileBottomNavProps = {
  * It surfaces the five most-used destinations for quick thumb access.
  */
 export default function MobileBottomNav({ currentPath, className }: MobileBottomNavProps) {
+  const { counts, isLoading } = useNotifications()
+
+  const getNotificationCount = (href: string): number => {
+    if (isLoading) return 0
+
+    switch (href) {
+      case '/projects':
+        return counts.newProjects
+      case '/documents':
+        return counts.newDocuments
+      default:
+        return 0
+    }
+  }
+
   return (
     <nav
       className={cn(
@@ -28,16 +44,25 @@ export default function MobileBottomNav({ currentPath, className }: MobileBottom
         {BOTTOM_NAV_ITEMS.map((item) => {
           const Icon = (Icons[item.icon as keyof typeof Icons] ?? Icons.Circle) as Icons.LucideIcon
           const active = isActivePath(currentPath, item.href)
+          const notificationCount = getNotificationCount(item.href)
+
           return (
             <li key={item.href} className="flex-1">
               <Link
                 href={item.href}
                 className={cn(
-                  'flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-xs font-medium transition-colors',
+                  'relative flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-xs font-medium transition-colors',
                   active ? 'text-gray-900' : 'text-gray-500 hover:text-gray-800'
                 )}
               >
-                <Icon className={cn('h-5 w-5', active ? 'text-gray-900' : 'text-gray-400')} aria-hidden="true" />
+                <div className="relative">
+                  <Icon className={cn('h-5 w-5', active ? 'text-gray-900' : 'text-gray-400')} aria-hidden="true" />
+                  {notificationCount > 0 && (
+                    <span className="absolute -right-2 -top-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#fd8216] px-1 text-[10px] font-bold text-white">
+                      {notificationCount}
+                    </span>
+                  )}
+                </div>
                 <span>{item.label}</span>
               </Link>
             </li>
