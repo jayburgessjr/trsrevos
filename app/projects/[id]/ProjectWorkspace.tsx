@@ -109,47 +109,47 @@ export default function ProjectWorkspace({
   const getStatusColor = (status: ProjectStatus) => {
     switch (status) {
       case 'Active':
-        return 'bg-green-100 text-green-800'
+        return 'border border-orange-500 bg-green-700 text-white'
       case 'Pending':
-        return 'bg-yellow-100 text-yellow-800'
+        return 'border border-orange-500 bg-green-800 text-white'
       case 'Delivered':
-        return 'bg-blue-100 text-blue-800'
+        return 'border border-orange-500 bg-green-600 text-white'
       case 'Closed':
-        return 'bg-gray-100 text-gray-800'
+        return 'border border-orange-500 bg-green-900 text-white'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'border border-orange-500 bg-green-800 text-white'
     }
   }
 
   const getTypeColor = (type: ProjectType) => {
     switch (type) {
       case 'Audit':
-        return 'bg-purple-100 text-purple-800'
+        return 'border border-orange-500 bg-green-700 text-white'
       case 'Blueprint':
-        return 'bg-blue-100 text-blue-800'
+        return 'border border-orange-500 bg-green-800 text-white'
       case 'Advisory':
-        return 'bg-orange-100 text-orange-800'
+        return 'border border-orange-500 bg-green-600 text-white'
       case 'Internal':
-        return 'bg-gray-100 text-gray-800'
+        return 'border border-orange-500 bg-green-900 text-white'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'border border-orange-500 bg-green-800 text-white'
     }
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 text-white">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link
             href="/projects"
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors"
+            className="group flex h-10 w-10 items-center justify-center rounded-lg border border-orange-500 bg-green-800 text-white transition-colors hover:bg-orange-500"
           >
-            <ArrowLeft className="h-5 w-5 text-gray-600" />
+            <ArrowLeft className="h-5 w-5 text-white transition-colors group-hover:text-green-900" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
-            <p className="text-sm text-gray-500">Client: {project.client}</p>
+            <h1 className="text-2xl font-bold text-white">{project.name}</h1>
+            <p className="text-sm text-green-200">Client: {project.client}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -163,8 +163,8 @@ export default function ProjectWorkspace({
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
+      <div className="border-b border-orange-500 pb-2">
+        <nav className="-mb-px flex flex-wrap gap-3">
           {tabs.map((tab) => {
             const Icon = tab.icon
             return (
@@ -172,15 +172,15 @@ export default function ProjectWorkspace({
                 key={tab.key}
                 onClick={() => handleTabChange(tab.key)}
                 className={`
-                  flex items-center gap-2 whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors
+                  group flex items-center gap-2 whitespace-nowrap rounded-lg border border-orange-500 px-4 py-2 text-sm font-medium transition-colors
                   ${
                     activeTab === tab.key
-                      ? 'border-[#fd8216] text-[#fd8216]'
-                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                      ? 'bg-orange-500 text-white'
+                      : 'bg-green-800 text-white hover:bg-orange-500 hover:text-white'
                   }
                 `}
               >
-                <Icon className="h-5 w-5" />
+                <Icon className="h-5 w-5 text-white transition-colors group-hover:text-green-900" />
                 {tab.label}
               </button>
             )

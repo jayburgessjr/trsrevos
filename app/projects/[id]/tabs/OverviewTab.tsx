@@ -99,25 +99,25 @@ export default function OverviewTab({ project }: OverviewTabProps) {
         {!isEditing ? (
           <button
             onClick={() => setIsEditing(true)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#fd8216] hover:bg-orange-50 rounded-lg transition-colors"
+            className="group flex items-center gap-2 rounded-lg border border-orange-500 bg-green-800 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500"
           >
-            <Edit2 className="h-4 w-4" />
+            <Edit2 className="h-4 w-4 text-white transition-colors group-hover:text-green-900" />
             Edit Project
           </button>
         ) : (
           <div className="flex gap-2">
             <button
               onClick={handleSave}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#fd8216] hover:bg-[#e67412] rounded-lg transition-colors"
+              className="group flex items-center gap-2 rounded-lg border border-orange-500 bg-green-800 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500"
             >
-              <Save className="h-4 w-4" />
+              <Save className="h-4 w-4 text-white transition-colors group-hover:text-green-900" />
               Save Changes
             </button>
             <button
               onClick={handleCancel}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors"
+              className="group flex items-center gap-2 rounded-lg border border-orange-500 bg-green-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500"
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4 text-white transition-colors group-hover:text-green-900" />
               Cancel
             </button>
           </div>
@@ -128,44 +128,44 @@ export default function OverviewTab({ project }: OverviewTabProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left Column */}
         <div className="space-y-6">
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Information</h3>
+          <div className="rounded-lg border border-orange-500 bg-green-800 p-6">
+            <h3 className="mb-4 text-lg font-semibold text-white">Project Information</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Project Name</label>
+                <label className="mb-1 block text-sm font-medium text-green-200">Project Name</label>
                 {isEditing ? (
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fd8216] focus:border-[#fd8216]"
+                    className="w-full rounded-lg border border-orange-500 bg-green-950 px-3 py-2 text-white placeholder:text-green-200 focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-300"
                   />
                 ) : (
-                  <p className="text-gray-900">{project.name}</p>
+                  <p className="text-white">{project.name}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Client</label>
+                <label className="mb-1 block text-sm font-medium text-green-200">Client</label>
                 {isEditing ? (
                   <input
                     type="text"
                     value={formData.client}
                     onChange={(e) => setFormData({ ...formData, client: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fd8216] focus:border-[#fd8216]"
+                    className="w-full rounded-lg border border-orange-500 bg-green-950 px-3 py-2 text-white placeholder:text-green-200 focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-300"
                   />
                 ) : (
-                  <p className="text-gray-900">{project.client}</p>
+                  <p className="text-white">{project.client}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Project Type</label>
+                <label className="mb-1 block text-sm font-medium text-green-200">Project Type</label>
                 {isEditing ? (
                   <select
                     value={formData.type}
                     onChange={(e) => handleTypeChange(e.target.value as ProjectType)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fd8216] focus:border-[#fd8216]"
+                    className="w-full rounded-lg border border-orange-500 bg-green-950 px-3 py-2 text-white focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-300"
                   >
                     <option value="Audit">Audit</option>
                     <option value="Blueprint">Blueprint</option>
@@ -173,17 +173,17 @@ export default function OverviewTab({ project }: OverviewTabProps) {
                     <option value="Internal">Internal</option>
                   </select>
                 ) : (
-                  <p className="text-gray-900">{project.type}</p>
+                  <p className="text-white">{project.type}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <label className="mb-1 block text-sm font-medium text-green-200">Status</label>
                 {isEditing ? (
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as ProjectStatus })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fd8216] focus:border-[#fd8216]"
+                    className="w-full rounded-lg border border-orange-500 bg-green-950 px-3 py-2 text-white focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-300"
                   >
                     <option value="Pending">Pending</option>
                     <option value="Active">Active</option>
@@ -191,46 +191,46 @@ export default function OverviewTab({ project }: OverviewTabProps) {
                     <option value="Closed">Closed</option>
                   </select>
                 ) : (
-                  <p className="text-gray-900">{project.status}</p>
+                  <p className="text-white">{project.status}</p>
                 )}
               </div>
             </div>
           </div>
 
           {/* Timeline */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-[#fd8216]" />
+          <div className="rounded-lg border border-orange-500 bg-green-800 p-6">
+            <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
+              <Calendar className="h-5 w-5 text-white" />
               Timeline
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                <label className="mb-1 block text-sm font-medium text-green-200">Start Date</label>
                 {isEditing ? (
                   <input
                     type="date"
                     value={formData.start_date}
                     onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fd8216] focus:border-[#fd8216]"
+                    className="w-full rounded-lg border border-orange-500 bg-green-950 px-3 py-2 text-white focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-300"
                   />
                 ) : (
-                  <p className="text-gray-900">
+                  <p className="text-white">
                     {project.start_date ? new Date(project.start_date).toLocaleDateString() : 'Not set'}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                <label className="mb-1 block text-sm font-medium text-green-200">End Date</label>
                 {isEditing ? (
                   <input
                     type="date"
                     value={formData.end_date}
                     onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fd8216] focus:border-[#fd8216]"
+                    className="w-full rounded-lg border border-orange-500 bg-green-950 px-3 py-2 text-white focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-300"
                   />
                 ) : (
-                  <p className="text-gray-900">
+                  <p className="text-white">
                     {project.end_date ? new Date(project.end_date).toLocaleDateString() : 'Not set'}
                   </p>
                 )}
@@ -242,9 +242,9 @@ export default function OverviewTab({ project }: OverviewTabProps) {
         {/* Right Column */}
         <div className="space-y-6">
           {/* Team */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Users className="h-5 w-5 text-[#fd8216]" />
+          <div className="rounded-lg border border-orange-500 bg-green-800 p-6">
+            <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
+              <Users className="h-5 w-5 text-white" />
               Team
             </h3>
             {isEditing ? (
@@ -253,28 +253,28 @@ export default function OverviewTab({ project }: OverviewTabProps) {
                 value={formData.team}
                 onChange={(e) => setFormData({ ...formData, team: e.target.value })}
                 placeholder="Comma-separated team members"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fd8216] focus:border-[#fd8216]"
+                className="w-full rounded-lg border border-orange-500 bg-green-950 px-3 py-2 text-white placeholder:text-green-200 focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
             ) : project.team.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {project.team.map((member, idx) => (
                   <span
                     key={idx}
-                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
+                    className="rounded-full border border-orange-500 bg-green-700 px-3 py-1 text-sm text-white"
                   >
                     {member}
                   </span>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-sm">No team members assigned</p>
+              <p className="text-sm text-green-200">No team members assigned</p>
             )}
           </div>
 
           {/* Revenue Target */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-[#fd8216]" />
+          <div className="rounded-lg border border-orange-500 bg-green-800 p-6">
+            <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
+              <DollarSign className="h-5 w-5 text-white" />
               Revenue Target
             </h3>
             {isEditing ? (
@@ -282,19 +282,19 @@ export default function OverviewTab({ project }: OverviewTabProps) {
                 type="number"
                 value={formData.revenue_target}
                 onChange={(e) => setFormData({ ...formData, revenue_target: parseFloat(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fd8216] focus:border-[#fd8216]"
+                className="w-full rounded-lg border border-orange-500 bg-green-950 px-3 py-2 text-white focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
             ) : (
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-2xl font-bold text-white">
                 ${project.revenue_target?.toLocaleString() || '0'}
               </p>
             )}
           </div>
 
           {/* QuickBooks */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Target className="h-5 w-5 text-[#fd8216]" />
+          <div className="rounded-lg border border-orange-500 bg-green-800 p-6">
+            <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
+              <Target className="h-5 w-5 text-white" />
               QuickBooks Invoice
             </h3>
             {isEditing ? (
@@ -303,19 +303,19 @@ export default function OverviewTab({ project }: OverviewTabProps) {
                 value={formData.quickbooks_invoice_url}
                 onChange={(e) => setFormData({ ...formData, quickbooks_invoice_url: e.target.value })}
                 placeholder="https://..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fd8216] focus:border-[#fd8216]"
+                className="w-full rounded-lg border border-orange-500 bg-green-950 px-3 py-2 text-white placeholder:text-green-200 focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
             ) : project.quickbooks_invoice_url ? (
               <a
                 href={project.quickbooks_invoice_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#fd8216] hover:text-[#e67412] underline"
+                className="font-medium text-white underline decoration-orange-400 underline-offset-4 hover:text-orange-200"
               >
                 View Invoice
               </a>
             ) : (
-              <p className="text-gray-500 text-sm">No invoice URL set</p>
+              <p className="text-sm text-green-200">No invoice URL set</p>
             )}
           </div>
         </div>
@@ -323,11 +323,11 @@ export default function OverviewTab({ project }: OverviewTabProps) {
 
       {/* Document Templates (shown when type changes in edit mode) */}
       {showTemplates && isEditing && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="rounded-lg border border-orange-500 bg-green-900 p-6">
+          <h3 className="mb-4 text-lg font-semibold text-white">
             Recommended Documents for {selectedType} Projects
           </h3>
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="mb-4 text-sm text-green-100">
             Click any template below to create that document for this project:
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -335,11 +335,11 @@ export default function OverviewTab({ project }: OverviewTabProps) {
               <button
                 key={idx}
                 onClick={() => handleCreateDocument(template)}
-                className="text-left p-4 bg-white border border-gray-200 rounded-lg hover:border-[#fd8216] hover:shadow-sm transition-all"
+                className="group rounded-lg border border-orange-500 bg-green-800 p-4 text-left transition-all hover:bg-orange-500"
               >
-                <div className="font-medium text-gray-900">{template.name}</div>
-                <div className="text-sm text-gray-500 mt-1">{template.description}</div>
-                <div className="text-xs text-gray-400 mt-2">Type: {template.type}</div>
+                <div className="font-medium text-white transition-colors group-hover:text-green-900">{template.name}</div>
+                <div className="mt-1 text-sm text-green-100 transition-colors group-hover:text-white">{template.description}</div>
+                <div className="mt-2 text-xs text-green-200 transition-colors group-hover:text-green-900">Type: {template.type}</div>
               </button>
             ))}
           </div>
