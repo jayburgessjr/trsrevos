@@ -379,7 +379,7 @@ export default function ClientDetailPageClient({ clientName }: ClientDetailProps
                       {clientData.projects.map((project) => (
                         <TableRow key={project.id}>
                           <TableCell className="font-medium">
-                            <Link href="/projects" className="hover:underline">
+                            <Link href={`/projects/${project.id}`} className="hover:underline">
                               {project.name}
                             </Link>
                           </TableCell>
@@ -413,7 +413,7 @@ export default function ClientDetailPageClient({ clientName }: ClientDetailProps
                       {clientData.documents.map((doc) => (
                         <TableRow key={doc.id}>
                           <TableCell className="font-medium">
-                            <Link href="/documents" className="hover:underline">
+                            <Link href={`/documents/${doc.id}`} className="hover:underline">
                               {doc.title}
                             </Link>
                           </TableCell>
