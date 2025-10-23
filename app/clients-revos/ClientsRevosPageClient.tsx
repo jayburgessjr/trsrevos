@@ -6,7 +6,7 @@ import { useRevosData } from '@/app/providers/RevosDataProvider'
 import { Badge } from '@/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table'
-import { Building2, DollarSign, FileText, TrendingUp } from 'lucide-react'
+import { ArrowUpDown, Building2, DollarSign, FileText, TrendingUp } from 'lucide-react'
 import { Input } from '@/ui/input'
 import AddClientDialog from '@/components/clients/AddClientDialog'
 import type { Project } from '@/lib/revos/types'
@@ -21,9 +21,20 @@ type ClientData = {
   totalProjects: number
 }
 
+type SortField =
+  | 'name'
+  | 'projects'
+  | 'activeProjects'
+  | 'documents'
+  | 'annualRevenue'
+  | 'monthlyRevenue'
+type SortDirection = 'asc' | 'desc'
+
 export default function ClientsRevosPageClient() {
   const { projects, documents, content, resources } = useRevosData()
   const [searchQuery, setSearchQuery] = useState('')
+  const [sortField, setSortField] = useState<SortField>('name')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
 
   // Aggregate data by client
   const clientsData = useMemo<ClientData[]>(() => {
@@ -67,13 +78,64 @@ export default function ClientsRevosPageClient() {
 
   // Filter clients based on search
   const filteredClients = useMemo(() => {
-    if (!searchQuery.trim()) return clientsData
+    const query = searchQuery.trim().toLowerCase()
 
-    const query = searchQuery.toLowerCase()
-    return clientsData.filter(client =>
-      client.name.toLowerCase().includes(query)
-    )
-  }, [clientsData, searchQuery])
+    const results = clientsData.filter(client => {
+      if (!query) return true
+      return client.name.toLowerCase().includes(query)
+    })
+
+    const sorted = [...results]
+
+    sorted.sort((a, b) => {
+      let aValue: string | number
+      let bValue: string | number
+
+      switch (sortField) {
+        case 'name':
+          aValue = a.name.toLowerCase()
+          bValue = b.name.toLowerCase()
+          break
+        case 'projects':
+          aValue = a.totalProjects
+          bValue = b.totalProjects
+          break
+        case 'activeProjects':
+          aValue = a.activeProjects
+          bValue = b.activeProjects
+          break
+        case 'documents':
+          aValue = a.documentsCount
+          bValue = b.documentsCount
+          break
+        case 'annualRevenue':
+          aValue = a.totalRevenue
+          bValue = b.totalRevenue
+          break
+        case 'monthlyRevenue':
+          aValue = a.monthlyRevenue
+          bValue = b.monthlyRevenue
+          break
+        default:
+          return 0
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+
+    return sorted
+  }, [clientsData, searchQuery, sortField, sortDirection])
+
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
 
   // Calculate totals
   const totals = useMemo(() => {
@@ -172,12 +234,60 @@ export default function ClientsRevosPageClient() {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="px-6">Client Name</TableHead>
-                <TableHead>Projects</TableHead>
-                <TableHead>Active</TableHead>
-                <TableHead>Documents</TableHead>
-                <TableHead>Annual Revenue</TableHead>
-                <TableHead>Monthly Revenue</TableHead>
+                <TableHead className="px-6">
+                  <button
+                    onClick={() => toggleSort('name')}
+                    className="flex items-center gap-1 hover:text-foreground"
+                  >
+                    Client Name
+                    <ArrowUpDown className="h-3 w-3" />
+                  </button>
+                </TableHead>
+                <TableHead>
+                  <button
+                    onClick={() => toggleSort('projects')}
+                    className="flex items-center gap-1 hover:text-foreground"
+                  >
+                    Projects
+                    <ArrowUpDown className="h-3 w-3" />
+                  </button>
+                </TableHead>
+                <TableHead>
+                  <button
+                    onClick={() => toggleSort('activeProjects')}
+                    className="flex items-center gap-1 hover:text-foreground"
+                  >
+                    Active
+                    <ArrowUpDown className="h-3 w-3" />
+                  </button>
+                </TableHead>
+                <TableHead>
+                  <button
+                    onClick={() => toggleSort('documents')}
+                    className="flex items-center gap-1 hover:text-foreground"
+                  >
+                    Documents
+                    <ArrowUpDown className="h-3 w-3" />
+                  </button>
+                </TableHead>
+                <TableHead>
+                  <button
+                    onClick={() => toggleSort('annualRevenue')}
+                    className="flex items-center gap-1 hover:text-foreground"
+                  >
+                    Annual Revenue
+                    <ArrowUpDown className="h-3 w-3" />
+                  </button>
+                </TableHead>
+                <TableHead>
+                  <button
+                    onClick={() => toggleSort('monthlyRevenue')}
+                    className="flex items-center gap-1 hover:text-foreground"
+                  >
+                    Monthly Revenue
+                    <ArrowUpDown className="h-3 w-3" />
+                  </button>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
