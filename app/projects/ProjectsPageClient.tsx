@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
+import { ArrowUpDown } from 'lucide-react'
 
 import { useRevosData } from '@/app/providers/RevosDataProvider'
 import { Badge } from '@/ui/badge'
@@ -13,6 +14,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 
 const projectTypes = ['Audit', 'Blueprint', 'Advisory', 'Internal'] as const
 const projectStatuses = ['Pending', 'Active', 'Delivered', 'Closed'] as const
+
+type SortField = 'name' | 'status' | 'client' | 'startDate'
+type SortDirection = 'asc' | 'desc'
 
 type FormState = {
   name: string
@@ -42,6 +46,8 @@ export default function ProjectsPageClient() {
   const { projects, resources, invoices, createProject, updateProjectStatus } = useRevosData()
   const [form, setForm] = useState<FormState>(initialFormState)
   const [isNewClient, setIsNewClient] = useState(false)
+  const [sortField, setSortField] = useState<SortField>('startDate')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
   // Get unique client names from existing projects
   const existingClients = useMemo(() => {
@@ -54,9 +60,48 @@ export default function ProjectsPageClient() {
     return Array.from(clientSet).sort()
   }, [projects])
 
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
+
   const sortedProjects = useMemo(() => {
-    return [...projects].sort((a, b) => (a.startDate > b.startDate ? -1 : 1))
-  }, [projects])
+    const sorted = [...projects]
+    sorted.sort((a, b) => {
+      let aValue: any
+      let bValue: any
+
+      switch (sortField) {
+        case 'name':
+          aValue = a.name.toLowerCase()
+          bValue = b.name.toLowerCase()
+          break
+        case 'status':
+          aValue = a.status
+          bValue = b.status
+          break
+        case 'client':
+          aValue = a.client.toLowerCase()
+          bValue = b.client.toLowerCase()
+          break
+        case 'startDate':
+          aValue = a.startDate ? new Date(a.startDate).getTime() : 0
+          bValue = b.startDate ? new Date(b.startDate).getTime() : 0
+          break
+        default:
+          return 0
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+    return sorted
+  }, [projects, sortField, sortDirection])
 
   const stats = useMemo(() => {
     const totalsByStatus = projects.reduce<Record<string, number>>((acc, project) => {
@@ -298,13 +343,46 @@ export default function ProjectsPageClient() {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="px-6">Project</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Client</TableHead>
+                <TableHead className="px-6">
+                  <button
+                    onClick={() => toggleSort('name')}
+                    className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
+                  >
+                    Project
+                    <ArrowUpDown className="h-3 w-3" />
+                  </button>
+                </TableHead>
+                <TableHead>
+                  <button
+                    onClick={() => toggleSort('status')}
+                    className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
+                  >
+                    Status
+                    <ArrowUpDown className="h-3 w-3" />
+                  </button>
+                </TableHead>
+                <TableHead>
+                  <button
+                    onClick={() => toggleSort('client')}
+                    className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
+                  >
+                    Client
+                    <ArrowUpDown className="h-3 w-3" />
+                  </button>
+                </TableHead>
                 <TableHead>Team</TableHead>
                 <TableHead>Documents</TableHead>
                 <TableHead>Resources</TableHead>
                 <TableHead>Invoice</TableHead>
+                <TableHead>
+                  <button
+                    onClick={() => toggleSort('startDate')}
+                    className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
+                  >
+                    Last Modified
+                    <ArrowUpDown className="h-3 w-3" />
+                  </button>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -363,6 +441,9 @@ export default function ProjectsPageClient() {
                     <div className="text-xs text-muted-foreground">
                       {invoices.find((invoice) => invoice.projectId === project.id)?.status ?? 'Draft'}
                     </div>
+                  </TableCell>
+                  <TableCell className="text-xs text-gray-500 dark:text-neutral-400">
+                    {project.startDate ? new Date(project.startDate).toLocaleDateString() : '—'}
                   </TableCell>
                 </TableRow>
               ))}

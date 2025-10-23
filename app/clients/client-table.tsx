@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowUpDown } from "lucide-react";
 
 import type { Client, RevOSPhase } from "@/core/clients/types";
 import { Input } from "@/ui/input";
@@ -11,15 +12,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 const PHASES: RevOSPhase[] = ["Discovery", "Data", "Algorithm", "Architecture", "Compounding"];
 const SEGMENTS: Client["segment"][] = ["SMB", "Mid", "Enterprise"];
 
+type SortField = "name" | "segment" | "arr" | "owner" | "phase" | "health" | "updated_at";
+type SortDirection = "asc" | "desc";
+
 export function ClientsTable({ data }: { data: Client[] }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [segment, setSegment] = useState<string>("all");
   const [phase, setPhase] = useState<string>("all");
+  const [sortField, setSortField] = useState<SortField>("updated_at");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return data.filter((client) => {
+    let results = data.filter((client) => {
       const matchesQuery =
         !query ||
         client.name.toLowerCase().includes(query) ||
@@ -29,7 +35,61 @@ export function ClientsTable({ data }: { data: Client[] }) {
       const matchesPhase = phase === "all" || client.phase === phase;
       return matchesQuery && matchesSegment && matchesPhase;
     });
-  }, [data, search, segment, phase]);
+
+    // Sort results
+    results.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortField) {
+        case "name":
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        case "segment":
+          aValue = a.segment;
+          bValue = b.segment;
+          break;
+        case "arr":
+          aValue = a.arr ?? 0;
+          bValue = b.arr ?? 0;
+          break;
+        case "owner":
+          aValue = a.owner.toLowerCase();
+          bValue = b.owner.toLowerCase();
+          break;
+        case "phase":
+          aValue = a.phase;
+          bValue = b.phase;
+          break;
+        case "health":
+          aValue = a.health ?? 0;
+          bValue = b.health ?? 0;
+          break;
+        case "updated_at":
+          aValue = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+          bValue = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+
+    return results;
+  }, [data, search, segment, phase, sortField, sortDirection]);
+
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
 
   const navigate = useCallback(
     (id: string) => {
@@ -97,14 +157,71 @@ export function ClientsTable({ data }: { data: Client[] }) {
         <Table className="text-sm">
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Segment</TableHead>
-              <TableHead>ARR</TableHead>
-              <TableHead>Owner</TableHead>
-              <TableHead>Phase</TableHead>
-              <TableHead>Health</TableHead>
+              <TableHead>
+                <button
+                  onClick={() => toggleSort("name")}
+                  className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
+                >
+                  Name
+                  <ArrowUpDown className="h-3 w-3" />
+                </button>
+              </TableHead>
+              <TableHead>
+                <button
+                  onClick={() => toggleSort("segment")}
+                  className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
+                >
+                  Segment
+                  <ArrowUpDown className="h-3 w-3" />
+                </button>
+              </TableHead>
+              <TableHead>
+                <button
+                  onClick={() => toggleSort("arr")}
+                  className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
+                >
+                  ARR
+                  <ArrowUpDown className="h-3 w-3" />
+                </button>
+              </TableHead>
+              <TableHead>
+                <button
+                  onClick={() => toggleSort("owner")}
+                  className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
+                >
+                  Owner
+                  <ArrowUpDown className="h-3 w-3" />
+                </button>
+              </TableHead>
+              <TableHead>
+                <button
+                  onClick={() => toggleSort("phase")}
+                  className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
+                >
+                  Phase
+                  <ArrowUpDown className="h-3 w-3" />
+                </button>
+              </TableHead>
+              <TableHead>
+                <button
+                  onClick={() => toggleSort("health")}
+                  className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
+                >
+                  Health
+                  <ArrowUpDown className="h-3 w-3" />
+                </button>
+              </TableHead>
               <TableHead>Open Opps</TableHead>
               <TableHead>AR</TableHead>
+              <TableHead>
+                <button
+                  onClick={() => toggleSort("updated_at")}
+                  className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
+                >
+                  Last Modified
+                  <ArrowUpDown className="h-3 w-3" />
+                </button>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -136,12 +253,15 @@ export function ClientsTable({ data }: { data: Client[] }) {
                   <TableCell>{Math.round(client.health)}</TableCell>
                   <TableCell>{openOpps}</TableCell>
                   <TableCell>{formatCurrency(outstanding)}</TableCell>
+                  <TableCell className="text-xs text-gray-500 dark:text-neutral-400">
+                    {client.updated_at ? new Date(client.updated_at).toLocaleDateString() : "—"}
+                  </TableCell>
                 </TableRow>
               );
             })}
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-sm text-gray-500 dark:text-neutral-400">
+                <TableCell colSpan={9} className="text-center text-sm text-gray-500 dark:text-neutral-400">
                   No clients match the current filters.
                 </TableCell>
               </TableRow>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { ArrowUpDown } from 'lucide-react'
 
 import { useRevosData } from '@/app/providers/RevosDataProvider'
 import { Badge } from '@/ui/badge'
@@ -23,6 +24,9 @@ const documentTypes = [
   'Revenue Modeling Resource'
 ]
 const documentStatuses = ['Draft', 'In Review', 'Final'] as const
+
+type SortField = 'title' | 'type' | 'status' | 'version' | 'updatedAt'
+type SortDirection = 'asc' | 'desc'
 
 type FormState = {
   title: string
@@ -49,11 +53,59 @@ export default function DocumentsPageClient() {
   const [form, setForm] = useState<FormState>(initialForm)
   const [filter, setFilter] = useState<string>('All')
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
+  const [sortField, setSortField] = useState<SortField>('updatedAt')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
 
   const filteredDocuments = useMemo(() => {
-    if (filter === 'All') return documents
-    return documents.filter((document) => document.status === filter)
-  }, [documents, filter])
+    let filtered = filter === 'All' ? documents : documents.filter((document) => document.status === filter)
+
+    // Sort the documents
+    const sorted = [...filtered]
+    sorted.sort((a, b) => {
+      let aValue: any
+      let bValue: any
+
+      switch (sortField) {
+        case 'title':
+          aValue = a.title.toLowerCase()
+          bValue = b.title.toLowerCase()
+          break
+        case 'type':
+          aValue = a.type.toLowerCase()
+          bValue = b.type.toLowerCase()
+          break
+        case 'status':
+          aValue = a.status
+          bValue = b.status
+          break
+        case 'version':
+          aValue = a.version ?? 0
+          bValue = b.version ?? 0
+          break
+        case 'updatedAt':
+          aValue = a.updatedAt ? new Date(a.updatedAt).getTime() : 0
+          bValue = b.updatedAt ? new Date(b.updatedAt).getTime() : 0
+          break
+        default:
+          return 0
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+
+    return sorted
+  }, [documents, filter, sortField, sortDirection])
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -238,18 +290,59 @@ export default function DocumentsPageClient() {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="px-6">Title</TableHead>
+                <TableHead className="px-6">
+                  <button
+                    onClick={() => toggleSort('title')}
+                    className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
+                  >
+                    Title
+                    <ArrowUpDown className="h-3 w-3" />
+                  </button>
+                </TableHead>
                 <TableHead>Link to Project</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Version</TableHead>
+                <TableHead>
+                  <button
+                    onClick={() => toggleSort('type')}
+                    className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
+                  >
+                    Type
+                    <ArrowUpDown className="h-3 w-3" />
+                  </button>
+                </TableHead>
+                <TableHead>
+                  <button
+                    onClick={() => toggleSort('status')}
+                    className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
+                  >
+                    Status
+                    <ArrowUpDown className="h-3 w-3" />
+                  </button>
+                </TableHead>
+                <TableHead>
+                  <button
+                    onClick={() => toggleSort('version')}
+                    className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
+                  >
+                    Version
+                    <ArrowUpDown className="h-3 w-3" />
+                  </button>
+                </TableHead>
                 <TableHead>Summary</TableHead>
+                <TableHead>
+                  <button
+                    onClick={() => toggleSort('updatedAt')}
+                    className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
+                  >
+                    Last Modified
+                    <ArrowUpDown className="h-3 w-3" />
+                  </button>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredDocuments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="px-6 py-10 text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={7} className="px-6 py-10 text-center text-sm text-muted-foreground">
                     No documents found for this filter.
                   </TableCell>
                 </TableRow>
@@ -293,6 +386,9 @@ export default function DocumentsPageClient() {
                     </TableCell>
                     <TableCell>v{document.version}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{document.summary}</TableCell>
+                    <TableCell className="text-xs text-gray-500 dark:text-neutral-400">
+                      {document.updatedAt ? new Date(document.updatedAt).toLocaleDateString() : '—'}
+                    </TableCell>
                   </TableRow>
                 ))
               )}

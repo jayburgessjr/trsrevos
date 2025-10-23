@@ -19,11 +19,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/ui/dialog'
-import { Loader2, Download, Copy, Eye } from 'lucide-react'
+import { Loader2, Download, Copy, Eye, ArrowUpDown } from 'lucide-react'
 import type { ContentItem } from '@/lib/revos/types'
 
 const contentTypes = ['Case Study', 'Post', 'Email', 'Slide'] as const
 const contentStatuses = ['Draft', 'Published'] as const
+
+type SortField = 'title' | 'type' | 'status' | 'createdAt'
+type SortDirection = 'asc' | 'desc'
 
 type FormState = {
   title: string
@@ -48,6 +51,8 @@ export default function ContentPageClient() {
   const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null)
   const [viewDialogOpen, setViewDialogOpen] = useState(false)
   const [isNewClient, setIsNewClient] = useState(false)
+  const [sortField, setSortField] = useState<SortField>('createdAt')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
   // Get unique client names from existing projects
   const existingClients = useMemo(() => {
@@ -59,6 +64,49 @@ export default function ContentPageClient() {
     })
     return Array.from(clientSet).sort()
   }, [projects])
+
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
+
+  const sortedContent = useMemo(() => {
+    const sorted = [...content]
+    sorted.sort((a, b) => {
+      let aValue: any
+      let bValue: any
+
+      switch (sortField) {
+        case 'title':
+          aValue = a.title.toLowerCase()
+          bValue = b.title.toLowerCase()
+          break
+        case 'type':
+          aValue = a.type
+          bValue = b.type
+          break
+        case 'status':
+          aValue = a.status
+          bValue = b.status
+          break
+        case 'createdAt':
+          aValue = a.createdAt ? new Date(a.createdAt).getTime() : 0
+          bValue = b.createdAt ? new Date(b.createdAt).getTime() : 0
+          break
+        default:
+          return 0
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+    return sorted
+  }, [content, sortField, sortDirection])
 
   const stats = useMemo(() => {
     return content.reduce(
@@ -379,82 +427,114 @@ export default function ContentPageClient() {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="px-6">Title</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead className="px-6">
+                  <button
+                    onClick={() => toggleSort('title')}
+                    className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
+                  >
+                    Title
+                    <ArrowUpDown className="h-3 w-3" />
+                  </button>
+                </TableHead>
+                <TableHead>
+                  <button
+                    onClick={() => toggleSort('type')}
+                    className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
+                  >
+                    Type
+                    <ArrowUpDown className="h-3 w-3" />
+                  </button>
+                </TableHead>
+                <TableHead>
+                  <button
+                    onClick={() => toggleSort('status')}
+                    className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
+                  >
+                    Status
+                    <ArrowUpDown className="h-3 w-3" />
+                  </button>
+                </TableHead>
                 <TableHead>Project</TableHead>
+                <TableHead>
+                  <button
+                    onClick={() => toggleSort('createdAt')}
+                    className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
+                  >
+                    Created
+                    <ArrowUpDown className="h-3 w-3" />
+                  </button>
+                </TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {content.length === 0 ? (
+              {sortedContent.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="px-6 py-10 text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={6} className="px-6 py-10 text-center text-sm text-muted-foreground">
                     No content has been generated yet.
                   </TableCell>
                 </TableRow>
               ) : (
-                content
-                  .slice()
-                  .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1))
-                  .map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="px-6">
-                        <button
-                          onClick={() => handleViewContent(item)}
-                          className="text-left hover:underline"
-                        >
-                          <div className="font-medium text-foreground">{item.title}</div>
-                          <div className="text-xs text-muted-foreground">{new Date(item.createdAt).toLocaleDateString()}</div>
-                        </button>
-                      </TableCell>
-                      <TableCell>{item.type}</TableCell>
-                      <TableCell>
-                        <Badge
+                sortedContent.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="px-6">
+                      <button
+                        onClick={() => handleViewContent(item)}
+                        className="text-left hover:underline"
+                      >
+                        <div className="font-medium text-foreground">{item.title}</div>
+                      </button>
+                    </TableCell>
+                    <TableCell>{item.type}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={item.status === 'Published' ? 'border-emerald-500 text-emerald-600' : ''}
+                      >
+                        {item.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {item.sourceProjectId
+                        ? projects.find((project) => project.id === item.sourceProjectId)?.name ?? 'Unlinked'
+                        : 'Standalone'}
+                    </TableCell>
+                    <TableCell className="text-xs text-gray-500 dark:text-neutral-400">
+                      {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—'}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
                           variant="outline"
-                          className={item.status === 'Published' ? 'border-emerald-500 text-emerald-600' : ''}
+                          size="sm"
+                          onClick={() => handleViewContent(item)}
+                          title="View content"
                         >
-                          {item.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {item.sourceProjectId
-                          ? projects.find((project) => project.id === item.sourceProjectId)?.name ?? 'Unlinked'
-                          : 'Standalone'}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleViewContent(item)}
-                            title="View content"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleCopyContent(item)}
-                            title="Copy content"
-                          >
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDownloadContent(item)}
-                            title="Download content"
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCopyContent(item)}
+                          title="Copy content"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDownloadContent(item)}
+                          title="Download content"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>
