@@ -4,6 +4,7 @@ import { listClients } from "@/core/clients/store";
 import type { Client } from "@/core/clients/types";
 import { createServerClient } from "@/lib/supabase/server";
 import { ClientsSearch } from "./ClientsSearch";
+import { ClientsPortfolioTable } from "./ClientsPortfolioTable";
 
 type ClientRow = {
   id: string;
@@ -248,59 +249,7 @@ export default async function ClientsPage({
           <SummaryCard label="Onboarding" value={`${onboardingCount}`} />
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr className="text-left text-[12px] text-gray-500">
-                <th className="px-3 py-2">Client</th>
-                <th className="px-3 py-2">Phase</th>
-                <th className="px-3 py-2">Owner</th>
-                <th className="px-3 py-2">Pipeline Stage</th>
-                <th className="px-3 py-2">MRR</th>
-                <th className="px-3 py-2">ARR</th>
-                <th className="px-3 py-2">Health</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {clients.length === 0 ? (
-                <tr>
-                  <td className="px-4 py-6 text-center text-gray-500" colSpan={7}>
-                    No clients found. Close a deal from pipeline to see it here.
-                  </td>
-                </tr>
-              ) : (
-                clients.map((client) => {
-                  const overview = overviewMap.get(client.id);
-                  const ownerRecord = Array.isArray(client.owner)
-                    ? client.owner[0]
-                    : client.owner;
-                  const ownerName = ownerRecord?.name ?? client.owner_id ?? "—";
-                  return (
-                    <tr key={client.id} className="hover:bg-gray-50">
-                      <td className="px-3 py-2 font-medium text-black">
-                        <Link href={`/clients/${client.id}`} className="hover:underline">
-                          {client.name}
-                        </Link>
-                      </td>
-                      <td className="px-3 py-2 text-gray-700">{client.phase ?? "—"}</td>
-                      <td className="px-3 py-2 text-gray-700">{ownerName}</td>
-                      <td className="px-3 py-2 text-gray-700">
-                        {overview?.pipeline_stage ?? "—"}
-                      </td>
-                      <td className="px-3 py-2 text-gray-700">
-                        ${overview?.mrr ? overview.mrr.toLocaleString() : "0"}
-                      </td>
-                      <td className="px-3 py-2 text-gray-700">
-                        ${client.arr ? client.arr.toLocaleString() : "0"}
-                      </td>
-                      <td className="px-3 py-2 text-gray-700">{client.health ?? "—"}</td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+        <ClientsPortfolioTable clients={clients} overviewMap={overviewMap} />
       </div>
     </div>
   );
