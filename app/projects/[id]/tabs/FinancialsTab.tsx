@@ -37,35 +37,35 @@ export default function FinancialsTab({ project }: FinancialsTabProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-white">
       {/* Header with Edit Toggle */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Project Financials</h2>
-          <p className="text-sm text-gray-500 mt-1">Revenue tracking and invoicing</p>
+          <h2 className="text-xl font-semibold text-white">Project Financials</h2>
+          <p className="mt-1 text-sm text-green-200">Revenue tracking and invoicing</p>
         </div>
         {!isEditing ? (
           <button
             onClick={() => setIsEditing(true)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#fd8216] hover:bg-orange-50 rounded-lg transition-colors"
+            className="group flex items-center gap-2 rounded-lg border border-orange-500 bg-green-800 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500"
           >
-            <Edit2 className="h-4 w-4" />
+            <Edit2 className="h-4 w-4 text-white transition-colors group-hover:text-green-900" />
             Edit Financials
           </button>
         ) : (
           <div className="flex gap-2">
             <button
               onClick={handleSave}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#fd8216] hover:bg-[#e67412] rounded-lg transition-colors"
+              className="group flex items-center gap-2 rounded-lg border border-orange-500 bg-green-800 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500"
             >
-              <Save className="h-4 w-4" />
+              <Save className="h-4 w-4 text-white transition-colors group-hover:text-green-900" />
               Save Changes
             </button>
             <button
               onClick={handleCancel}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors"
+              className="group flex items-center gap-2 rounded-lg border border-orange-500 bg-green-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500"
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4 text-white transition-colors group-hover:text-green-900" />
               Cancel
             </button>
           </div>
@@ -73,55 +73,55 @@ export default function FinancialsTab({ project }: FinancialsTabProps) {
       </div>
 
       {/* Revenue Target */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <DollarSign className="h-5 w-5 text-[#fd8216]" />
+      <div className="rounded-lg border border-orange-500 bg-green-800 p-6">
+        <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
+          <DollarSign className="h-5 w-5 text-white" />
           Revenue Target
         </h3>
         {isEditing ? (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Target Amount</label>
+            <label className="mb-2 block text-sm font-medium text-green-200">Target Amount</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-green-200">$</span>
               <input
                 type="number"
                 value={revenueTarget}
                 onChange={(e) => setRevenueTarget(parseFloat(e.target.value))}
-                className="w-full pl-7 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fd8216] focus:border-[#fd8216]"
+                className="w-full rounded-lg border border-orange-500 bg-green-950 pl-7 pr-4 py-2 text-white focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
             </div>
           </div>
         ) : (
-          <div className="text-4xl font-bold text-gray-900">
+          <div className="text-4xl font-bold text-white">
             ${revenueTarget.toLocaleString()}
           </div>
         )}
       </div>
 
       {/* Progress Bar */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-lg font-semibold text-gray-900">Revenue Progress</h3>
-          <span className="text-sm font-medium text-gray-500">{percentageComplete}% Complete</span>
+      <div className="rounded-lg border border-orange-500 bg-green-800 p-6">
+        <div className="mb-2 flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-white">Revenue Progress</h3>
+          <span className="text-sm font-medium text-green-200">{percentageComplete}% Complete</span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
+        <div className="mb-4 h-4 w-full rounded-full bg-green-950">
           <div
-            className="bg-[#fd8216] h-4 rounded-full transition-all duration-300"
+            className="h-4 rounded-full bg-orange-500 transition-all duration-300"
             style={{ width: `${Math.min(percentageComplete, 100)}%` }}
           />
         </div>
-        <div className="grid grid-cols-3 gap-4 text-sm">
+        <div className="grid grid-cols-3 gap-4 text-sm text-green-100">
           <div>
-            <span className="text-gray-500">Paid</span>
-            <div className="font-semibold text-green-600">${mockFinancials.paid.toLocaleString()}</div>
+            <span className="text-green-200">Paid</span>
+            <div className="font-semibold text-white">${mockFinancials.paid.toLocaleString()}</div>
           </div>
           <div>
-            <span className="text-gray-500">Outstanding</span>
-            <div className="font-semibold text-yellow-600">${mockFinancials.outstanding.toLocaleString()}</div>
+            <span className="text-green-200">Outstanding</span>
+            <div className="font-semibold text-white">${mockFinancials.outstanding.toLocaleString()}</div>
           </div>
           <div>
-            <span className="text-gray-500">Remaining</span>
-            <div className="font-semibold text-gray-600">
+            <span className="text-green-200">Remaining</span>
+            <div className="font-semibold text-white">
               ${(revenueTarget - mockFinancials.invoiced).toLocaleString()}
             </div>
           </div>
@@ -129,20 +129,20 @@ export default function FinancialsTab({ project }: FinancialsTabProps) {
       </div>
 
       {/* QuickBooks Integration */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-[#fd8216]" />
+      <div className="rounded-lg border border-orange-500 bg-green-800 p-6">
+        <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
+          <TrendingUp className="h-5 w-5 text-white" />
           QuickBooks Integration
         </h3>
         {isEditing ? (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Invoice URL</label>
+            <label className="mb-2 block text-sm font-medium text-green-200">Invoice URL</label>
             <input
               type="url"
               value={quickbooksUrl}
               onChange={(e) => setQuickbooksUrl(e.target.value)}
               placeholder="https://qbo.intuit.com/..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fd8216] focus:border-[#fd8216]"
+              className="w-full rounded-lg border border-orange-500 bg-green-950 px-4 py-2 text-white placeholder:text-green-200 focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-300"
             />
           </div>
         ) : quickbooksUrl ? (
@@ -150,75 +150,75 @@ export default function FinancialsTab({ project }: FinancialsTabProps) {
             href={quickbooksUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-3 bg-[#fd8216] hover:bg-[#e67412] text-white rounded-lg font-medium transition-colors w-fit"
+            className="group flex w-fit items-center gap-2 rounded-lg border border-orange-500 bg-green-800 px-4 py-3 font-medium text-white transition-colors hover:bg-orange-500"
           >
-            <ExternalLink className="h-5 w-5" />
+            <ExternalLink className="h-5 w-5 text-white transition-colors group-hover:text-green-900" />
             View Invoice in QuickBooks
           </a>
         ) : (
-          <p className="text-gray-500 text-sm">No QuickBooks invoice URL set</p>
+          <p className="text-sm text-green-200">No QuickBooks invoice URL set</p>
         )}
       </div>
 
       {/* Financial Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-            <DollarSign className="h-4 w-4" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-lg border border-orange-500 bg-green-800 p-4">
+          <div className="mb-1 flex items-center gap-2 text-sm text-green-200">
+            <DollarSign className="h-4 w-4 text-white" />
             Revenue Target
           </div>
-          <div className="text-2xl font-bold text-gray-900">${revenueTarget.toLocaleString()}</div>
+          <div className="text-2xl font-bold text-white">${revenueTarget.toLocaleString()}</div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-            <TrendingUp className="h-4 w-4" />
+        <div className="rounded-lg border border-orange-500 bg-green-800 p-4">
+          <div className="mb-1 flex items-center gap-2 text-sm text-green-200">
+            <TrendingUp className="h-4 w-4 text-white" />
             Total Invoiced
           </div>
-          <div className="text-2xl font-bold text-blue-600">${mockFinancials.invoiced.toLocaleString()}</div>
+          <div className="text-2xl font-bold text-white">${mockFinancials.invoiced.toLocaleString()}</div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-            <DollarSign className="h-4 w-4" />
+        <div className="rounded-lg border border-orange-500 bg-green-800 p-4">
+          <div className="mb-1 flex items-center gap-2 text-sm text-green-200">
+            <DollarSign className="h-4 w-4 text-white" />
             Total Paid
           </div>
-          <div className="text-2xl font-bold text-green-600">${mockFinancials.paid.toLocaleString()}</div>
+          <div className="text-2xl font-bold text-white">${mockFinancials.paid.toLocaleString()}</div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-            <Calendar className="h-4 w-4" />
+        <div className="rounded-lg border border-orange-500 bg-green-800 p-4">
+          <div className="mb-1 flex items-center gap-2 text-sm text-green-200">
+            <Calendar className="h-4 w-4 text-white" />
             Outstanding
           </div>
-          <div className="text-2xl font-bold text-yellow-600">${mockFinancials.outstanding.toLocaleString()}</div>
+          <div className="text-2xl font-bold text-white">${mockFinancials.outstanding.toLocaleString()}</div>
         </div>
       </div>
 
       {/* Payment Schedule (Mock) */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Schedule</h3>
+      <div className="rounded-lg border border-orange-500 bg-green-800 p-6">
+        <h3 className="mb-4 text-lg font-semibold text-white">Payment Schedule</h3>
         <div className="space-y-3">
-          <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center justify-between rounded-lg border border-orange-500 bg-green-900 p-3">
             <div>
-              <div className="font-medium text-gray-900">Initial Payment</div>
-              <div className="text-sm text-gray-500">Received on {new Date(project.created_at).toLocaleDateString()}</div>
+              <div className="font-medium text-white">Initial Payment</div>
+              <div className="text-sm text-green-200">Received on {new Date(project.created_at).toLocaleDateString()}</div>
             </div>
             <div className="text-right">
-              <div className="font-semibold text-green-600">${mockFinancials.paid.toLocaleString()}</div>
-              <div className="text-xs text-green-600">Paid</div>
+              <div className="font-semibold text-white">${mockFinancials.paid.toLocaleString()}</div>
+              <div className="text-xs text-green-200">Paid</div>
             </div>
           </div>
 
           {mockFinancials.outstanding > 0 && (
-            <div className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-center justify-between rounded-lg border border-orange-500 bg-green-900 p-3">
               <div>
-                <div className="font-medium text-gray-900">Outstanding Balance</div>
-                <div className="text-sm text-gray-500">Due upon completion</div>
+                <div className="font-medium text-white">Outstanding Balance</div>
+                <div className="text-sm text-green-200">Due upon completion</div>
               </div>
               <div className="text-right">
-                <div className="font-semibold text-yellow-600">${mockFinancials.outstanding.toLocaleString()}</div>
-                <div className="text-xs text-yellow-600">Pending</div>
+                <div className="font-semibold text-white">${mockFinancials.outstanding.toLocaleString()}</div>
+                <div className="text-xs text-green-200">Pending</div>
               </div>
             </div>
           )}

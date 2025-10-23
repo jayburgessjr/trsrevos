@@ -47,15 +47,15 @@ export default function ActivityTab({ project }: ActivityTabProps) {
   const getActivityColor = (type: string) => {
     switch (type) {
       case 'project_created':
-        return 'bg-green-100 text-green-600'
+        return 'border border-orange-500 bg-green-600 text-white'
       case 'project_updated':
-        return 'bg-blue-100 text-blue-600'
+        return 'border border-orange-500 bg-green-700 text-white'
       case 'document_added':
-        return 'bg-purple-100 text-purple-600'
+        return 'border border-orange-500 bg-green-800 text-white'
       case 'team_updated':
-        return 'bg-orange-100 text-orange-600'
+        return 'border border-orange-500 bg-green-900 text-white'
       default:
-        return 'bg-gray-100 text-gray-600'
+        return 'border border-orange-500 bg-green-800 text-white'
     }
   }
 
@@ -77,26 +77,26 @@ export default function ActivityTab({ project }: ActivityTabProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-white">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-semibold text-gray-900">Project Activity</h2>
-        <p className="text-sm text-gray-500 mt-1">Timeline of all project events and updates</p>
+        <h2 className="text-xl font-semibold text-white">Project Activity</h2>
+        <p className="mt-1 text-sm text-green-200">Timeline of all project events and updates</p>
       </div>
 
       {/* Activity Timeline */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
+      <div className="rounded-lg border border-orange-500 bg-green-800 p-6">
         <div className="space-y-6">
           {mockActivities.length === 0 ? (
-            <div className="text-center py-12">
-              <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No activity yet</h3>
-              <p className="text-gray-500">Project activity will appear here as events occur</p>
+            <div className="py-12 text-center">
+              <Activity className="mx-auto mb-4 h-12 w-12 text-white" />
+              <h3 className="mb-2 text-lg font-medium text-white">No activity yet</h3>
+              <p className="text-green-200">Project activity will appear here as events occur</p>
             </div>
           ) : (
             <div className="relative">
               {/* Timeline line */}
-              <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-200" />
+              <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-orange-500" />
 
               {/* Activity items */}
               <div className="space-y-6">
@@ -105,20 +105,22 @@ export default function ActivityTab({ project }: ActivityTabProps) {
                   return (
                     <div key={activity.id} className="relative flex gap-4">
                       {/* Icon */}
-                      <div className={`relative z-10 flex h-16 w-16 items-center justify-center rounded-full ${getActivityColor(activity.type)}`}>
-                        <Icon className="h-6 w-6" />
+                      <div
+                        className={`relative z-10 flex h-16 w-16 items-center justify-center rounded-full ${getActivityColor(activity.type)}`}
+                      >
+                        <Icon className="h-6 w-6 text-white" />
                       </div>
 
                       {/* Content */}
                       <div className="flex-1 pt-2">
                         <div className="flex items-start justify-between">
                           <div>
-                            <p className="text-base font-medium text-gray-900">{activity.description}</p>
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="text-base font-medium text-white">{activity.description}</p>
+                            <p className="mt-1 text-sm text-green-200">
                               by {activity.user}
                             </p>
                           </div>
-                          <span className="text-sm text-gray-400 whitespace-nowrap ml-4">
+                          <span className="ml-4 whitespace-nowrap text-sm text-green-200">
                             {formatTimestamp(activity.timestamp)}
                           </span>
                         </div>
@@ -133,37 +135,37 @@ export default function ActivityTab({ project }: ActivityTabProps) {
       </div>
 
       {/* Project Milestones */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Key Milestones</h3>
+      <div className="rounded-lg border border-orange-500 bg-green-800 p-6">
+        <h3 className="mb-4 text-lg font-semibold text-white">Key Milestones</h3>
         <div className="space-y-3">
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-between rounded-lg border border-orange-500 bg-green-900 p-3">
             <div className="flex items-center gap-3">
-              <Calendar className="h-5 w-5 text-gray-400" />
-              <span className="text-sm font-medium text-gray-900">Project Start</span>
+              <Calendar className="h-5 w-5 text-white" />
+              <span className="text-sm font-medium text-white">Project Start</span>
             </div>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-green-200">
               {project.start_date ? new Date(project.start_date).toLocaleDateString() : 'Not set'}
             </span>
           </div>
 
           {project.end_date && (
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between rounded-lg border border-orange-500 bg-green-900 p-3">
               <div className="flex items-center gap-3">
-                <Calendar className="h-5 w-5 text-gray-400" />
-                <span className="text-sm font-medium text-gray-900">Project End</span>
+                <Calendar className="h-5 w-5 text-white" />
+                <span className="text-sm font-medium text-white">Project End</span>
               </div>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-green-200">
                 {new Date(project.end_date).toLocaleDateString()}
               </span>
             </div>
           )}
 
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-between rounded-lg border border-orange-500 bg-green-900 p-3">
             <div className="flex items-center gap-3">
-              <Edit className="h-5 w-5 text-gray-400" />
-              <span className="text-sm font-medium text-gray-900">Last Updated</span>
+              <Edit className="h-5 w-5 text-white" />
+              <span className="text-sm font-medium text-white">Last Updated</span>
             </div>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-green-200">
               {new Date(project.updated_at).toLocaleDateString()}
             </span>
           </div>
@@ -171,26 +173,26 @@ export default function ActivityTab({ project }: ActivityTabProps) {
       </div>
 
       {/* Activity Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="text-sm text-gray-500 mb-1">Total Events</div>
-          <div className="text-2xl font-bold text-gray-900">{mockActivities.length}</div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+        <div className="rounded-lg border border-orange-500 bg-green-800 p-4">
+          <div className="mb-1 text-sm text-green-200">Total Events</div>
+          <div className="text-2xl font-bold text-white">{mockActivities.length}</div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="text-sm text-gray-500 mb-1">Documents</div>
-          <div className="text-2xl font-bold text-purple-600">
+        <div className="rounded-lg border border-orange-500 bg-green-800 p-4">
+          <div className="mb-1 text-sm text-green-200">Documents</div>
+          <div className="text-2xl font-bold text-white">
             {mockActivities.filter((a) => a.type === 'document_added').length}
           </div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="text-sm text-gray-500 mb-1">Updates</div>
-          <div className="text-2xl font-bold text-blue-600">
+        <div className="rounded-lg border border-orange-500 bg-green-800 p-4">
+          <div className="mb-1 text-sm text-green-200">Updates</div>
+          <div className="text-2xl font-bold text-white">
             {mockActivities.filter((a) => a.type === 'project_updated').length}
           </div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="text-sm text-gray-500 mb-1">Team Changes</div>
-          <div className="text-2xl font-bold text-orange-600">
+        <div className="rounded-lg border border-orange-500 bg-green-800 p-4">
+          <div className="mb-1 text-sm text-green-200">Team Changes</div>
+          <div className="text-2xl font-bold text-white">
             {mockActivities.filter((a) => a.type === 'team_updated').length}
           </div>
         </div>

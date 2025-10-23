@@ -30,13 +30,13 @@ export default function ContentTab({ project, content }: ContentTabProps) {
   const getStatusColor = (status: ProjectContent['status']) => {
     switch (status) {
       case 'Draft':
-        return 'bg-yellow-100 text-yellow-800'
+        return 'border border-orange-500 bg-green-700 text-white'
       case 'Review':
-        return 'bg-blue-100 text-blue-800'
+        return 'border border-orange-500 bg-green-800 text-white'
       case 'Published':
-        return 'bg-green-100 text-green-800'
+        return 'border border-orange-500 bg-green-600 text-white'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'border border-orange-500 bg-green-800 text-white'
     }
   }
 
@@ -46,20 +46,20 @@ export default function ContentTab({ project, content }: ContentTabProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-white">
       {/* Header with Actions */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Project Content</h2>
-          <p className="text-sm text-gray-500 mt-1">
+          <h2 className="text-xl font-semibold text-white">Project Content</h2>
+          <p className="mt-1 text-sm text-green-200">
             {filteredContent.length} of {content.length} content piece{content.length !== 1 ? 's' : ''}
           </p>
         </div>
         <button
           onClick={handleCreateContent}
-          className="flex items-center gap-2 px-4 py-2 bg-[#fd8216] hover:bg-[#e67412] text-white rounded-lg font-medium transition-colors"
+          className="group flex items-center gap-2 rounded-lg border border-orange-500 bg-green-800 px-4 py-2 font-medium text-white transition-colors hover:bg-orange-500"
         >
-          <Plus className="h-5 w-5" />
+          <Plus className="h-5 w-5 text-white transition-colors group-hover:text-green-900" />
           New Content
         </button>
       </div>
@@ -67,14 +67,14 @@ export default function ContentTab({ project, content }: ContentTabProps) {
       {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         {/* Search */}
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-200" />
           <input
             type="text"
             placeholder="Search content..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fd8216] focus:border-[#fd8216]"
+            className="w-full rounded-lg border border-orange-500 bg-green-950 pl-10 pr-4 py-2 text-white placeholder:text-green-200 focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-300"
           />
         </div>
 
@@ -82,7 +82,7 @@ export default function ContentTab({ project, content }: ContentTabProps) {
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value as any)}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fd8216] focus:border-[#fd8216]"
+          className="rounded-lg border border-orange-500 bg-green-950 px-4 py-2 text-white focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-300"
         >
           <option value="all">All Statuses</option>
           <option value="Draft">Draft</option>
@@ -94,7 +94,7 @@ export default function ContentTab({ project, content }: ContentTabProps) {
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fd8216] focus:border-[#fd8216]"
+          className="rounded-lg border border-orange-500 bg-green-950 px-4 py-2 text-white focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-300"
         >
           <option value="all">All Types</option>
           {contentTypes.map((type) => (
@@ -107,10 +107,10 @@ export default function ContentTab({ project, content }: ContentTabProps) {
 
       {/* Content List */}
       {filteredContent.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-          <FolderOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No content found</h3>
-          <p className="text-gray-500 mb-4">
+        <div className="rounded-lg border-2 border-dashed border-orange-500 bg-green-900 py-12 text-center">
+          <FolderOpen className="mx-auto mb-4 h-12 w-12 text-white" />
+          <h3 className="mb-2 text-lg font-medium text-white">No content found</h3>
+          <p className="mb-4 text-green-200">
             {content.length === 0
               ? 'Get started by creating your first content piece'
               : 'Try adjusting your search or filters'}
@@ -118,9 +118,9 @@ export default function ContentTab({ project, content }: ContentTabProps) {
           {content.length === 0 && (
             <button
               onClick={handleCreateContent}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#fd8216] hover:bg-[#e67412] text-white rounded-lg font-medium transition-colors"
+              className="group inline-flex items-center gap-2 rounded-lg border border-orange-500 bg-green-800 px-4 py-2 font-medium text-white transition-colors hover:bg-orange-500"
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-5 w-5 text-white transition-colors group-hover:text-green-900" />
               Create Content
             </button>
           )}
@@ -130,40 +130,40 @@ export default function ContentTab({ project, content }: ContentTabProps) {
           {filteredContent.map((item) => (
             <div
               key={item.id}
-              className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+              className="rounded-lg border border-orange-500 bg-green-800 p-6 transition-shadow hover:bg-orange-500"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <FileText className="h-5 w-5 text-[#fd8216]" />
-                    <h3 className="text-lg font-semibold text-gray-900">{item.title}</h3>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(item.status)}`}>
+                  <div className="mb-2 flex items-center gap-3">
+                    <FileText className="h-5 w-5 text-white" />
+                    <h3 className="text-lg font-semibold text-white">{item.title}</h3>
+                    <span className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(item.status)}`}>
                       {item.status}
                     </span>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-3">
+                  <div className="mb-3 flex flex-wrap items-center gap-4 text-sm text-green-100">
                     <span className="flex items-center gap-1">
-                      <span className="font-medium">Type:</span> {item.type}
+                      <span className="font-medium text-white">Type:</span> {item.type}
                     </span>
                     <span className="flex items-center gap-1">
-                      <span className="font-medium">Updated:</span>{' '}
+                      <span className="font-medium text-white">Updated:</span>{' '}
                       {new Date(item.updated_at).toLocaleDateString()}
                     </span>
                   </div>
 
                   {/* Content Preview */}
                   {item.final_text && (
-                    <div className="mt-3 p-4 bg-gray-50 rounded-lg">
-                      <div className="text-xs font-medium text-gray-500 mb-2">Published Content Preview</div>
-                      <p className="text-sm text-gray-700 line-clamp-3">{item.final_text}</p>
+                    <div className="mt-3 rounded-lg border border-orange-500 bg-green-900 p-4">
+                      <div className="mb-2 text-xs font-medium text-green-100">Published Content Preview</div>
+                      <p className="text-sm text-green-100 line-clamp-3">{item.final_text}</p>
                     </div>
                   )}
 
                   {!item.final_text && item.draft && (
-                    <div className="mt-3 p-4 bg-yellow-50 rounded-lg">
-                      <div className="text-xs font-medium text-yellow-700 mb-2">Draft Preview</div>
-                      <p className="text-sm text-gray-700 line-clamp-3">{item.draft}</p>
+                    <div className="mt-3 rounded-lg border border-orange-500 bg-green-900 p-4">
+                      <div className="mb-2 text-xs font-medium text-green-100">Draft Preview</div>
+                      <p className="text-sm text-green-100 line-clamp-3">{item.draft}</p>
                     </div>
                   )}
                 </div>
@@ -171,16 +171,16 @@ export default function ContentTab({ project, content }: ContentTabProps) {
                 <div className="flex flex-col gap-2 ml-4">
                   <Link
                     href={`/content/${item.id}`}
-                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[#fd8216] hover:bg-orange-50 rounded-lg transition-colors"
+                    className="group flex items-center gap-2 rounded-lg border border-orange-500 bg-green-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500"
                   >
-                    <Eye className="h-4 w-4" />
+                    <Eye className="h-4 w-4 text-white transition-colors group-hover:text-green-900" />
                     View
                   </Link>
                   <Link
                     href={`/content/${item.id}/edit`}
-                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="group flex items-center gap-2 rounded-lg border border-orange-500 bg-green-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500"
                   >
-                    <Edit className="h-4 w-4" />
+                    <Edit className="h-4 w-4 text-white transition-colors group-hover:text-green-900" />
                     Edit
                   </Link>
                 </div>
@@ -191,20 +191,20 @@ export default function ContentTab({ project, content }: ContentTabProps) {
       )}
 
       {/* Content Statistics */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="text-sm text-gray-500 mb-1">Total Content</div>
-          <div className="text-2xl font-bold text-gray-900">{content.length}</div>
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="rounded-lg border border-orange-500 bg-green-800 p-4">
+          <div className="mb-1 text-sm text-green-200">Total Content</div>
+          <div className="text-2xl font-bold text-white">{content.length}</div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="text-sm text-gray-500 mb-1">Published</div>
-          <div className="text-2xl font-bold text-green-600">
+        <div className="rounded-lg border border-orange-500 bg-green-800 p-4">
+          <div className="mb-1 text-sm text-green-200">Published</div>
+          <div className="text-2xl font-bold text-white">
             {content.filter((c) => c.status === 'Published').length}
           </div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="text-sm text-gray-500 mb-1">In Review</div>
-          <div className="text-2xl font-bold text-blue-600">
+        <div className="rounded-lg border border-orange-500 bg-green-800 p-4">
+          <div className="mb-1 text-sm text-green-200">In Review</div>
+          <div className="text-2xl font-bold text-white">
             {content.filter((c) => c.status === 'Review').length}
           </div>
         </div>
