@@ -261,8 +261,10 @@ function OverviewTab({ client, projects, deliverables, contentPieces, latestFina
                   {projects.slice(0, 5).map((project) => (
                     <tr key={project.id} className="align-top">
                       <td className="py-2 pr-4">
-                        <div className="font-medium text-black">{project.name}</div>
-                        {project.description && <div className="text-xs text-gray-500">{project.description}</div>}
+                        <Link href={`/projects/${project.id}`} className="block hover:bg-gray-50 -m-2 p-2 rounded">
+                          <div className="font-medium text-black hover:text-[#fd8216] hover:underline">{project.name}</div>
+                          {project.description && <div className="text-xs text-gray-500">{project.description}</div>}
+                        </Link>
                       </td>
                       <td className="py-2 pr-4 text-gray-700">{project.owner}</td>
                       <td className="py-2 pr-4 text-gray-700">{project.phase}</td>
@@ -341,8 +343,10 @@ function ProjectsTab({ client, projects }: ProjectsTabProps) {
                 {projects.map((project) => (
                   <tr key={project.id} className="hover:bg-gray-50">
                     <td className="px-3 py-2">
-                      <div className="font-medium text-black">{project.name}</div>
-                      {project.description && <div className="mt-0.5 text-xs text-gray-600">{project.description}</div>}
+                      <Link href={`/projects/${project.id}`}>
+                        <div className="font-medium text-black hover:text-[#fd8216] hover:underline cursor-pointer">{project.name}</div>
+                        {project.description && <div className="mt-0.5 text-xs text-gray-600">{project.description}</div>}
+                      </Link>
                     </td>
                     <td className="px-3 py-2 text-gray-700">{project.phase}</td>
                     <td className="px-3 py-2 text-gray-700">{project.owner}</td>
