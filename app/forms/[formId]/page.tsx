@@ -8,22 +8,27 @@ const publicForms = {
     title: 'Revenue Clarity - Future Client',
     description: 'Help us understand your revenue challenges so we can deliver maximum impact.',
     fields: [
+      // Required Fields Only
       { name: 'clientName', label: 'Company Name', type: 'text', required: true, placeholder: 'Acme Corp' },
       { name: 'contactName', label: 'Your Name', type: 'text', required: true, placeholder: 'John Smith' },
       { name: 'contactEmail', label: 'Email', type: 'email', required: true, placeholder: 'john@acme.com' },
-      { name: 'contactPhone', label: 'Phone', type: 'tel', required: false, placeholder: '+1 (555) 123-4567' },
-      { name: 'referralSource', label: 'Where did you hear about us?', type: 'select', required: false, options: ['Google Search', 'LinkedIn', 'Referral from friend/colleague', 'Twitter/X', 'Podcast', 'Conference/Event', 'Blog/Article', 'Other'] },
-      { name: 'industry', label: 'Industry', type: 'text', required: true, placeholder: 'B2B SaaS, E-commerce, etc.' },
+      { name: 'contactPhone', label: 'Phone', type: 'tel', required: true, placeholder: '+1 (555) 123-4567' },
       { name: 'monthlyRevenue', label: 'Current Monthly Revenue ($)', type: 'number', required: true, placeholder: '50000' },
-      { name: 'teamSize', label: 'Team Size', type: 'number', required: false, placeholder: '25' },
-      { name: 'painPoints', label: 'What are your top 3 revenue challenges right now?', type: 'textarea', required: true, placeholder: 'e.g., High churn rate, low conversion, pricing confusion...' },
-      { name: 'tried', label: 'What have you already tried to fix these challenges?', type: 'textarea', required: true, placeholder: 'List any strategies, tools, or tactics you\'ve implemented...' },
-      { name: 'goals', label: 'What revenue goals do you want to achieve in the next 12 months?', type: 'textarea', required: true, placeholder: 'Be specific: revenue targets, growth %, customer acquisition goals...' },
-      { name: 'timeline', label: 'When do you need to see results?', type: 'select', required: true, options: ['ASAP (30 days)', '60 days', '90 days', 'Next quarter', 'Within 6 months'] },
-      { name: 'budget', label: 'What\'s your budget range for this engagement?', type: 'select', required: true, options: ['$3,500-$10k', '$10k-$25k', '$25k-$50k', '$50k+', 'Not sure yet'] },
-      { name: 'dataAccess', label: 'What data/systems can you provide access to?', type: 'textarea', required: true, placeholder: 'CRM, analytics, billing platform, customer data...' },
-      { name: 'blockers', label: 'What might prevent you from implementing our recommendations?', type: 'textarea', required: false, placeholder: 'Technical constraints, team bandwidth, budget limits...' },
-      { name: 'urgency', label: 'How urgent is solving these revenue challenges? (1-10)', type: 'number', required: true, placeholder: '8', min: 1, max: 10 },
+
+      // Optional Fields with Dropdowns
+      { name: 'industry', label: 'Industry', type: 'select', required: false, options: ['B2B SaaS', 'E-commerce', 'Consulting/Services', 'Manufacturing', 'Healthcare', 'Finance', 'Education', 'Real Estate', 'Marketing/Advertising', 'Technology', 'Retail', 'Other'] },
+      { name: 'teamSize', label: 'Team Size', type: 'select', required: false, options: ['Just me (solo)', '2-5 people', '6-10 people', '11-25 people', '26-50 people', '51-100 people', '100+ people'] },
+      { name: 'painPoints', label: 'What are your top revenue challenges?', type: 'select', required: false, options: ['High churn rate', 'Low conversion rates', 'Pricing confusion', 'Sales cycle too long', 'Customer acquisition cost too high', 'Poor retention', 'Inconsistent revenue', 'Scaling challenges', 'Market saturation', 'Other'] },
+      { name: 'tried', label: 'What have you already tried?', type: 'select', required: false, options: ['Hired consultants', 'Changed pricing', 'New marketing campaigns', 'CRM implementation', 'Sales training', 'Product changes', 'Customer success program', 'Nothing yet', 'Other'] },
+      { name: 'goals', label: 'Primary revenue goal for next 12 months', type: 'select', required: false, options: ['Double revenue', 'Increase 50%', 'Increase 25%', 'Achieve consistent MRR', 'Reduce churn by 50%', 'Improve margins', 'Scale to $1M ARR', 'Scale to $5M ARR', 'Other'] },
+      { name: 'timeline', label: 'When do you need to see results?', type: 'select', required: false, options: ['ASAP (30 days)', '60 days', '90 days', 'Next quarter', 'Within 6 months', 'Flexible'] },
+      { name: 'budget', label: 'Budget range for this engagement', type: 'select', required: false, options: ['$3,500-$10k', '$10k-$25k', '$25k-$50k', '$50k-$100k', '$100k+', 'Not sure yet'] },
+      { name: 'dataAccess', label: 'What systems do you use?', type: 'select', required: false, options: ['HubSpot', 'Salesforce', 'Google Analytics', 'Stripe/Payment processor', 'QuickBooks/Accounting', 'Custom CRM', 'Excel/Spreadsheets', 'Multiple systems', 'None yet', 'Other'] },
+      { name: 'urgency', label: 'How urgent is solving these challenges?', type: 'select', required: false, options: ['Extremely urgent (1-2 weeks)', 'Very urgent (1 month)', 'Urgent (2-3 months)', 'Moderate (3-6 months)', 'Not urgent, exploring options'] },
+      { name: 'referralSource', label: 'Where did you hear about us?', type: 'select', required: false, options: ['Google Search', 'LinkedIn', 'Referral from friend/colleague', 'Twitter/X', 'Podcast', 'Conference/Event', 'Blog/Article', 'Other'] },
+
+      // Optional text area for additional details
+      { name: 'blockers', label: 'Additional notes or specific challenges (optional)', type: 'textarea', required: false, placeholder: 'Share any additional context that would help us understand your situation...', rows: 3 },
     ],
   },
   'blueprint-intake': {
