@@ -481,12 +481,13 @@ export default function DashboardScreen() {
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="px-6">Document</TableHead>
                   <TableHead>Type</TableHead>
+                  <TableHead>Updated</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {metrics.recentDocuments.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={2} className="px-6 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                    <TableCell colSpan={3} className="px-6 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
                       No documents yet
                     </TableCell>
                   </TableRow>
@@ -501,6 +502,9 @@ export default function DashboardScreen() {
                         <Badge variant="outline" className="border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 text-xs">
                           {doc.type}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-slate-500 dark:text-slate-400">
+                        {new Date(doc.updatedAt).toLocaleDateString()}
                       </TableCell>
                     </TableRow>
                   ))
@@ -521,12 +525,13 @@ export default function DashboardScreen() {
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="px-6">Title</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Created</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {content.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={2} className="px-6 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                    <TableCell colSpan={3} className="px-6 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
                       No content yet
                     </TableCell>
                   </TableRow>
@@ -544,6 +549,9 @@ export default function DashboardScreen() {
                         >
                           {item.status}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-slate-500 dark:text-slate-400">
+                        {new Date(item.createdAt).toLocaleDateString()}
                       </TableCell>
                     </TableRow>
                   ))
@@ -564,12 +572,13 @@ export default function DashboardScreen() {
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="px-6">Project</TableHead>
                   <TableHead>Revenue</TableHead>
+                  <TableHead>Modified</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {projects.filter(p => p.status === 'Active').length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={2} className="px-6 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                    <TableCell colSpan={3} className="px-6 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
                       No active projects
                     </TableCell>
                   </TableRow>
@@ -582,6 +591,9 @@ export default function DashboardScreen() {
                       </TableCell>
                       <TableCell className="font-semibold text-slate-900 dark:text-slate-100 text-sm">
                         ${(project.revenueTarget && project.revenueTarget >= 1000) ? Math.round(project.revenueTarget / 1000) + 'k' : project.revenueTarget?.toLocaleString() || 0}
+                      </TableCell>
+                      <TableCell className="text-xs text-slate-500 dark:text-slate-400">
+                        {new Date(project.updatedAt).toLocaleDateString()}
                       </TableCell>
                     </TableRow>
                   ))
