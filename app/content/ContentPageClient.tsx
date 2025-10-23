@@ -42,7 +42,7 @@ const initialForm: FormState = {
 }
 
 export default function ContentPageClient() {
-  const { content, projects, agents, automationLogs, createContent, updateContentStatus } = useRevosData()
+  const { content, projects, agents, automationLogs, createContent, updateContentStatus, createDocument } = useRevosData()
   const [form, setForm] = useState<FormState>(initialForm)
   const [generating, setGenerating] = useState(false)
   const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null)
@@ -102,6 +102,7 @@ export default function ContentPageClient() {
       }
 
       const contentId = `content-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      const documentId = `doc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
       // Save to Supabase revos_content table
       const { error: contentError } = await supabase.from('revos_content').insert({
@@ -121,6 +122,26 @@ export default function ContentPageClient() {
         return
       }
 
+      // Also save as a document in revos_documents table
+      const { error: documentError } = await supabase.from('revos_documents').insert({
+        id: documentId,
+        title: form.title.trim(),
+        description: `Generated ${form.type}: ${form.draft.substring(0, 100)}${form.draft.length > 100 ? '...' : ''}`,
+        project_id: form.sourceProjectId || 'unassigned',
+        version: 1,
+        type: form.type,
+        status: 'Draft',
+        tags: [form.type, 'AI Generated', 'Content'],
+        file_url: `content://${contentId}`, // Reference to content entry
+        summary: data.content.substring(0, 200) + (data.content.length > 200 ? '...' : ''),
+      })
+
+      if (documentError) {
+        console.error('Error saving document to Supabase:', documentError)
+        // Don't fail the whole operation if document creation fails
+        console.warn('Content saved but document creation failed')
+      }
+
       // Create content in local state for immediate UI update
       createContent({
         title: form.title.trim(),
@@ -130,6 +151,18 @@ export default function ContentPageClient() {
         draft: form.draft.trim(),
         finalText: data.content,
       })
+
+      // Also create document in local state if successful
+      if (!documentError) {
+        createDocument({
+          title: form.title.trim(),
+          description: `Generated ${form.type}: ${form.draft.substring(0, 100)}${form.draft.length > 100 ? '...' : ''}`,
+          projectId: form.sourceProjectId || 'unassigned',
+          type: form.type,
+          tags: [form.type, 'AI Generated', 'Content'],
+          fileUrl: `content://${contentId}`,
+        })
+      }
 
       alert('Content generated and saved successfully!')
       setForm(initialForm)
