@@ -217,7 +217,7 @@ export default function ProjectWorkspace({
         {/* Left Column - Tabs */}
         <div className="lg:col-span-2">
           <Card>
-            <Tabs value={activeTab} onValueChange={(value) => handleTabChange(value as TabKey)} className="w-full">
+            <Tabs defaultValue={initialTab} value={activeTab} onValueChange={(value) => handleTabChange(value as TabKey)} className="w-full">
               <CardHeader>
                 <TabsList className="grid w-full grid-cols-6">
                   <TabsTrigger value="overview">Overview</TabsTrigger>
