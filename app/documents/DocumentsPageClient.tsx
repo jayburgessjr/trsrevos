@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Link from 'next/link'
 import { ArrowUpDown } from 'lucide-react'
 
 import { useRevosData } from '@/app/providers/RevosDataProvider'
@@ -11,8 +12,6 @@ import { Input } from '@/ui/input'
 import { Select } from '@/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table'
 import { Textarea } from '@/ui/textarea'
-import DocumentViewerModal from '@/components/documents/DocumentViewerModal'
-import type { Document } from '@/lib/revos/types'
 
 const documentTypes = [
   'Audit Report',
@@ -52,7 +51,6 @@ export default function DocumentsPageClient() {
   const { documents, projects, createDocument, updateDocumentStatus, updateDocumentProject } = useRevosData()
   const [form, setForm] = useState<FormState>(initialForm)
   const [filter, setFilter] = useState<string>('All')
-  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
   const [sortField, setSortField] = useState<SortField>('updatedAt')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
@@ -350,13 +348,20 @@ export default function DocumentsPageClient() {
                 filteredDocuments.map((document) => (
                   <TableRow key={document.id}>
                     <TableCell className="px-6">
-                      <div className="font-medium text-foreground">{document.title}</div>
-                      <button
-                        onClick={() => setSelectedDocument(document)}
+                      <div className="font-medium text-foreground">
+                        <Link
+                          href={`/documents/${document.id}`}
+                          className="hover:text-emerald-700 text-foreground transition-colors"
+                        >
+                          {document.title}
+                        </Link>
+                      </div>
+                      <Link
+                        href={`/documents/${document.id}`}
                         className="text-xs text-emerald-600 underline hover:text-emerald-700 transition-colors"
                       >
-                        Open file
-                      </button>
+                        Open page
+                      </Link>
                     </TableCell>
                     <TableCell>
                       <Select
@@ -397,12 +402,6 @@ export default function DocumentsPageClient() {
         </CardContent>
       </Card>
 
-      {selectedDocument && (
-        <DocumentViewerModal
-          document={selectedDocument}
-          onClose={() => setSelectedDocument(null)}
-        />
-      )}
     </div>
   )
 }
