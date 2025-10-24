@@ -16,20 +16,24 @@ import type {
   CreateCommentInput,
   CreateContentInput,
   CreateDocumentInput,
+  CreateFileInput,
+  CreateFileVersionInput,
   CreateProjectInput,
   CreateResourceInput,
   CreateResourcePermissionInput,
   CreateTaskInput,
+  DeleteFileInput,
   RevosState,
   RunAgentInput,
   UpdateCommentInput,
   UpdateContentStatusInput,
   UpdateDocumentStatusInput,
+  UpdateFileInput,
   UpdateProjectStatusInput,
   UpdateResourcePermissionInput,
   UpdateTaskInput,
 } from '@/lib/revos/types'
-import { type Agent, type AutomationLog, type Comment, type ContentItem, type Document, type Project, type Resource, type ResourcePermission, type Task, type User } from '@/lib/revos/types'
+import { type Agent, type AutomationLog, type Comment, type ContentItem, type Document, type File, type Project, type Resource, type ResourcePermission, type Task, type User } from '@/lib/revos/types'
 
 const randomId = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2))
 
@@ -61,6 +65,7 @@ const loadInitialState = (): RevosState => {
       users: [mockCurrentUser],
       resourcePermissions: [],
       currentUser: mockCurrentUser,
+      files: [],
     }
   }
 
@@ -72,6 +77,7 @@ const loadInitialState = (): RevosState => {
         ...parsed,
         agents: mockAgents,
         tasks: parsed.tasks || [],
+        files: parsed.files || [],
       }
     }
   } catch (error) {
@@ -87,6 +93,11 @@ const loadInitialState = (): RevosState => {
     automationLogs: mockAutomationLogs,
     invoices: mockInvoices,
     tasks: [],
+    comments: [],
+    users: [],
+    resourcePermissions: [],
+    currentUser: null,
+    files: [],
   }
 }
 
@@ -123,6 +134,11 @@ type Action =
   | { type: 'createResourcePermission'; payload: CreateResourcePermissionInput }
   | { type: 'updateResourcePermission'; payload: UpdateResourcePermissionInput }
   | { type: 'deleteResourcePermission'; payload: { id: string } }
+  | { type: 'setFiles'; payload: File[] }
+  | { type: 'createFile'; payload: CreateFileInput }
+  | { type: 'createFileVersion'; payload: CreateFileVersionInput }
+  | { type: 'updateFile'; payload: UpdateFileInput }
+  | { type: 'deleteFile'; payload: DeleteFileInput }
   | { type: 'runAgent'; payload: RunAgentInput }
 
 type RevosContextValue = RevosState & {
@@ -147,6 +163,10 @@ type RevosContextValue = RevosState & {
   createResourcePermission: (input: CreateResourcePermissionInput) => void
   updateResourcePermission: (input: UpdateResourcePermissionInput) => void
   deleteResourcePermission: (id: string) => void
+  createFile: (input: CreateFileInput) => void
+  createFileVersion: (input: CreateFileVersionInput) => void
+  updateFile: (input: UpdateFileInput) => void
+  deleteFile: (input: DeleteFileInput) => void
   runAgent: (input: RunAgentInput) => void
 }
 
@@ -477,6 +497,114 @@ function reducer(state: RevosState, action: Action): RevosState {
       return {
         ...state,
         resourcePermissions: state.resourcePermissions.filter((rp) => rp.id !== action.payload.id),
+      }
+    }
+    case 'setFiles':
+      return { ...state, files: action.payload }
+    case 'createFile': {
+      const fileId = randomId()
+      const versionId = randomId()
+      const now = new Date().toISOString()
+
+      const firstVersion: import('@/lib/revos/types').FileVersion = {
+        id: versionId,
+        fileId,
+        versionNumber: 1,
+        fileName: action.payload.fileName,
+        fileSize: action.payload.fileSize,
+        mimeType: action.payload.mimeType,
+        storageUrl: action.payload.fileData,
+        uploadedBy: state.currentUser?.id || 'system',
+        uploadedAt: now,
+        changeNotes: action.payload.changeNotes,
+        isActive: true,
+      }
+
+      const newFile: File = {
+        id: fileId,
+        name: action.payload.name,
+        description: action.payload.description,
+        fileType: action.payload.fileType,
+        resourceType: action.payload.resourceType,
+        resourceId: action.payload.resourceId,
+        currentVersionId: versionId,
+        versions: [firstVersion],
+        createdBy: state.currentUser?.id || 'system',
+        createdAt: now,
+        updatedAt: now,
+        tags: action.payload.tags || [],
+        isDeleted: false,
+      }
+
+      return { ...state, files: [newFile, ...state.files] }
+    }
+    case 'createFileVersion': {
+      const file = state.files.find(f => f.id === action.payload.fileId)
+      if (!file) return state
+
+      const versionId = randomId()
+      const now = new Date().toISOString()
+      const latestVersion = file.versions.reduce((max, v) => v.versionNumber > max ? v.versionNumber : max, 0)
+
+      const newVersion: import('@/lib/revos/types').FileVersion = {
+        id: versionId,
+        fileId: file.id,
+        versionNumber: latestVersion + 1,
+        fileName: action.payload.fileName,
+        fileSize: action.payload.fileSize,
+        mimeType: action.payload.mimeType,
+        storageUrl: action.payload.fileData,
+        uploadedBy: state.currentUser?.id || 'system',
+        uploadedAt: now,
+        changeNotes: action.payload.changeNotes,
+        isActive: true,
+      }
+
+      return {
+        ...state,
+        files: state.files.map(f =>
+          f.id === file.id
+            ? {
+                ...f,
+                currentVersionId: versionId,
+                versions: [newVersion, ...f.versions],
+                updatedAt: now,
+              }
+            : f
+        ),
+      }
+    }
+    case 'updateFile': {
+      return {
+        ...state,
+        files: state.files.map(f =>
+          f.id === action.payload.id
+            ? {
+                ...f,
+                name: action.payload.name ?? f.name,
+                description: action.payload.description ?? f.description,
+                tags: action.payload.tags ?? f.tags,
+                updatedAt: new Date().toISOString(),
+              }
+            : f
+        ),
+      }
+    }
+    case 'deleteFile': {
+      if (action.payload.permanent) {
+        return {
+          ...state,
+          files: state.files.filter(f => f.id !== action.payload.id),
+        }
+      } else {
+        return {
+          ...state,
+          files: state.files.map(f =>
+            f.id === action.payload.id
+              ? { ...f, isDeleted: true, updatedAt: new Date().toISOString() }
+              : f
+          ),
+        }
       }
     }
     default:
@@ -994,6 +1122,22 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'deleteResourcePermission', payload: { id } })
   }, [])
 
+  const createFile = useCallback((input: CreateFileInput) => {
+    dispatch({ type: 'createFile', payload: input })
+  }, [])
+
+  const createFileVersion = useCallback((input: CreateFileVersionInput) => {
+    dispatch({ type: 'createFileVersion', payload: input })
+  }, [])
+
+  const updateFile = useCallback((input: UpdateFileInput) => {
+    dispatch({ type: 'updateFile', payload: input })
+  }, [])
+
+  const deleteFile = useCallback((input: DeleteFileInput) => {
+    dispatch({ type: 'deleteFile', payload: input })
+  }, [])
+
   const value = useMemo<RevosContextValue>(
     () => ({
       ...state,
@@ -1018,9 +1162,13 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
       createResourcePermission,
       updateResourcePermission,
       deleteResourcePermission,
+      createFile,
+      createFileVersion,
+      updateFile,
+      deleteFile,
       runAgent,
     }),
-    [state, createProject, updateProjectStatus, deleteProject, deleteClient, createDocument, updateDocumentStatus, updateDocumentProject, deleteDocument, createContent, updateContentStatus, deleteContent, createResource, createTask, updateTask, deleteTask, createComment, updateComment, deleteComment, createResourcePermission, updateResourcePermission, deleteResourcePermission, runAgent],
+    [state, createProject, updateProjectStatus, deleteProject, deleteClient, createDocument, updateDocumentStatus, updateDocumentProject, deleteDocument, createContent, updateContentStatus, deleteContent, createResource, createTask, updateTask, deleteTask, createComment, updateComment, deleteComment, createResourcePermission, updateResourcePermission, deleteResourcePermission, createFile, createFileVersion, updateFile, deleteFile, runAgent],
   )
 
   if (isLoading) {

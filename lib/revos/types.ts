@@ -126,6 +126,7 @@ export type RevosState = {
   users: User[]
   resourcePermissions: ResourcePermission[]
   currentUser: User | null
+  files: File[]
 }
 
 export type CreateProjectInput = Omit<Project, 'id' | 'documents' | 'agents' | 'resources'> & {
@@ -268,4 +269,82 @@ export type CreateResourcePermissionInput = {
 export type UpdateResourcePermissionInput = {
   id: string
   permission: Permission
+}
+
+// File Upload and Versioning Types
+
+export type FileType =
+  | 'pdf'
+  | 'image'
+  | 'document'
+  | 'spreadsheet'
+  | 'presentation'
+  | 'video'
+  | 'audio'
+  | 'archive'
+  | 'other'
+
+export type FileVersion = {
+  id: string
+  fileId: string
+  versionNumber: number
+  fileName: string
+  fileSize: number
+  mimeType: string
+  storageUrl: string
+  uploadedBy: string
+  uploadedAt: string
+  changeNotes?: string
+  isActive: boolean
+}
+
+export type File = {
+  id: string
+  name: string
+  description?: string
+  fileType: FileType
+  resourceType: 'project' | 'document' | 'content' | 'task' | 'comment'
+  resourceId: string
+  currentVersionId: string
+  versions: FileVersion[]
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+  tags: string[]
+  isDeleted: boolean
+}
+
+export type CreateFileInput = {
+  name: string
+  description?: string
+  fileType: FileType
+  resourceType: 'project' | 'document' | 'content' | 'task' | 'comment'
+  resourceId: string
+  fileName: string
+  fileSize: number
+  mimeType: string
+  fileData: string // base64 or URL
+  tags?: string[]
+  changeNotes?: string
+}
+
+export type CreateFileVersionInput = {
+  fileId: string
+  fileName: string
+  fileSize: number
+  mimeType: string
+  fileData: string // base64 or URL
+  changeNotes?: string
+}
+
+export type UpdateFileInput = {
+  id: string
+  name?: string
+  description?: string
+  tags?: string[]
+}
+
+export type DeleteFileInput = {
+  id: string
+  permanent?: boolean // if false, just marks as deleted
 }
