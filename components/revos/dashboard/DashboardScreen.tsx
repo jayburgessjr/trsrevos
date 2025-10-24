@@ -118,26 +118,41 @@ export default function DashboardScreen() {
 
     const docVelocityChange = previousDocs > 0 ? Math.round(((recentDocs - previousDocs) / previousDocs) * 100) : 0
 
-    // Revenue by month for chart (last 6 months)
-    const revenueByMonth = []
+    // New clients by month (last 6 months based on project start dates)
+    const newClientsByMonth = []
     for (let i = 5; i >= 0; i--) {
-      const date = new Date()
-      date.setMonth(date.getMonth() - i)
-      const monthName = date.toLocaleDateString('en-US', { month: 'short' })
-      // Simulate some variation for demo (in real app, this would come from actual data)
-      const variation = 1 + (Math.sin(i) * 0.15)
-      revenueByMonth.push({
+      const targetDate = new Date()
+      targetDate.setMonth(targetDate.getMonth() - i)
+      const monthName = targetDate.toLocaleDateString('en-US', { month: 'short' })
+      const monthIndex = targetDate.getMonth()
+      const year = targetDate.getFullYear()
+
+      // Count unique new clients for this month
+      const clientsThisMonth = new Set<string>()
+      projects.forEach(project => {
+        if (project.startDate) {
+          const startDate = new Date(project.startDate)
+          if (startDate.getMonth() === monthIndex && startDate.getFullYear() === year && project.client) {
+            clientsThisMonth.add(project.client)
+          }
+        }
+      })
+
+      newClientsByMonth.push({
         month: monthName,
-        revenue: Math.round(totalMonthlyRevenue * variation)
+        count: clientsThisMonth.size
       })
     }
 
-    // Client health distribution
-    const clientHealthDistribution = {
-      healthy: Math.round(activeClients * 0.7),
-      atRisk: Math.round(activeClients * 0.2),
-      critical: Math.round(activeClients * 0.1)
-    }
+    // Client distribution by industry (mock data based on client count)
+    const industryDistribution = [
+      { industry: 'Technology', count: Math.round(uniqueClients * 0.35), color: '#015e32' },
+      { industry: 'Healthcare', count: Math.round(uniqueClients * 0.25), color: '#fd8216' },
+      { industry: 'Finance', count: Math.round(uniqueClients * 0.20), color: '#004d28' },
+      { industry: 'Retail', count: Math.round(uniqueClients * 0.12), color: '#10b981' },
+      { industry: 'Other', count: Math.round(uniqueClients * 0.08), color: '#6366f1' }
+    ].filter(item => item.count > 0)
+    const totalIndustryClients = industryDistribution.reduce((sum, item) => sum + item.count, 0)
 
     // Content by type
     const contentTypeCounts = content.reduce<Record<string, number>>((acc, item) => {
@@ -184,8 +199,9 @@ export default function DashboardScreen() {
       planningProjects,
       recentDocs,
       docVelocityChange,
-      revenueByMonth,
-      clientHealthDistribution,
+      newClientsByMonth,
+      industryDistribution,
+      totalIndustryClients,
       contentByType,
       documentsByType,
       documentTypes,
@@ -272,28 +288,28 @@ export default function DashboardScreen() {
 
       {/* Charts Section - 4 Vertical Bar Charts */}
       <section className="grid gap-6 lg:grid-cols-4">
-        {/* Revenue Trend Chart - Vertical */}
+        {/* New Clients by Month Chart - Vertical */}
         <Card className="border-slate-200 dark:border-slate-800">
           <CardHeader className="border-b border-slate-200/60 dark:border-slate-800/60 pb-4">
-            <CardTitle className="text-base font-semibold">Revenue Trend</CardTitle>
-            <CardDescription className="text-xs">Last 6 months (in $k)</CardDescription>
+            <CardTitle className="text-base font-semibold">New Clients by Month</CardTitle>
+            <CardDescription className="text-xs">Last 6 months</CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
             <div className="flex gap-4">
               {/* Y-axis labels */}
               <div className="flex flex-col justify-between h-48 py-2">
-                <span className="text-[9px] text-slate-500">50k</span>
-                <span className="text-[9px] text-slate-500">40k</span>
-                <span className="text-[9px] text-slate-500">30k</span>
-                <span className="text-[9px] text-slate-500">20k</span>
-                <span className="text-[9px] text-slate-500">10k</span>
+                <span className="text-[9px] text-slate-500">10</span>
+                <span className="text-[9px] text-slate-500">8</span>
+                <span className="text-[9px] text-slate-500">6</span>
+                <span className="text-[9px] text-slate-500">4</span>
+                <span className="text-[9px] text-slate-500">2</span>
                 <span className="text-[9px] text-slate-500">0</span>
               </div>
               {/* Bars */}
               <div className="flex-1 flex items-end justify-between gap-2 h-48 border-l border-b border-slate-200 dark:border-slate-700 pl-2 pb-2">
-                {metrics.revenueByMonth.map((item, index) => {
-                  const maxScale = 50000 // $50k max
-                  const heightPercent = Math.min((item.revenue / maxScale) * 100, 100)
+                {metrics.newClientsByMonth.map((item, index) => {
+                  const maxScale = 10 // 10 clients max
+                  const heightPercent = Math.min((item.count / maxScale) * 100, 100)
                   return (
                     <div key={index} className="flex flex-col items-center flex-1 gap-2">
                       <div className="relative w-full h-full">
@@ -304,7 +320,7 @@ export default function DashboardScreen() {
                           >
                             {heightPercent > 15 && (
                               <span className="text-[9px] font-semibold text-white">
-                                ${(item.revenue / 1000).toFixed(0)}k
+                                {item.count}
                               </span>
                             )}
                           </div>
@@ -319,78 +335,62 @@ export default function DashboardScreen() {
           </CardContent>
         </Card>
 
-        {/* Client Health Distribution - Vertical */}
+        {/* Client Distribution by Industry - Pie Chart */}
         <Card className="border-slate-200 dark:border-slate-800">
           <CardHeader className="border-b border-slate-200/60 dark:border-slate-800/60 pb-4">
-            <CardTitle className="text-base font-semibold">Client Health</CardTitle>
-            <CardDescription className="text-xs">Distribution by status</CardDescription>
+            <CardTitle className="text-base font-semibold">Clients by Industry</CardTitle>
+            <CardDescription className="text-xs">Industry distribution</CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
-            <div className="flex gap-4">
-              {/* Y-axis labels */}
-              <div className="flex flex-col justify-between h-48 py-2">
-                <span className="text-[9px] text-slate-500">10</span>
-                <span className="text-[9px] text-slate-500">8</span>
-                <span className="text-[9px] text-slate-500">6</span>
-                <span className="text-[9px] text-slate-500">4</span>
-                <span className="text-[9px] text-slate-500">2</span>
-                <span className="text-[9px] text-slate-500">0</span>
+            <div className="flex flex-col items-center gap-4">
+              {/* Pie Chart */}
+              <div className="relative w-48 h-48">
+                <svg viewBox="0 0 200 200" className="w-full h-full">
+                  {metrics.industryDistribution.map((item, index) => {
+                    let startAngle = 0
+                    for (let i = 0; i < index; i++) {
+                      startAngle += (metrics.industryDistribution[i].count / metrics.totalIndustryClients) * 360
+                    }
+                    const angle = (item.count / metrics.totalIndustryClients) * 360
+                    const endAngle = startAngle + angle
+
+                    const startRad = (startAngle - 90) * (Math.PI / 180)
+                    const endRad = (endAngle - 90) * (Math.PI / 180)
+
+                    const x1 = 100 + 80 * Math.cos(startRad)
+                    const y1 = 100 + 80 * Math.sin(startRad)
+                    const x2 = 100 + 80 * Math.cos(endRad)
+                    const y2 = 100 + 80 * Math.sin(endRad)
+
+                    const largeArc = angle > 180 ? 1 : 0
+
+                    return (
+                      <path
+                        key={index}
+                        d={`M 100 100 L ${x1} ${y1} A 80 80 0 ${largeArc} 1 ${x2} ${y2} Z`}
+                        fill={item.color}
+                        className="transition-all duration-300"
+                      />
+                    )
+                  })}
+                  <circle cx="100" cy="100" r="45" fill="white" className="dark:fill-[#121212]" />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center flex-col">
+                  <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">{metrics.totalIndustryClients}</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">Total Clients</span>
+                </div>
               </div>
-              {/* Bars */}
-              <div className="flex-1 flex items-end justify-between gap-4 h-48 border-l border-b border-slate-200 dark:border-slate-700 pl-2 pb-2">
-                <div className="flex flex-col items-center flex-1 gap-2">
-                  <div className="relative w-full h-full">
-                    <div className="absolute bottom-0 w-full">
-                      <div
-                        className="w-full bg-emerald-500 rounded-t-md transition-all duration-500 flex flex-col items-center justify-start pt-1"
-                        style={{ height: `${Math.min((metrics.clientHealthDistribution.healthy / 10) * 100, 100)}%`, minHeight: metrics.clientHealthDistribution.healthy > 0 ? '20px' : '0' }}
-                      >
-                        {metrics.clientHealthDistribution.healthy > 0 && (
-                          <span className="text-xs font-semibold text-white">
-                            {metrics.clientHealthDistribution.healthy}
-                          </span>
-                        )}
-                      </div>
+              {/* Legend */}
+              <div className="grid grid-cols-2 gap-2 w-full">
+                {metrics.industryDistribution.map((item, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                    <div className="flex-1">
+                      <p className="text-[10px] font-medium text-slate-600 dark:text-slate-400">{item.industry}</p>
+                      <p className="text-[9px] text-slate-500 dark:text-slate-500">{item.count} ({Math.round((item.count / metrics.totalIndustryClients) * 100)}%)</p>
                     </div>
                   </div>
-                  <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400 text-center">Healthy</span>
-                </div>
-
-                <div className="flex flex-col items-center flex-1 gap-2">
-                  <div className="relative w-full h-full">
-                    <div className="absolute bottom-0 w-full">
-                      <div
-                        className="w-full bg-amber-500 rounded-t-md transition-all duration-500 flex flex-col items-center justify-start pt-1"
-                        style={{ height: `${Math.min((metrics.clientHealthDistribution.atRisk / 10) * 100, 100)}%`, minHeight: metrics.clientHealthDistribution.atRisk > 0 ? '20px' : '0' }}
-                      >
-                        {metrics.clientHealthDistribution.atRisk > 0 && (
-                          <span className="text-xs font-semibold text-white">
-                            {metrics.clientHealthDistribution.atRisk}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400 text-center">At Risk</span>
-                </div>
-
-                <div className="flex flex-col items-center flex-1 gap-2">
-                  <div className="relative w-full h-full">
-                    <div className="absolute bottom-0 w-full">
-                      <div
-                        className="w-full bg-red-500 rounded-t-md transition-all duration-500 flex flex-col items-center justify-start pt-1"
-                        style={{ height: `${Math.min((metrics.clientHealthDistribution.critical / 10) * 100, 100)}%`, minHeight: metrics.clientHealthDistribution.critical > 0 ? '20px' : '0' }}
-                      >
-                        {metrics.clientHealthDistribution.critical > 0 && (
-                          <span className="text-xs font-semibold text-white">
-                            {metrics.clientHealthDistribution.critical}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400 text-center">Critical</span>
-                </div>
+                ))}
               </div>
             </div>
           </CardContent>
@@ -416,7 +416,8 @@ export default function DashboardScreen() {
               {/* Bars */}
               <div className="flex-1 flex items-end justify-between gap-2 h-48 border-l border-b border-slate-200 dark:border-slate-700 pl-2 pb-2">
                 {metrics.contentByType.map((item, index) => {
-                  const maxScale = 50
+                  const maxCount = Math.max(...metrics.contentByType.map(t => t.count), 1)
+                  const maxScale = Math.max(maxCount, 10) // Minimum scale of 10
                   const heightPercent = Math.min((item.count / maxScale) * 100, 100)
                   const colors = ['bg-blue-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500']
                   return (
@@ -464,7 +465,8 @@ export default function DashboardScreen() {
               {/* Bars */}
               <div className="flex-1 flex items-end justify-between gap-2 h-48 border-l border-b border-slate-200 dark:border-slate-700 pl-2 pb-2">
                 {metrics.documentsByType.map((item, index) => {
-                  const maxScale = 50
+                  const maxCount = Math.max(...metrics.documentsByType.map(t => t.count), 1)
+                  const maxScale = Math.max(maxCount, 10) // Minimum scale of 10
                   const heightPercent = Math.min((item.count / maxScale) * 100, 100)
                   const colors = ['bg-[#fd8216]', 'bg-[#015e32]', 'bg-[#004d28]', 'bg-emerald-600']
                   return (
