@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ArrowUpDown } from 'lucide-react'
+import { ArrowUpDown, Trash2 } from 'lucide-react'
 
 import { useRevosData } from '@/app/providers/RevosDataProvider'
 import { Badge } from '@/ui/badge'
@@ -11,6 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/
 import { Input } from '@/ui/input'
 import { Select } from '@/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table'
+import DeleteConfirmationModal from '@/components/common/DeleteConfirmationModal'
+import type { Project } from '@/lib/revos/types'
 
 const projectTypes = ['Audit', 'Blueprint', 'Advisory', 'Internal'] as const
 const projectStatuses = ['Pending', 'Active', 'Delivered', 'Closed'] as const
@@ -43,9 +45,10 @@ const initialFormState: FormState = {
 }
 
 export default function ProjectsPageClient() {
-  const { projects, resources, invoices, createProject, updateProjectStatus } = useRevosData()
+  const { projects, resources, invoices, createProject, updateProjectStatus, deleteProject } = useRevosData()
   const [form, setForm] = useState<FormState>(initialFormState)
   const [isNewClient, setIsNewClient] = useState(false)
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null)
   const [sortField, setSortField] = useState<SortField>('startDate')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
@@ -383,6 +386,7 @@ export default function ProjectsPageClient() {
                     <ArrowUpDown className="h-3 w-3" />
                   </button>
                 </TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -445,6 +449,15 @@ export default function ProjectsPageClient() {
                   <TableCell className="text-xs text-gray-500 dark:text-neutral-400">
                     {project.startDate ? new Date(project.startDate).toLocaleDateString() : '—'}
                   </TableCell>
+                  <TableCell>
+                    <button
+                      onClick={() => setProjectToDelete(project)}
+                      className="text-xs text-red-600 underline hover:text-red-700 transition-colors flex items-center gap-1"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      Delete
+                    </button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -476,6 +489,16 @@ export default function ProjectsPageClient() {
           ))}
         </CardContent>
       </Card>
+
+      {projectToDelete && (
+        <DeleteConfirmationModal
+          isOpen={!!projectToDelete}
+          onClose={() => setProjectToDelete(null)}
+          onConfirm={() => deleteProject(projectToDelete.id)}
+          itemName={projectToDelete.name}
+          itemType="project"
+        />
+      )}
     </div>
   )
 }
