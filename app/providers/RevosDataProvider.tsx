@@ -18,6 +18,7 @@ import type {
   CreateDocumentInput,
   CreateProjectInput,
   CreateResourceInput,
+  CreateResourcePermissionInput,
   CreateTaskInput,
   RevosState,
   RunAgentInput,
@@ -25,9 +26,10 @@ import type {
   UpdateContentStatusInput,
   UpdateDocumentStatusInput,
   UpdateProjectStatusInput,
+  UpdateResourcePermissionInput,
   UpdateTaskInput,
 } from '@/lib/revos/types'
-import { type Agent, type AutomationLog, type Comment, type ContentItem, type Document, type Project, type Resource, type Task } from '@/lib/revos/types'
+import { type Agent, type AutomationLog, type Comment, type ContentItem, type Document, type Project, type Resource, type ResourcePermission, type Task, type User } from '@/lib/revos/types'
 
 const randomId = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2))
 
@@ -37,6 +39,15 @@ const MIGRATION_KEY = 'trs-revos-migrated'
 // Load initial state - will be replaced with Supabase data after mount
 const loadInitialState = (): RevosState => {
   if (typeof window === 'undefined') {
+    // Mock current user for development
+    const mockCurrentUser: User = {
+      id: 'user-1',
+      name: 'Jay Burgess',
+      email: 'jay@trsrevos.com',
+      role: 'Admin',
+      createdAt: new Date().toISOString(),
+    }
+
     return {
       projects: mockProjects,
       documents: mockDocuments,
@@ -47,6 +58,9 @@ const loadInitialState = (): RevosState => {
       invoices: mockInvoices,
       tasks: [],
       comments: [],
+      users: [mockCurrentUser],
+      resourcePermissions: [],
+      currentUser: mockCurrentUser,
     }
   }
 
@@ -103,6 +117,12 @@ type Action =
   | { type: 'createComment'; payload: CreateCommentInput }
   | { type: 'updateComment'; payload: UpdateCommentInput }
   | { type: 'deleteComment'; payload: { id: string } }
+  | { type: 'setUsers'; payload: User[] }
+  | { type: 'setCurrentUser'; payload: User | null }
+  | { type: 'setResourcePermissions'; payload: ResourcePermission[] }
+  | { type: 'createResourcePermission'; payload: CreateResourcePermissionInput }
+  | { type: 'updateResourcePermission'; payload: UpdateResourcePermissionInput }
+  | { type: 'deleteResourcePermission'; payload: { id: string } }
   | { type: 'runAgent'; payload: RunAgentInput }
 
 type RevosContextValue = RevosState & {
@@ -124,6 +144,9 @@ type RevosContextValue = RevosState & {
   createComment: (input: CreateCommentInput) => void
   updateComment: (input: UpdateCommentInput) => void
   deleteComment: (id: string) => void
+  createResourcePermission: (input: CreateResourcePermissionInput) => void
+  updateResourcePermission: (input: UpdateResourcePermissionInput) => void
+  deleteResourcePermission: (id: string) => void
   runAgent: (input: RunAgentInput) => void
 }
 
@@ -420,6 +443,40 @@ function reducer(state: RevosState, action: Action): RevosState {
       return {
         ...state,
         comments: state.comments.filter((comment) => !idsToDelete.includes(comment.id)),
+      }
+    }
+    case 'setUsers':
+      return { ...state, users: action.payload }
+    case 'setCurrentUser':
+      return { ...state, currentUser: action.payload }
+    case 'setResourcePermissions':
+      return { ...state, resourcePermissions: action.payload }
+    case 'createResourcePermission': {
+      const newPermission: ResourcePermission = {
+        id: randomId(),
+        resourceType: action.payload.resourceType,
+        resourceId: action.payload.resourceId,
+        userId: action.payload.userId,
+        permission: action.payload.permission,
+        grantedBy: state.currentUser?.id || 'system',
+        grantedAt: new Date().toISOString(),
+      }
+      return { ...state, resourcePermissions: [newPermission, ...state.resourcePermissions] }
+    }
+    case 'updateResourcePermission': {
+      return {
+        ...state,
+        resourcePermissions: state.resourcePermissions.map((rp) =>
+          rp.id === action.payload.id
+            ? { ...rp, permission: action.payload.permission }
+            : rp
+        ),
+      }
+    }
+    case 'deleteResourcePermission': {
+      return {
+        ...state,
+        resourcePermissions: state.resourcePermissions.filter((rp) => rp.id !== action.payload.id),
       }
     }
     default:
@@ -925,6 +982,18 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'deleteComment', payload: { id } })
   }, [])
 
+  const createResourcePermission = useCallback((input: CreateResourcePermissionInput) => {
+    dispatch({ type: 'createResourcePermission', payload: input })
+  }, [])
+
+  const updateResourcePermission = useCallback((input: UpdateResourcePermissionInput) => {
+    dispatch({ type: 'updateResourcePermission', payload: input })
+  }, [])
+
+  const deleteResourcePermission = useCallback((id: string) => {
+    dispatch({ type: 'deleteResourcePermission', payload: { id } })
+  }, [])
+
   const value = useMemo<RevosContextValue>(
     () => ({
       ...state,
@@ -946,9 +1015,12 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
       createComment,
       updateComment,
       deleteComment,
+      createResourcePermission,
+      updateResourcePermission,
+      deleteResourcePermission,
       runAgent,
     }),
-    [state, createProject, updateProjectStatus, deleteProject, deleteClient, createDocument, updateDocumentStatus, updateDocumentProject, deleteDocument, createContent, updateContentStatus, deleteContent, createResource, createTask, updateTask, deleteTask, createComment, updateComment, deleteComment, runAgent],
+    [state, createProject, updateProjectStatus, deleteProject, deleteClient, createDocument, updateDocumentStatus, updateDocumentProject, deleteDocument, createContent, updateContentStatus, deleteContent, createResource, createTask, updateTask, deleteTask, createComment, updateComment, deleteComment, createResourcePermission, updateResourcePermission, deleteResourcePermission, runAgent],
   )
 
   if (isLoading) {

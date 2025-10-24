@@ -123,6 +123,9 @@ export type RevosState = {
   invoices: InvoiceSummary[]
   tasks: Task[]
   comments: Comment[]
+  users: User[]
+  resourcePermissions: ResourcePermission[]
+  currentUser: User | null
 }
 
 export type CreateProjectInput = Omit<Project, 'id' | 'documents' | 'agents' | 'resources'> & {
@@ -226,4 +229,43 @@ export type CreateCommentInput = {
 export type UpdateCommentInput = {
   id: string
   content: string
+}
+
+export type UserRole = 'Admin' | 'Manager' | 'Member' | 'Viewer'
+
+export type Permission = {
+  canView: boolean
+  canEdit: boolean
+  canDelete: boolean
+  canShare: boolean
+}
+
+export type User = {
+  id: string
+  name: string
+  email: string
+  role: UserRole
+  createdAt: string
+}
+
+export type ResourcePermission = {
+  id: string
+  resourceType: 'project' | 'document' | 'content'
+  resourceId: string
+  userId: string
+  permission: Permission
+  grantedBy: string
+  grantedAt: string
+}
+
+export type CreateResourcePermissionInput = {
+  resourceType: 'project' | 'document' | 'content'
+  resourceId: string
+  userId: string
+  permission: Permission
+}
+
+export type UpdateResourcePermissionInput = {
+  id: string
+  permission: Permission
 }

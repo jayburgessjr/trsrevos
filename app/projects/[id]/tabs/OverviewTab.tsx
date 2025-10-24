@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { Calendar, Users, Target, DollarSign, Edit2, Save, X } from 'lucide-react'
 import CommentThread from '@/components/comments/CommentThread'
+import ShareDialog from '@/components/permissions/ShareDialog'
+import { usePermissions } from '@/hooks/usePermissions'
 import type { ProjectWorkspaceProject, ProjectType, ProjectStatus } from '../ProjectWorkspace'
 
 interface OverviewTabProps {
@@ -42,6 +44,7 @@ const PROJECT_TYPE_TEMPLATES: Record<ProjectType, { name: string; description: s
 }
 
 export default function OverviewTab({ project }: OverviewTabProps) {
+  const { canEdit: hasEditPermission, canShare: hasSharePermission } = usePermissions('project', project.id)
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
     name: project.name,
@@ -95,9 +98,17 @@ export default function OverviewTab({ project }: OverviewTabProps) {
 
   return (
     <div className="space-y-6">
-      {/* Edit Mode Toggle */}
-      <div className="flex justify-end">
-        {!isEditing ? (
+      {/* Edit Mode Toggle & Share Button */}
+      <div className="flex justify-end gap-3">
+        {hasSharePermission && (
+          <ShareDialog
+            resourceType="project"
+            resourceId={project.id}
+            resourceName={project.name}
+          />
+        )}
+
+        {hasEditPermission && !isEditing && (
           <button
             onClick={() => setIsEditing(true)}
             className="group flex items-center gap-2 rounded-lg border border-orange-500 bg-green-800 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500"
@@ -105,7 +116,9 @@ export default function OverviewTab({ project }: OverviewTabProps) {
             <Edit2 className="h-4 w-4 text-white transition-colors group-hover:text-green-900" />
             Edit Project
           </button>
-        ) : (
+        )}
+
+        {hasEditPermission && isEditing && (
           <div className="flex gap-2">
             <button
               onClick={handleSave}
