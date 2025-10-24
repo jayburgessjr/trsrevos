@@ -13,6 +13,7 @@ import {
   mockResources,
 } from '@/lib/revos/mock-data'
 import type {
+  CreateCommentInput,
   CreateContentInput,
   CreateDocumentInput,
   CreateProjectInput,
@@ -20,12 +21,13 @@ import type {
   CreateTaskInput,
   RevosState,
   RunAgentInput,
+  UpdateCommentInput,
   UpdateContentStatusInput,
   UpdateDocumentStatusInput,
   UpdateProjectStatusInput,
   UpdateTaskInput,
 } from '@/lib/revos/types'
-import { type Agent, type AutomationLog, type ContentItem, type Document, type Project, type Resource, type Task } from '@/lib/revos/types'
+import { type Agent, type AutomationLog, type Comment, type ContentItem, type Document, type Project, type Resource, type Task } from '@/lib/revos/types'
 
 const randomId = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2))
 
@@ -44,6 +46,7 @@ const loadInitialState = (): RevosState => {
       automationLogs: mockAutomationLogs,
       invoices: mockInvoices,
       tasks: [],
+      comments: [],
     }
   }
 
@@ -96,6 +99,10 @@ type Action =
   | { type: 'createTask'; payload: CreateTaskInput }
   | { type: 'updateTask'; payload: UpdateTaskInput }
   | { type: 'deleteTask'; payload: { id: string } }
+  | { type: 'setComments'; payload: Comment[] }
+  | { type: 'createComment'; payload: CreateCommentInput }
+  | { type: 'updateComment'; payload: UpdateCommentInput }
+  | { type: 'deleteComment'; payload: { id: string } }
   | { type: 'runAgent'; payload: RunAgentInput }
 
 type RevosContextValue = RevosState & {
@@ -114,6 +121,9 @@ type RevosContextValue = RevosState & {
   createTask: (input: CreateTaskInput) => void
   updateTask: (input: UpdateTaskInput) => void
   deleteTask: (id: string) => void
+  createComment: (input: CreateCommentInput) => void
+  updateComment: (input: UpdateCommentInput) => void
+  deleteComment: (id: string) => void
   runAgent: (input: RunAgentInput) => void
 }
 
@@ -365,6 +375,51 @@ function reducer(state: RevosState, action: Action): RevosState {
       return {
         ...state,
         tasks: state.tasks.filter((task) => task.id !== action.payload.id),
+      }
+    }
+    case 'setComments':
+      return { ...state, comments: action.payload }
+    case 'createComment': {
+      const newComment: Comment = {
+        id: randomId(),
+        content: action.payload.content,
+        author: 'current-user', // TODO: Get from auth context
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        projectId: action.payload.projectId,
+        documentId: action.payload.documentId,
+        parentCommentId: action.payload.parentCommentId,
+        isEdited: false,
+      }
+      return { ...state, comments: [newComment, ...state.comments] }
+    }
+    case 'updateComment': {
+      return {
+        ...state,
+        comments: state.comments.map((comment) =>
+          comment.id === action.payload.id
+            ? {
+                ...comment,
+                content: action.payload.content,
+                updatedAt: new Date().toISOString(),
+                isEdited: true,
+              }
+            : comment
+        ),
+      }
+    }
+    case 'deleteComment': {
+      // Also delete all replies to this comment
+      const deleteCommentAndReplies = (commentId: string): string[] => {
+        const replies = state.comments.filter(c => c.parentCommentId === commentId)
+        const replyIds = replies.flatMap(r => deleteCommentAndReplies(r.id))
+        return [commentId, ...replyIds]
+      }
+
+      const idsToDelete = deleteCommentAndReplies(action.payload.id)
+      return {
+        ...state,
+        comments: state.comments.filter((comment) => !idsToDelete.includes(comment.id)),
       }
     }
     default:
@@ -858,6 +913,18 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'deleteTask', payload: { id } })
   }, [])
 
+  const createComment = useCallback((input: CreateCommentInput) => {
+    dispatch({ type: 'createComment', payload: input })
+  }, [])
+
+  const updateComment = useCallback((input: UpdateCommentInput) => {
+    dispatch({ type: 'updateComment', payload: input })
+  }, [])
+
+  const deleteComment = useCallback((id: string) => {
+    dispatch({ type: 'deleteComment', payload: { id } })
+  }, [])
+
   const value = useMemo<RevosContextValue>(
     () => ({
       ...state,
@@ -876,9 +943,12 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
       createTask,
       updateTask,
       deleteTask,
+      createComment,
+      updateComment,
+      deleteComment,
       runAgent,
     }),
-    [state, createProject, updateProjectStatus, deleteProject, deleteClient, createDocument, updateDocumentStatus, updateDocumentProject, deleteDocument, createContent, updateContentStatus, deleteContent, createResource, createTask, updateTask, deleteTask, runAgent],
+    [state, createProject, updateProjectStatus, deleteProject, deleteClient, createDocument, updateDocumentStatus, updateDocumentProject, deleteDocument, createContent, updateContentStatus, deleteContent, createResource, createTask, updateTask, deleteTask, createComment, updateComment, deleteComment, runAgent],
   )
 
   if (isLoading) {

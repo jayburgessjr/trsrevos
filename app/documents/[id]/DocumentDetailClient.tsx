@@ -9,6 +9,7 @@ import { Button } from '@/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card'
 import { Textarea } from '@/ui/textarea'
 import TRSBrainChat from '@/components/documents/TRSBrainChat'
+import CommentThread from '@/components/comments/CommentThread'
 
 type DocumentDetailClientProps = {
   documentId: string
@@ -365,6 +366,13 @@ export default function DocumentDetailClient({ documentId }: DocumentDetailClien
 
             {/* TRS Brain Chat Card */}
             <TRSBrainChat documentContext={document} />
+
+            {/* Document Discussion */}
+            <CommentThread
+              documentId={document.id}
+              title="Document Discussion"
+              description="Discuss this document with your team - ask questions, share feedback, and collaborate"
+            />
           </div>
         </div>
       </div>

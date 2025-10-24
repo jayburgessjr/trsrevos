@@ -122,6 +122,7 @@ export type RevosState = {
   automationLogs: AutomationLog[]
   invoices: InvoiceSummary[]
   tasks: Task[]
+  comments: Comment[]
 }
 
 export type CreateProjectInput = Omit<Project, 'id' | 'documents' | 'agents' | 'resources'> & {
@@ -201,4 +202,28 @@ export type UpdateTaskInput = {
   dueDate?: string
   tags?: string[]
   actualHours?: number
+}
+
+export type Comment = {
+  id: string
+  content: string
+  author: string
+  createdAt: string
+  updatedAt: string
+  projectId?: string
+  documentId?: string
+  parentCommentId?: string
+  isEdited: boolean
+}
+
+export type CreateCommentInput = {
+  content: string
+  projectId?: string
+  documentId?: string
+  parentCommentId?: string
+}
+
+export type UpdateCommentInput = {
+  id: string
+  content: string
 }

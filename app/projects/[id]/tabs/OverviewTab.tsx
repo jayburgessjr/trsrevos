@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Calendar, Users, Target, DollarSign, Edit2, Save, X } from 'lucide-react'
+import CommentThread from '@/components/comments/CommentThread'
 import type { ProjectWorkspaceProject, ProjectType, ProjectStatus } from '../ProjectWorkspace'
 
 interface OverviewTabProps {
@@ -345,6 +346,15 @@ export default function OverviewTab({ project }: OverviewTabProps) {
           </div>
         </div>
       )}
+
+      {/* Project Discussion */}
+      <div className="mt-8">
+        <CommentThread
+          projectId={project.id}
+          title="Project Discussion"
+          description="Discuss project updates, decisions, and next steps with your team"
+        />
+      </div>
     </div>
   )
 }
