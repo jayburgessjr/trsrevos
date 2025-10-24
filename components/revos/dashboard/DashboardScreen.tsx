@@ -25,25 +25,25 @@ export default function DashboardScreen() {
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([])
   const [newsLoading, setNewsLoading] = useState(true)
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('30d')
+  const [documentFilter, setDocumentFilter] = useState<string>('all')
+  const [contentFilter, setContentFilter] = useState<string>('all')
+  const [projectFilter, setProjectFilter] = useState<string>('all')
 
   // Fetch news articles on mount
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        // Using NewsAPI - you'll need to add NEXT_PUBLIC_NEWS_API_KEY to your .env.local
-        const apiKey = process.env.NEXT_PUBLIC_NEWS_API_KEY || 'demo'
-        const response = await fetch(
-          `https://newsapi.org/v2/top-headlines?category=business&language=en&pageSize=6&apiKey=${apiKey}`
-        )
+        // Use server-side API route
+        const response = await fetch('/api/news')
         const data = await response.json()
 
-        if (data.articles) {
+        if (data.articles && data.articles.length > 0) {
           setNewsArticles(data.articles.map((article: any) => ({
             title: article.title,
             description: article.description || '',
             url: article.url,
             publishedAt: article.publishedAt,
-            source: article.source.name
+            source: article.source?.name || article.source
           })))
         }
       } catch (error) {
@@ -51,11 +51,11 @@ export default function DashboardScreen() {
         // Fallback to mock data if API fails
         setNewsArticles([
           {
-            title: 'Stock Market Update: Markets Rally on Tech Earnings',
-            description: 'Major tech companies report strong quarterly earnings',
+            title: 'Business News Loading',
+            description: 'Latest business updates will appear here',
             url: '#',
             publishedAt: new Date().toISOString(),
-            source: 'Financial Times'
+            source: 'News Service'
           }
         ])
       } finally {
@@ -80,14 +80,22 @@ export default function DashboardScreen() {
     // Total documents created
     const totalDocuments = documents.length
 
-    // Recent documents (last 5)
-    const recentDocuments = [...documents]
+    // Get unique document types for filtering
+    const documentTypes = ['all', ...Array.from(new Set(documents.map(d => d.type)))]
+
+    // Recent documents (last 5) with filtering
+    const filteredDocuments = documentFilter === 'all'
+      ? documents
+      : documents.filter(d => d.type === documentFilter)
+
+    const recentDocuments = [...filteredDocuments]
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
       .slice(0, 5)
       .map(doc => ({
         id: doc.id,
         title: doc.title,
         project: projects.find((project) => project.id === doc.projectId)?.name ?? 'Unlinked',
+        projectId: doc.projectId,
         type: doc.type,
         updatedAt: doc.updatedAt,
       }))
@@ -151,6 +159,18 @@ export default function DashboardScreen() {
       .sort((a, b) => b.count - a.count)
       .slice(0, 4) // Top 4 types
 
+    // Get unique content statuses and types for filtering
+    const contentStatuses = ['all', ...Array.from(new Set(content.map(c => c.status)))]
+    const filteredContent = contentFilter === 'all'
+      ? content
+      : content.filter(c => c.status === contentFilter)
+
+    // Get unique project statuses for filtering
+    const projectStatuses = ['all', 'Active', 'Pending', 'Completed']
+    const filteredProjects = projectFilter === 'all'
+      ? projects.filter(p => p.status === 'Active')
+      : projects.filter(p => p.status === projectFilter)
+
     return {
       totalAnnualRevenue,
       totalMonthlyRevenue,
@@ -168,8 +188,13 @@ export default function DashboardScreen() {
       clientHealthDistribution,
       contentByType,
       documentsByType,
+      documentTypes,
+      contentStatuses,
+      projectStatuses,
+      filteredContent,
+      filteredProjects,
     }
-  }, [projects, documents, content])
+  }, [projects, documents, content, documentFilter, contentFilter, projectFilter])
 
   return (
     <div className="space-y-8">
@@ -472,8 +497,21 @@ export default function DashboardScreen() {
       <section className="grid gap-6 lg:grid-cols-3">
         <Card className="border-slate-200 dark:border-slate-800">
           <CardHeader className="flex flex-col gap-1 border-b border-slate-200/60 dark:border-slate-800/60 pb-4">
-            <CardTitle className="text-lg font-semibold">Recent Documents</CardTitle>
-            <CardDescription>Latest documents created</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-semibold">Recent Documents</CardTitle>
+                <CardDescription>Latest documents created</CardDescription>
+              </div>
+              <select
+                value={documentFilter}
+                onChange={(e) => setDocumentFilter(e.target.value)}
+                className="text-xs border border-slate-300 dark:border-slate-700 rounded-md px-2 py-1 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+              >
+                {metrics.documentTypes.map(type => (
+                  <option key={type} value={type}>{type === 'all' ? 'All Types' : type}</option>
+                ))}
+              </select>
+            </div>
           </CardHeader>
           <CardContent className="px-0">
             <Table>
@@ -493,10 +531,12 @@ export default function DashboardScreen() {
                   </TableRow>
                 ) : (
                   metrics.recentDocuments.map((doc) => (
-                    <TableRow key={doc.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/60">
+                    <TableRow key={doc.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/60 cursor-pointer">
                       <TableCell className="px-6">
-                        <div className="font-medium text-slate-900 dark:text-slate-100 text-sm">{doc.title}</div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400">{doc.project}</div>
+                        <Link href={`/documents?id=${doc.id}`} className="block hover:text-[#fd8216] transition-colors">
+                          <div className="font-medium text-slate-900 dark:text-slate-100 text-sm">{doc.title}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">{doc.project}</div>
+                        </Link>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 text-xs">
@@ -516,8 +556,21 @@ export default function DashboardScreen() {
 
         <Card className="border-slate-200 dark:border-slate-800">
           <CardHeader className="border-b border-slate-200/60 dark:border-slate-800/60 pb-4">
-            <CardTitle className="text-lg font-semibold">Content Pipeline</CardTitle>
-            <CardDescription>Derivative content assets</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-semibold">Content Pipeline</CardTitle>
+                <CardDescription>Derivative content assets</CardDescription>
+              </div>
+              <select
+                value={contentFilter}
+                onChange={(e) => setContentFilter(e.target.value)}
+                className="text-xs border border-slate-300 dark:border-slate-700 rounded-md px-2 py-1 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+              >
+                {metrics.contentStatuses.map(status => (
+                  <option key={status} value={status}>{status === 'all' ? 'All Status' : status}</option>
+                ))}
+              </select>
+            </div>
           </CardHeader>
           <CardContent className="px-0">
             <Table>
@@ -529,18 +582,20 @@ export default function DashboardScreen() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {content.length === 0 ? (
+                {metrics.filteredContent.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={3} className="px-6 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
                       No content yet
                     </TableCell>
                   </TableRow>
                 ) : (
-                  content.slice(0, 5).map((item) => (
-                    <TableRow key={item.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/60">
+                  metrics.filteredContent.slice(0, 5).map((item) => (
+                    <TableRow key={item.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/60 cursor-pointer">
                       <TableCell className="px-6">
-                        <div className="font-medium text-slate-900 dark:text-slate-100 text-sm">{item.title}</div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400">{item.type}</div>
+                        <Link href={`/content/${item.id}`} className="block hover:text-[#fd8216] transition-colors">
+                          <div className="font-medium text-slate-900 dark:text-slate-100 text-sm">{item.title}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">{item.type}</div>
+                        </Link>
                       </TableCell>
                       <TableCell>
                         <Badge
@@ -563,8 +618,21 @@ export default function DashboardScreen() {
 
         <Card className="border-slate-200 dark:border-slate-800">
           <CardHeader className="border-b border-slate-200/60 dark:border-slate-800/60 pb-4">
-            <CardTitle className="text-lg font-semibold">Active Projects</CardTitle>
-            <CardDescription>Client engagements</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-semibold">Active Projects</CardTitle>
+                <CardDescription>Client engagements</CardDescription>
+              </div>
+              <select
+                value={projectFilter}
+                onChange={(e) => setProjectFilter(e.target.value)}
+                className="text-xs border border-slate-300 dark:border-slate-700 rounded-md px-2 py-1 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+              >
+                {metrics.projectStatuses.map(status => (
+                  <option key={status} value={status}>{status === 'all' ? 'All Status' : status}</option>
+                ))}
+              </select>
+            </div>
           </CardHeader>
           <CardContent className="px-0">
             <Table>
@@ -576,18 +644,20 @@ export default function DashboardScreen() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {projects.filter(p => p.status === 'Active').length === 0 ? (
+                {metrics.filteredProjects.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={3} className="px-6 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
-                      No active projects
+                      No projects found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  projects.filter(p => p.status === 'Active').slice(0, 5).map((project) => (
-                    <TableRow key={project.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/60">
+                  metrics.filteredProjects.slice(0, 5).map((project) => (
+                    <TableRow key={project.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/60 cursor-pointer">
                       <TableCell className="px-6">
-                        <div className="font-medium text-slate-900 dark:text-slate-100 text-sm">{project.name}</div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400">{project.client}</div>
+                        <Link href={`/projects/${project.id}`} className="block hover:text-[#fd8216] transition-colors">
+                          <div className="font-medium text-slate-900 dark:text-slate-100 text-sm">{project.name}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">{project.client}</div>
+                        </Link>
                       </TableCell>
                       <TableCell className="font-semibold text-slate-900 dark:text-slate-100 text-sm">
                         ${(project.revenueTarget && project.revenueTarget >= 1000) ? Math.round(project.revenueTarget / 1000) + 'k' : project.revenueTarget?.toLocaleString() || 0}

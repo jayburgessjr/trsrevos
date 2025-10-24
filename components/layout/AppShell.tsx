@@ -14,6 +14,7 @@ import { ThemeToggle } from '@/components/ThemeToggle'
 import GlobalSearch from '@/components/search/GlobalSearch'
 import MobileBottomNav from '@/components/layout/MobileBottomNav'
 import { createClient } from '@/lib/supabase/client'
+import Notifications from '@/components/ui/notifications'
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? '/'
@@ -102,6 +103,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <div className="flex items-center gap-3 text-xs">
+            <Notifications />
             <GlobalSearch />
             <Button
               onClick={handleLogout}
@@ -122,6 +124,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <p className="text-base font-semibold text-white">RevOS</p>
           </div>
           <div className="flex items-center gap-2">
+            <Notifications />
             <GlobalSearch />
             <Button
               onClick={handleLogout}

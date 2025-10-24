@@ -2,8 +2,9 @@
 
 import { useCallback, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Bell, Search } from "lucide-react"
+import { Search } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import Notifications from "@/components/ui/notifications"
 
 export default function GlobalHeader() {
   const router = useRouter()
@@ -38,6 +39,7 @@ export default function GlobalHeader() {
 
         </div>
         <div className="flex items-center gap-2 text-sm">
+          <Notifications />
           <div className="flex h-9 w-64 items-center gap-2 rounded-md border border-gray-200 bg-white px-3 text-sm">
             <Search size={16} className="text-gray-500" />
             <input
@@ -45,9 +47,6 @@ export default function GlobalHeader() {
               className="h-full flex-1 border-none bg-transparent text-sm text-gray-700 outline-none placeholder:text-gray-500"
             />
           </div>
-          <button className="flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">
-            <Bell size={16} />
-          </button>
           <div className="h-9 w-9 rounded-full border border-gray-200 bg-white" />
           <button
             onClick={handleSignOut}

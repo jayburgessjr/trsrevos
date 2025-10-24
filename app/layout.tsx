@@ -5,6 +5,7 @@ import { Suspense } from 'react'
 import AppShell from '@/components/layout/AppShell'
 import { ThemeProvider } from '@/lib/theme-provider'
 import { RevosDataProvider } from '@/app/providers/RevosDataProvider'
+import { NotificationsProvider } from '@/app/providers/NotificationsProvider'
 
 export const metadata: Metadata = {
   title: 'TRS-RevOS',
@@ -22,9 +23,11 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <body className="min-h-screen bg-background text-foreground" style={{ margin: 0, padding: 0, width: '100%' }}>
         <ThemeProvider defaultTheme="system" storageKey="trs-theme">
           <RevosDataProvider>
-            <Suspense fallback={<div className="min-h-screen bg-background" />}>
-              <AppShell>{children}</AppShell>
-            </Suspense>
+            <NotificationsProvider>
+              <Suspense fallback={<div className="min-h-screen bg-background" />}>
+                <AppShell>{children}</AppShell>
+              </Suspense>
+            </NotificationsProvider>
           </RevosDataProvider>
         </ThemeProvider>
       </body>

@@ -11,6 +11,7 @@ import {
 import { ChatMessageList } from "@/components/ui/chat-message-list"
 import { ChatInput } from "@/components/ui/chat-input"
 import { Component as NotificationsMenu } from "@/components/ui/notifications-menu"
+import Notifications from "@/components/ui/notifications"
 
 export function ChatMessageListDemo() {
   const [messages, setMessages] = useState([
@@ -149,6 +150,10 @@ export function ChatMessageListDemo() {
       </div>
     </div>
   )
+}
+
+export function NotificationsDemo() {
+  return <Notifications />
 }
 
 export default function DemoOne() {
