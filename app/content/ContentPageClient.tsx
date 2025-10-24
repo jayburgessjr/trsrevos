@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 import { useRevosData } from '@/app/providers/RevosDataProvider'
 import { Badge } from '@/ui/badge'
@@ -45,6 +46,7 @@ const initialForm: FormState = {
 }
 
 export default function ContentPageClient() {
+  const router = useRouter()
   const { content, projects, agents, automationLogs, createContent, updateContentStatus, createDocument } = useRevosData()
   const [form, setForm] = useState<FormState>(initialForm)
   const [generating, setGenerating] = useState(false)
@@ -479,11 +481,25 @@ export default function ContentPageClient() {
                   <TableRow key={item.id}>
                     <TableCell className="px-6">
                       <button
-                        onClick={() => handleViewContent(item)}
-                        className="text-left hover:underline"
+                        onClick={() => router.push(`/content/${item.id}`)}
+                        className="font-medium text-foreground hover:text-[#fd8216] transition-colors text-left"
                       >
-                        <div className="font-medium text-foreground">{item.title}</div>
+                        {item.title}
                       </button>
+                      <div className="flex gap-3 mt-1">
+                        <button
+                          onClick={() => router.push(`/content/${item.id}`)}
+                          className="text-xs text-emerald-600 underline hover:text-emerald-700 transition-colors"
+                        >
+                          View details
+                        </button>
+                        <button
+                          onClick={() => handleViewContent(item)}
+                          className="text-xs text-blue-600 underline hover:text-blue-700 transition-colors"
+                        >
+                          Quick view
+                        </button>
+                      </div>
                     </TableCell>
                     <TableCell>{item.type}</TableCell>
                     <TableCell>

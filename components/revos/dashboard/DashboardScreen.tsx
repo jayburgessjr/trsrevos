@@ -533,7 +533,7 @@ export default function DashboardScreen() {
                   metrics.recentDocuments.map((doc) => (
                     <TableRow key={doc.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/60 cursor-pointer">
                       <TableCell className="px-6">
-                        <Link href={`/documents?id=${doc.id}`} className="block hover:text-[#fd8216] transition-colors">
+                        <Link href={`/documents/${doc.id}`} className="block hover:text-[#fd8216] transition-colors">
                           <div className="font-medium text-slate-900 dark:text-slate-100 text-sm">{doc.title}</div>
                           <div className="text-xs text-slate-500 dark:text-slate-400">{doc.project}</div>
                         </Link>
