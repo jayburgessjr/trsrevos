@@ -110,11 +110,11 @@ export default function LoginScreen() {
   }
 
   return (
-    <div className="w-full min-h-screen flex bg-[#015e32]">
+    <div className="flex min-h-screen w-full flex-col bg-[#015e32] lg:flex-row">
       {/* Left side - Hero section with green background */}
-      <div className="flex-1 bg-gradient-to-br from-[#004d28] via-[#015e32] to-[#124f2e] flex items-center justify-center p-12 relative">
+      <div className="relative flex flex-col items-center justify-center bg-gradient-to-br from-[#004d28] via-[#015e32] to-[#124f2e] px-6 py-10 text-center sm:px-10 sm:py-12 lg:flex-1 lg:items-start lg:justify-center lg:px-12 lg:py-16 lg:text-left">
         {/* Background image with 30% opacity */}
-        <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 hidden pointer-events-none lg:block">
           <Image
             src="/images/data-science-background.png"
             alt=""
@@ -124,24 +124,24 @@ export default function LoginScreen() {
           />
         </div>
 
-        <div className="text-white max-w-lg relative z-10">
-          <div className="mb-6">
+        <div className="relative z-10 mx-auto w-full max-w-lg text-white lg:mx-0">
+          <div className="mb-6 flex flex-col items-center gap-1 lg:items-start">
             <p className="text-xs font-semibold uppercase tracking-widest text-[#fd8216]">TRS</p>
-            <p className="text-2xl font-semibold text-white mt-1">RevOS</p>
+            <p className="mt-1 text-2xl font-semibold text-white">RevOS</p>
           </div>
-          <h1 className="text-5xl font-bold mb-6 leading-tight">
+          <h1 className="mb-5 text-3xl font-bold leading-tight sm:text-4xl lg:mb-6 lg:text-5xl">
             &ldquo;The secret of getting ahead is getting started.&rdquo;
           </h1>
-          <p className="text-white/80 text-lg">
+          <p className="text-base text-white/80 sm:text-lg">
             Revenue Operations Execution Layer
           </p>
         </div>
       </div>
 
       {/* Right side - Login form with green background */}
-      <div className="flex-1 bg-[#004d28] flex items-center justify-center p-12">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
+      <div className="flex flex-1 items-center justify-center bg-[#004d28] px-6 py-10 sm:px-10 sm:py-12 lg:px-12">
+        <div className="w-full max-w-md rounded-2xl bg-[#013c21]/60 p-6 shadow-xl backdrop-blur-sm sm:p-8 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-0">
+          <div className="mb-8 text-center">
             <Image
               src="/images/trs-logo.png"
               alt="TRS Logo"
@@ -155,9 +155,9 @@ export default function LoginScreen() {
             </h2>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-2">
+              <label htmlFor="email" className="mb-2 block text-sm font-medium text-white/80">
                 Your email
               </label>
               <input
@@ -173,7 +173,7 @@ export default function LoginScreen() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-white/80 mb-2">
+              <label htmlFor="password" className="mb-2 block text-sm font-medium text-white/80">
                 {isLogin ? "Password" : "Create new password"}
               </label>
               <div className="relative">
@@ -249,7 +249,7 @@ export default function LoginScreen() {
 
             <button
               type="submit"
-              className="w-full bg-[#fd8216] hover:bg-[#f27403] text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 focus:ring-2 focus:ring-[#fd8216] focus:ring-offset-2 focus:ring-offset-[#004d28] disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full rounded-lg bg-[#fd8216] px-4 py-3 font-semibold text-white transition-colors duration-200 hover:bg-[#f27403] focus:outline-none focus:ring-2 focus:ring-[#fd8216] focus:ring-offset-2 focus:ring-offset-[#004d28] disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isSubmitting}
             >
               {isSubmitting
@@ -273,7 +273,7 @@ export default function LoginScreen() {
             </div>
           </form>
 
-          <div className="mt-8 mb-6">
+          <div className="mb-6 mt-8">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-[#1b8f50]" />
@@ -284,7 +284,7 @@ export default function LoginScreen() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <button
               type="button"
               onClick={handleGoogleSignIn}
