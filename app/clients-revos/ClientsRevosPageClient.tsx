@@ -6,9 +6,10 @@ import { useRevosData } from '@/app/providers/RevosDataProvider'
 import { Badge } from '@/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table'
-import { ArrowUpDown, Building2, DollarSign, FileText, TrendingUp } from 'lucide-react'
+import { ArrowUpDown, Building2, DollarSign, FileText, TrendingUp, Trash2 } from 'lucide-react'
 import { Input } from '@/ui/input'
 import AddClientDialog from '@/components/clients/AddClientDialog'
+import DeleteConfirmationModal from '@/components/common/DeleteConfirmationModal'
 import type { Project } from '@/lib/revos/types'
 
 type ClientData = {
@@ -31,8 +32,9 @@ type SortField =
 type SortDirection = 'asc' | 'desc'
 
 export default function ClientsRevosPageClient() {
-  const { projects, documents, content, resources } = useRevosData()
+  const { projects, documents, content, resources, deleteClient } = useRevosData()
   const [searchQuery, setSearchQuery] = useState('')
+  const [clientToDelete, setClientToDelete] = useState<string | null>(null)
   const [sortField, setSortField] = useState<SortField>('name')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
 
@@ -288,12 +290,13 @@ export default function ClientsRevosPageClient() {
                     <ArrowUpDown className="h-3 w-3" />
                   </button>
                 </TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredClients.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="px-6 py-10 text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={7} className="px-6 py-10 text-center text-sm text-muted-foreground">
                     {searchQuery ? `No clients found matching "${searchQuery}"` : 'No clients yet. Create a project to get started.'}
                   </TableCell>
                 </TableRow>
@@ -327,6 +330,15 @@ export default function ClientsRevosPageClient() {
                     <TableCell className="text-muted-foreground">
                       ${client.monthlyRevenue.toLocaleString()}
                     </TableCell>
+                    <TableCell>
+                      <button
+                        onClick={() => setClientToDelete(client.name)}
+                        className="text-xs text-red-600 underline hover:text-red-700 transition-colors flex items-center gap-1"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        Delete
+                      </button>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -334,6 +346,16 @@ export default function ClientsRevosPageClient() {
           </Table>
         </CardContent>
       </Card>
+
+      {clientToDelete && (
+        <DeleteConfirmationModal
+          isOpen={!!clientToDelete}
+          onClose={() => setClientToDelete(null)}
+          onConfirm={() => deleteClient(clientToDelete)}
+          itemName={clientToDelete}
+          itemType="client"
+        />
+      )}
     </div>
   )
 }
