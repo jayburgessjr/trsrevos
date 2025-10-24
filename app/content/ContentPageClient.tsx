@@ -23,7 +23,7 @@ import {
 import { Loader2, Download, Copy, Eye, ArrowUpDown } from 'lucide-react'
 import type { ContentItem } from '@/lib/revos/types'
 
-const contentTypes = ['Case Study', 'Post', 'Email', 'Slide'] as const
+const contentTypes = ['Case Study', 'Post', 'Email', 'Slide', 'Research'] as const
 const contentStatuses = ['Draft', 'Published'] as const
 
 type SortField = 'title' | 'type' | 'status' | 'createdAt'

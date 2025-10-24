@@ -22,7 +22,12 @@ const documentTypes = [
   'Enablement Asset',
   'Onboarding Resource',
   'Framework Resource',
-  'Revenue Modeling Resource'
+  'Revenue Modeling Resource',
+  'Case Study',
+  'Post',
+  'Email',
+  'Slide',
+  'Research'
 ]
 const documentStatuses = ['Draft', 'In Review', 'Final'] as const
 

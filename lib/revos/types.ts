@@ -55,7 +55,7 @@ export type Agent = {
 export type ContentItem = {
   id: string
   title: string
-  type: 'Case Study' | 'Post' | 'Email' | 'Slide'
+  type: 'Case Study' | 'Post' | 'Email' | 'Slide' | 'Research'
   client?: string
   sourceProjectId?: string
   draft: string
