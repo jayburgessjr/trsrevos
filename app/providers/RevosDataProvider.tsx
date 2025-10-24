@@ -77,22 +77,30 @@ type Action =
   | { type: 'setContent'; payload: ContentItem[] }
   | { type: 'createProject'; payload: CreateProjectInput }
   | { type: 'updateProjectStatus'; payload: UpdateProjectStatusInput }
+  | { type: 'deleteProject'; payload: { id: string } }
+  | { type: 'deleteClient'; payload: { clientName: string } }
   | { type: 'createDocument'; payload: CreateDocumentInput }
   | { type: 'updateDocumentStatus'; payload: UpdateDocumentStatusInput }
   | { type: 'updateDocumentProject'; payload: { id: string; projectId: string } }
+  | { type: 'deleteDocument'; payload: { id: string } }
   | { type: 'createContent'; payload: CreateContentInput }
   | { type: 'updateContentStatus'; payload: UpdateContentStatusInput }
+  | { type: 'deleteContent'; payload: { id: string } }
   | { type: 'createResource'; payload: CreateResourceInput }
   | { type: 'runAgent'; payload: RunAgentInput }
 
 type RevosContextValue = RevosState & {
   createProject: (input: CreateProjectInput) => Promise<void>
   updateProjectStatus: (input: UpdateProjectStatusInput) => Promise<void>
+  deleteProject: (id: string) => Promise<void>
+  deleteClient: (clientName: string) => Promise<void>
   createDocument: (input: CreateDocumentInput) => Promise<void>
   updateDocumentStatus: (input: UpdateDocumentStatusInput) => Promise<void>
   updateDocumentProject: (input: { id: string; projectId: string }) => Promise<void>
+  deleteDocument: (id: string) => Promise<void>
   createContent: (input: CreateContentInput) => void
   updateContentStatus: (input: UpdateContentStatusInput) => void
+  deleteContent: (id: string) => void
   createResource: (input: CreateResourceInput) => void
   runAgent: (input: RunAgentInput) => void
 }
@@ -141,6 +149,26 @@ function reducer(state: RevosState, action: Action): RevosState {
         ),
       }
     }
+    case 'deleteProject': {
+      return {
+        ...state,
+        projects: state.projects.filter((project) => project.id !== action.payload.id),
+        // Also delete associated documents
+        documents: state.documents.filter((doc) => doc.projectId !== action.payload.id),
+      }
+    }
+    case 'deleteClient': {
+      // Delete all projects for this client and their documents
+      const projectIdsToDelete = state.projects
+        .filter((project) => project.client === action.payload.clientName)
+        .map((project) => project.id)
+
+      return {
+        ...state,
+        projects: state.projects.filter((project) => project.client !== action.payload.clientName),
+        documents: state.documents.filter((doc) => !projectIdsToDelete.includes(doc.projectId)),
+      }
+    }
     case 'createDocument': {
       const documentId = randomId()
       const newDocument: Document = {
@@ -182,6 +210,12 @@ function reducer(state: RevosState, action: Action): RevosState {
         ),
       }
     }
+    case 'deleteDocument': {
+      return {
+        ...state,
+        documents: state.documents.filter((document) => document.id !== action.payload.id),
+      }
+    }
     case 'createContent': {
       const newContent: ContentItem = {
         id: randomId(),
@@ -203,6 +237,12 @@ function reducer(state: RevosState, action: Action): RevosState {
             ? { ...item, status: action.payload.status, finalText: action.payload.finalText ?? item.finalText }
             : item,
         ),
+      }
+    }
+    case 'deleteContent': {
+      return {
+        ...state,
+        content: state.content.filter((item) => item.id !== action.payload.id),
       }
     }
     case 'createResource': {
@@ -655,12 +695,94 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
     }
   }, [supabase])
 
+  const deleteProject = useCallback(async (id: string) => {
+    // Optimistic update
+    dispatch({ type: 'deleteProject', payload: { id } })
+
+    // Delete from Supabase
+    if (!supabase) {
+      console.warn('Supabase client is not configured; project deleted locally only')
+      return
+    }
+
+    try {
+      // Delete associated documents first
+      await supabase.from('revos_documents').delete().eq('project_id', id)
+
+      // Then delete the project
+      const { error } = await supabase.from('revos_projects').delete().eq('id', id)
+
+      if (error) {
+        console.error('Error deleting project from Supabase:', error)
+      }
+    } catch (error) {
+      console.error('Error deleting project:', error)
+    }
+  }, [supabase])
+
+  const deleteClient = useCallback(async (clientName: string) => {
+    // Get all project IDs for this client
+    const projectIds = state.projects
+      .filter((project) => project.client === clientName)
+      .map((project) => project.id)
+
+    // Optimistic update
+    dispatch({ type: 'deleteClient', payload: { clientName } })
+
+    // Delete from Supabase
+    if (!supabase) {
+      console.warn('Supabase client is not configured; client deleted locally only')
+      return
+    }
+
+    try {
+      // Delete all documents for these projects
+      for (const projectId of projectIds) {
+        await supabase.from('revos_documents').delete().eq('project_id', projectId)
+      }
+
+      // Delete all projects for this client
+      const { error } = await supabase.from('revos_projects').delete().eq('client', clientName)
+
+      if (error) {
+        console.error('Error deleting client from Supabase:', error)
+      }
+    } catch (error) {
+      console.error('Error deleting client:', error)
+    }
+  }, [supabase, state.projects])
+
+  const deleteDocument = useCallback(async (id: string) => {
+    // Optimistic update
+    dispatch({ type: 'deleteDocument', payload: { id } })
+
+    // Delete from Supabase
+    if (!supabase) {
+      console.warn('Supabase client is not configured; document deleted locally only')
+      return
+    }
+
+    try {
+      const { error } = await supabase.from('revos_documents').delete().eq('id', id)
+
+      if (error) {
+        console.error('Error deleting document from Supabase:', error)
+      }
+    } catch (error) {
+      console.error('Error deleting document:', error)
+    }
+  }, [supabase])
+
   const createContent = useCallback((input: CreateContentInput) => {
     dispatch({ type: 'createContent', payload: input })
   }, [])
 
   const updateContentStatus = useCallback((input: UpdateContentStatusInput) => {
     dispatch({ type: 'updateContentStatus', payload: input })
+  }, [])
+
+  const deleteContent = useCallback((id: string) => {
+    dispatch({ type: 'deleteContent', payload: { id } })
   }, [])
 
   const createResource = useCallback((input: CreateResourceInput) => {
@@ -676,15 +798,19 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
       ...state,
       createProject,
       updateProjectStatus,
+      deleteProject,
+      deleteClient,
       createDocument,
       updateDocumentStatus,
       updateDocumentProject,
+      deleteDocument,
       createContent,
       updateContentStatus,
+      deleteContent,
       createResource,
       runAgent,
     }),
-    [state, createProject, updateProjectStatus, createDocument, updateDocumentStatus, updateDocumentProject, createContent, updateContentStatus, createResource, runAgent],
+    [state, createProject, updateProjectStatus, deleteProject, deleteClient, createDocument, updateDocumentStatus, updateDocumentProject, deleteDocument, createContent, updateContentStatus, deleteContent, createResource, runAgent],
   )
 
   if (isLoading) {

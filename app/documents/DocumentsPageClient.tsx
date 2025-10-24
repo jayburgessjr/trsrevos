@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowUpDown } from 'lucide-react'
+import { ArrowUpDown, Trash2 } from 'lucide-react'
 
 import { useRevosData } from '@/app/providers/RevosDataProvider'
 import { Badge } from '@/ui/badge'
@@ -13,6 +13,7 @@ import { Select } from '@/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table'
 import { Textarea } from '@/ui/textarea'
 import DocumentViewerModal from '@/components/documents/DocumentViewerModal'
+import DeleteConfirmationModal from '@/components/common/DeleteConfirmationModal'
 import type { Document } from '@/lib/revos/types'
 
 const documentTypes = [
@@ -56,10 +57,11 @@ const initialForm: FormState = {
 
 export default function DocumentsPageClient() {
   const router = useRouter()
-  const { documents, projects, createDocument, updateDocumentStatus, updateDocumentProject } = useRevosData()
+  const { documents, projects, createDocument, updateDocumentStatus, updateDocumentProject, deleteDocument } = useRevosData()
   const [form, setForm] = useState<FormState>(initialForm)
   const [filter, setFilter] = useState<string>('All')
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
+  const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null)
   const [sortField, setSortField] = useState<SortField>('updatedAt')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
@@ -376,6 +378,13 @@ export default function DocumentsPageClient() {
                         >
                           Quick view
                         </button>
+                        <button
+                          onClick={() => setDocumentToDelete(document)}
+                          className="text-xs text-red-600 underline hover:text-red-700 transition-colors flex items-center gap-1"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          Delete
+                        </button>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -421,6 +430,16 @@ export default function DocumentsPageClient() {
         <DocumentViewerModal
           document={selectedDocument}
           onClose={() => setSelectedDocument(null)}
+        />
+      )}
+
+      {documentToDelete && (
+        <DeleteConfirmationModal
+          isOpen={!!documentToDelete}
+          onClose={() => setDocumentToDelete(null)}
+          onConfirm={() => deleteDocument(documentToDelete.id)}
+          itemName={documentToDelete.title}
+          itemType="document"
         />
       )}
     </div>
