@@ -17,13 +17,15 @@ import type {
   CreateDocumentInput,
   CreateProjectInput,
   CreateResourceInput,
+  CreateTaskInput,
   RevosState,
   RunAgentInput,
   UpdateContentStatusInput,
   UpdateDocumentStatusInput,
   UpdateProjectStatusInput,
+  UpdateTaskInput,
 } from '@/lib/revos/types'
-import { type Agent, type AutomationLog, type ContentItem, type Document, type Project, type Resource } from '@/lib/revos/types'
+import { type Agent, type AutomationLog, type ContentItem, type Document, type Project, type Resource, type Task } from '@/lib/revos/types'
 
 const randomId = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2))
 
@@ -41,6 +43,7 @@ const loadInitialState = (): RevosState => {
       resources: mockResources,
       automationLogs: mockAutomationLogs,
       invoices: mockInvoices,
+      tasks: [],
     }
   }
 
@@ -51,6 +54,7 @@ const loadInitialState = (): RevosState => {
       return {
         ...parsed,
         agents: mockAgents,
+        tasks: parsed.tasks || [],
       }
     }
   } catch (error) {
@@ -65,6 +69,7 @@ const loadInitialState = (): RevosState => {
     resources: mockResources,
     automationLogs: mockAutomationLogs,
     invoices: mockInvoices,
+    tasks: [],
   }
 }
 
@@ -75,6 +80,7 @@ type Action =
   | { type: 'setDocuments'; payload: Document[] }
   | { type: 'setResources'; payload: Resource[] }
   | { type: 'setContent'; payload: ContentItem[] }
+  | { type: 'setTasks'; payload: Task[] }
   | { type: 'createProject'; payload: CreateProjectInput }
   | { type: 'updateProjectStatus'; payload: UpdateProjectStatusInput }
   | { type: 'deleteProject'; payload: { id: string } }
@@ -87,6 +93,9 @@ type Action =
   | { type: 'updateContentStatus'; payload: UpdateContentStatusInput }
   | { type: 'deleteContent'; payload: { id: string } }
   | { type: 'createResource'; payload: CreateResourceInput }
+  | { type: 'createTask'; payload: CreateTaskInput }
+  | { type: 'updateTask'; payload: UpdateTaskInput }
+  | { type: 'deleteTask'; payload: { id: string } }
   | { type: 'runAgent'; payload: RunAgentInput }
 
 type RevosContextValue = RevosState & {
@@ -102,6 +111,9 @@ type RevosContextValue = RevosState & {
   updateContentStatus: (input: UpdateContentStatusInput) => void
   deleteContent: (id: string) => void
   createResource: (input: CreateResourceInput) => void
+  createTask: (input: CreateTaskInput) => void
+  updateTask: (input: UpdateTaskInput) => void
+  deleteTask: (id: string) => void
   runAgent: (input: RunAgentInput) => void
 }
 
@@ -122,6 +134,8 @@ function reducer(state: RevosState, action: Action): RevosState {
       return { ...state, resources: action.payload }
     case 'setContent':
       return { ...state, content: action.payload }
+    case 'setTasks':
+      return { ...state, tasks: action.payload }
     case 'createProject': {
       const projectId = randomId()
       const newProject: Project = {
@@ -313,6 +327,45 @@ function reducer(state: RevosState, action: Action): RevosState {
       }
 
       return { ...state, ...updates }
+    }
+    case 'createTask': {
+      const newTask: Task = {
+        id: randomId(),
+        title: action.payload.title,
+        description: action.payload.description,
+        projectId: action.payload.projectId,
+        assignedTo: action.payload.assignedTo,
+        status: 'To Do',
+        priority: action.payload.priority,
+        dueDate: action.payload.dueDate,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        createdBy: 'current-user', // TODO: Get from auth context
+        tags: action.payload.tags || [],
+        parentTaskId: action.payload.parentTaskId,
+        estimatedHours: action.payload.estimatedHours,
+      }
+      return { ...state, tasks: [newTask, ...state.tasks] }
+    }
+    case 'updateTask': {
+      return {
+        ...state,
+        tasks: state.tasks.map((task) =>
+          task.id === action.payload.id
+            ? {
+                ...task,
+                ...action.payload,
+                updatedAt: new Date().toISOString(),
+              }
+            : task
+        ),
+      }
+    }
+    case 'deleteTask': {
+      return {
+        ...state,
+        tasks: state.tasks.filter((task) => task.id !== action.payload.id),
+      }
     }
     default:
       return state
@@ -793,6 +846,18 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'runAgent', payload: input })
   }, [])
 
+  const createTask = useCallback((input: CreateTaskInput) => {
+    dispatch({ type: 'createTask', payload: input })
+  }, [])
+
+  const updateTask = useCallback((input: UpdateTaskInput) => {
+    dispatch({ type: 'updateTask', payload: input })
+  }, [])
+
+  const deleteTask = useCallback((id: string) => {
+    dispatch({ type: 'deleteTask', payload: { id } })
+  }, [])
+
   const value = useMemo<RevosContextValue>(
     () => ({
       ...state,
@@ -808,9 +873,12 @@ export function RevosDataProvider({ children }: { children: React.ReactNode }) {
       updateContentStatus,
       deleteContent,
       createResource,
+      createTask,
+      updateTask,
+      deleteTask,
       runAgent,
     }),
-    [state, createProject, updateProjectStatus, deleteProject, deleteClient, createDocument, updateDocumentStatus, updateDocumentProject, deleteDocument, createContent, updateContentStatus, deleteContent, createResource, runAgent],
+    [state, createProject, updateProjectStatus, deleteProject, deleteClient, createDocument, updateDocumentStatus, updateDocumentProject, deleteDocument, createContent, updateContentStatus, deleteContent, createResource, createTask, updateTask, deleteTask, runAgent],
   )
 
   if (isLoading) {

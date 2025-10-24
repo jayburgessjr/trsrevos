@@ -13,6 +13,27 @@ export type AgentCategory =
 
 export type ResourceType = 'File' | 'Link'
 
+export type TaskStatus = 'To Do' | 'In Progress' | 'Blocked' | 'Done'
+export type TaskPriority = 'Low' | 'Medium' | 'High' | 'Urgent'
+
+export type Task = {
+  id: string
+  title: string
+  description: string
+  projectId: string
+  assignedTo?: string
+  status: TaskStatus
+  priority: TaskPriority
+  dueDate?: string
+  createdAt: string
+  updatedAt: string
+  createdBy: string
+  tags: string[]
+  parentTaskId?: string
+  estimatedHours?: number
+  actualHours?: number
+}
+
 export type Project = {
   id: string
   name: string
@@ -100,6 +121,7 @@ export type RevosState = {
   resources: Resource[]
   automationLogs: AutomationLog[]
   invoices: InvoiceSummary[]
+  tasks: Task[]
 }
 
 export type CreateProjectInput = Omit<Project, 'id' | 'documents' | 'agents' | 'resources'> & {
@@ -155,4 +177,28 @@ export type RunAgentInput = {
   agentId: string
   projectId?: string
   notes?: string
+}
+
+export type CreateTaskInput = {
+  title: string
+  description: string
+  projectId: string
+  assignedTo?: string
+  priority: TaskPriority
+  dueDate?: string
+  tags?: string[]
+  parentTaskId?: string
+  estimatedHours?: number
+}
+
+export type UpdateTaskInput = {
+  id: string
+  title?: string
+  description?: string
+  assignedTo?: string
+  status?: TaskStatus
+  priority?: TaskPriority
+  dueDate?: string
+  tags?: string[]
+  actualHours?: number
 }
