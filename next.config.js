@@ -1,11 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Disable image optimization to serve images as static files
+  // This ensures images work correctly on Netlify
   images: {
-    // Configure image domains and formats
-    formats: ['image/avif', 'image/webp'],
-    // Disable image optimization for Netlify (Netlify handles it via plugin)
-    // Set to true if you want Next.js to handle optimization
-    unoptimized: false,
+    unoptimized: true,
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {

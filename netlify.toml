@@ -1,22 +1,10 @@
 [build]
   command = "pnpm build"
-  publish = ".next"
+  # Don't set publish directory - let @netlify/plugin-nextjs handle it
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-# Ensure public directory assets are available
-[build.processing]
-  skip_processing = false
-
-[build.processing.images]
-  compress = true
-
 [build.environment]
   NODE_VERSION = "20"
   NPM_FLAGS = "--legacy-peer-deps"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
