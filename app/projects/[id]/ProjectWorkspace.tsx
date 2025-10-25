@@ -17,8 +17,9 @@ import ContentTab from './tabs/ContentTab'
 import ActivityTab from './tabs/ActivityTab'
 import FinancialsTab from './tabs/FinancialsTab'
 import TasksTab from './tabs/TasksTab'
+import FilesTab from './tabs/FilesTab'
 
-export type TabKey = 'overview' | 'documents' | 'tasks' | 'resources' | 'content' | 'activity' | 'financials'
+export type TabKey = 'overview' | 'documents' | 'tasks' | 'files' | 'resources' | 'content' | 'activity' | 'financials'
 
 export type ProjectType = 'Audit' | 'Blueprint' | 'Advisory' | 'Internal'
 export type ProjectStatus = 'Pending' | 'Active' | 'Delivered' | 'Closed'
@@ -220,10 +221,11 @@ export default function ProjectWorkspace({
           <Card>
             <Tabs defaultValue={initialTab} value={activeTab} onValueChange={(value) => handleTabChange(value as TabKey)} className="w-full">
               <CardHeader>
-                <TabsList className="grid w-full grid-cols-7">
+                <TabsList className="grid w-full grid-cols-8">
                   <TabsTrigger value="overview">Overview</TabsTrigger>
                   <TabsTrigger value="documents">Documents</TabsTrigger>
                   <TabsTrigger value="tasks">Tasks</TabsTrigger>
+                  <TabsTrigger value="files">Files</TabsTrigger>
                   <TabsTrigger value="resources">Resources</TabsTrigger>
                   <TabsTrigger value="content">Content</TabsTrigger>
                   <TabsTrigger value="activity">Activity</TabsTrigger>
@@ -239,6 +241,9 @@ export default function ProjectWorkspace({
                 </TabsContent>
                 <TabsContent value="tasks">
                   <TasksTab project={project} />
+                </TabsContent>
+                <TabsContent value="files">
+                  <FilesTab project={project} />
                 </TabsContent>
                 <TabsContent value="resources">
                   <ResourcesTab project={project} resources={resources} />
