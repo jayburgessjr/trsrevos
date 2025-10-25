@@ -1,5 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  images: {
+    // Configure image domains and formats
+    formats: ['image/avif', 'image/webp'],
+    // Disable image optimization for Netlify (Netlify handles it via plugin)
+    // Set to true if you want Next.js to handle optimization
+    unoptimized: false,
+  },
   webpack: (config, { isServer }) => {
     if (!isServer) {
       // Don't bundle Node.js-only modules on the client side
