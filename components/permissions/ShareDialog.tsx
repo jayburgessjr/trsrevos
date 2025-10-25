@@ -16,7 +16,7 @@ import { Select } from '@/ui/select'
 import { Share2, Trash2, Eye, Edit, Trash, Users } from 'lucide-react'
 import { useRevosData } from '@/app/providers/RevosDataProvider'
 import { getEffectivePermission, getRoleDisplayName, getRoleDescription, DEFAULT_PERMISSIONS } from '@/lib/permissions'
-import type { Permission } from '@/lib/revos/types'
+import type { Permission, UserRole } from '@/lib/revos/types'
 import { cn } from '@/lib/utils'
 
 interface ShareDialogProps {
@@ -271,7 +271,7 @@ export default function ShareDialog({ resourceType, resourceId, resourceName }: 
                   <div>
                     <span className="font-medium">{role}</span>
                     <p className="text-muted-foreground text-xs mt-0.5">
-                      {getRoleDescription(role as any)}
+                      {getRoleDescription(role as UserRole)}
                     </p>
                   </div>
                   <div className="flex gap-1">

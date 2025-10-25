@@ -13,17 +13,17 @@ interface FileListProps {
 // Get icon for file type
 function getFileTypeIcon(file: File) {
   switch (file.fileType) {
-    case 'image': return <Image className="h-5 w-5" />
-    case 'video': return <Video className="h-5 w-5" />
-    case 'audio': return <Music className="h-5 w-5" />
-    case 'archive': return <Archive className="h-5 w-5" />
+    case 'image': return <Image className="h-5 w-5" aria-label="Image file" />
+    case 'video': return <Video className="h-5 w-5" aria-label="Video file" />
+    case 'audio': return <Music className="h-5 w-5" aria-label="Audio file" />
+    case 'archive': return <Archive className="h-5 w-5" aria-label="Archive file" />
     case 'pdf':
     case 'document':
     case 'spreadsheet':
     case 'presentation':
-      return <FileText className="h-5 w-5" />
+      return <FileText className="h-5 w-5" aria-label="Document file" />
     default:
-      return <FileIcon className="h-5 w-5" />
+      return <FileIcon className="h-5 w-5" aria-label="File" />
   }
 }
 

@@ -29,7 +29,8 @@ export default function GlobalHeader() {
       alert("Failed to log out. Please try again.")
       setIsSigningOut(false)
     }
-  }, [router])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <header className="border-b border-gray-200" style={{ backgroundColor: '#e87b28' }}>
