@@ -118,6 +118,7 @@ export default function CommentThread({ projectId, documentId, title, descriptio
 
   // Filter comments for this resource
   const resourceComments = useMemo(() => {
+    if (!comments) return []
     return comments.filter(comment => {
       if (projectId) return comment.projectId === projectId && !comment.documentId
       if (documentId) return comment.documentId === documentId
