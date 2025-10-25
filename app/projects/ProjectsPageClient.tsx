@@ -54,6 +54,7 @@ export default function ProjectsPageClient() {
 
   // Get unique client names from existing projects
   const existingClients = useMemo(() => {
+    if (!projects) return []
     const clientSet = new Set<string>()
     projects.forEach((project) => {
       if (project.client && project.client.trim()) {
@@ -73,6 +74,7 @@ export default function ProjectsPageClient() {
   }
 
   const sortedProjects = useMemo(() => {
+    if (!projects) return []
     const sorted = [...projects]
     sorted.sort((a, b) => {
       let aValue: any
@@ -107,6 +109,14 @@ export default function ProjectsPageClient() {
   }, [projects, sortField, sortDirection])
 
   const stats = useMemo(() => {
+    if (!projects) {
+      return {
+        totalsByStatus: {},
+        totalRevenue: 0,
+        linkedResources: 0,
+      }
+    }
+
     const totalsByStatus = projects.reduce<Record<string, number>>((acc, project) => {
       acc[project.status] = (acc[project.status] ?? 0) + 1
       return acc

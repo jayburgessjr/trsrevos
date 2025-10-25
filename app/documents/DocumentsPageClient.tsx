@@ -75,6 +75,7 @@ export default function DocumentsPageClient() {
   }
 
   const filteredDocuments = useMemo(() => {
+    if (!documents) return []
     let filtered = filter === 'All' ? documents : documents.filter((document) => document.status === filter)
 
     // Sort the documents
@@ -155,6 +156,7 @@ export default function DocumentsPageClient() {
   }
 
   const tagCloud = useMemo(() => {
+    if (!documents) return {}
     return documents.reduce<Record<string, number>>((acc, doc) => {
       doc.tags.forEach((tag) => {
         acc[tag] = (acc[tag] ?? 0) + 1
@@ -197,7 +199,7 @@ export default function DocumentsPageClient() {
                   onChange={(event) => setForm((current) => ({ ...current, projectId: event.target.value }))}
                 >
                   <option value="no-project">No Project (Resource)</option>
-                  {projects.map((project) => (
+                  {(projects || []).map((project) => (
                     <option key={project.id} value={project.id}>
                       {project.name}
                     </option>
@@ -273,7 +275,7 @@ export default function DocumentsPageClient() {
             </Select>
             <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
               <p className="text-xs uppercase tracking-widest text-muted-foreground">Total Documents</p>
-              <p className="mt-1 text-2xl font-semibold text-foreground">{documents.length}</p>
+              <p className="mt-1 text-2xl font-semibold text-foreground">{documents?.length || 0}</p>
             </div>
             <div className="space-y-2">
               {Object.entries(tagCloud).map(([tag, count]) => (
@@ -393,7 +395,7 @@ export default function DocumentsPageClient() {
                         onChange={(event) => handleProjectChange(document.id, event.target.value)}
                       >
                         <option value="">Unlinked</option>
-                        {projects.map((project) => (
+                        {(projects || []).map((project) => (
                           <option key={project.id} value={project.id}>
                             {project.name}
                           </option>
