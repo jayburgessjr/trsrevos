@@ -127,6 +127,8 @@ export type RevosState = {
   resourcePermissions: ResourcePermission[]
   currentUser: User | null
   files: File[]
+  notifications: Notification[]
+  notificationPreferences: NotificationPreferences | null
 }
 
 export type CreateProjectInput = Omit<Project, 'id' | 'documents' | 'agents' | 'resources'> & {
@@ -347,4 +349,60 @@ export type UpdateFileInput = {
 export type DeleteFileInput = {
   id: string
   permanent?: boolean // if false, just marks as deleted
+}
+
+// Notification System Types
+
+export type NotificationType =
+  | 'task_assigned'
+  | 'task_completed'
+  | 'comment_added'
+  | 'file_uploaded'
+  | 'project_updated'
+  | 'document_shared'
+  | 'permission_granted'
+  | 'mention'
+
+export type NotificationPriority = 'low' | 'normal' | 'high' | 'urgent'
+
+export type Notification = {
+  id: string
+  type: NotificationType
+  title: string
+  message: string
+  priority: NotificationPriority
+  userId: string
+  resourceType?: 'project' | 'document' | 'content' | 'task' | 'comment' | 'file'
+  resourceId?: string
+  actionUrl?: string
+  isRead: boolean
+  isEmailSent: boolean
+  createdAt: string
+  readAt?: string
+}
+
+export type NotificationPreferences = {
+  userId: string
+  emailEnabled: boolean
+  emailDigest: 'immediate' | 'hourly' | 'daily' | 'weekly' | 'never'
+  notificationTypes: Record<NotificationType, boolean>
+  updatedAt: string
+}
+
+export type CreateNotificationInput = {
+  type: NotificationType
+  title: string
+  message: string
+  priority?: NotificationPriority
+  userId: string
+  resourceType?: 'project' | 'document' | 'content' | 'task' | 'comment' | 'file'
+  resourceId?: string
+  actionUrl?: string
+}
+
+export type UpdateNotificationPreferencesInput = {
+  userId: string
+  emailEnabled?: boolean
+  emailDigest?: 'immediate' | 'hourly' | 'daily' | 'weekly' | 'never'
+  notificationTypes?: Record<NotificationType, boolean>
 }
