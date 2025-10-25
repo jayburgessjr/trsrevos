@@ -208,7 +208,7 @@ export default function DashboardClient({
   );
 
   const kpiGrid = (
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
       <Card className={cn(TRS_CARD, "p-4")}>
         <div className="mb-3 border-b border-gray-200 pb-2 text-sm font-medium text-black">
           Health Ribbon
@@ -276,27 +276,35 @@ export default function DashboardClient({
       </Card>
       <Card className={cn(TRS_CARD, "p-4")}>
         <div className="mb-3 border-b border-gray-200 pb-2 text-sm font-medium text-black">
+          Total Revenue
+        </div>
+        <div className="h-40">
+          <SmallSpark />
+        </div>
+      </Card>
+      <Card className={cn(TRS_CARD, "p-4")}>
+        <div className="mb-3 border-b border-gray-200 pb-2 text-sm font-medium text-black">
           Client Revenue
         </div>
         <div className="grid grid-cols-2 gap-3">
           <KpiCard
             label="Invoiced"
-            value={`$${(financialMetrics.invoicedRevenue / 1000).toFixed(1)}K`}
+            value={`$${((financialMetrics?.invoicedRevenue || 0) / 1000).toFixed(1)}K`}
             hint="/mo"
           />
           <KpiCard
             label="Equity"
-            value={`$${(financialMetrics.equityRevenue / 1000).toFixed(1)}K`}
+            value={`$${((financialMetrics?.equityRevenue || 0) / 1000).toFixed(1)}K`}
             hint="/mo"
           />
           <KpiCard
             label="Partnership"
-            value={`$${(financialMetrics.equityPartnershipRevenue / 1000).toFixed(1)}K`}
+            value={`$${((financialMetrics?.equityPartnershipRevenue || 0) / 1000).toFixed(1)}K`}
             hint="/mo"
           />
           <KpiCard
             label="Total MRR"
-            value={`$${(financialMetrics.totalMonthlyRevenue / 1000).toFixed(1)}K`}
+            value={`$${((financialMetrics?.totalMonthlyRevenue || 0) / 1000).toFixed(1)}K`}
             hint="/mo"
           />
         </div>
