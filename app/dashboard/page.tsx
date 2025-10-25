@@ -5,6 +5,7 @@ import { getExecDashboard } from "@/core/exec/actions";
 import { exportForecastSnapshot, getForecastReviewState } from "@/core/exec/review";
 import { listClients } from "@/core/clients/store";
 import type { Client } from "@/core/clients/types";
+import { createServerClient } from "@/lib/supabase/server";
 
 // Helper to calculate monthly revenue from clients
 function calculateMonthlyRevenue(client: Client): number {
@@ -48,11 +49,26 @@ export default async function DashboardPage() {
     }
   });
 
+  // Calculate additional metrics
+  const activeClients = clients.filter(c => c.status === "active" || !c.status).length;
+  const averageClientRevenue = activeClients > 0 ? totalMonthlyRevenue / activeClients : 0;
+  const annualRevenue = totalMonthlyRevenue * 12;
+
+  // Get project and document counts from Supabase
+  const supabase = createServerClient();
+  const { count: activeProjects } = await supabase.from('revos_projects').select('*', { count: 'exact', head: true });
+  const { count: totalDocuments } = await supabase.from('revos_documents').select('*', { count: 'exact', head: true });
+
   const financialMetrics = {
     invoicedRevenue: Math.round(invoicedRevenue),
     equityRevenue: Math.round(equityRevenue),
     equityPartnershipRevenue: Math.round(equityPartnershipRevenue),
     totalMonthlyRevenue: Math.round(totalMonthlyRevenue),
+    annualRevenue: Math.round(annualRevenue),
+    activeClients,
+    averageClientRevenue: Math.round(averageClientRevenue),
+    activeProjects: activeProjects || 0,
+    totalDocuments: totalDocuments || 0,
   };
 
   const commitTrajectory = data.forecast.p50;

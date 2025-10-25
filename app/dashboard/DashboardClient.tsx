@@ -46,6 +46,11 @@ type FinancialMetrics = {
   equityRevenue: number;
   equityPartnershipRevenue: number;
   totalMonthlyRevenue: number;
+  annualRevenue: number;
+  activeClients: number;
+  averageClientRevenue: number;
+  activeProjects: number;
+  totalDocuments: number;
 };
 
 type DashboardClientProps = {
@@ -208,106 +213,66 @@ export default function DashboardClient({
   );
 
   const kpiGrid = (
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       <Card className={cn(TRS_CARD, "p-4")}>
-        <div className="mb-3 border-b border-gray-200 pb-2 text-sm font-medium text-black">
-          Health Ribbon
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <KpiCard
-            label="North Star Run-rate"
-            value={`$${Math.round(d.ribbon.northStarRunRate / 1000)}K`}
-            hint={`${d.ribbon.northStarDeltaVsPlanPct}% vs plan`}
-          />
-          <KpiCard
-            label="Cash on Hand"
-            value={`$${Math.round(d.ribbon.cashOnHand / 1000)}K`}
-            hint={`${d.ribbon.runwayDays}d runway`}
-          />
-          <KpiCard
-            label="TRS Score"
-            value={`${d.ribbon.trsScore}`}
-            hint="0–100"
-          />
-          <KpiCard
-            label="Risk Index"
-            value={`${d.ribbon.riskIndexPct}%`}
-            hint="Prob. downside"
-          />
-        </div>
+        <KpiCard
+          label="Invoiced Revenue"
+          value={`$${((financialMetrics?.invoicedRevenue || 0) / 1000).toFixed(1)}K`}
+          hint="/mo"
+        />
       </Card>
       <Card className={cn(TRS_CARD, "p-4")}>
-        <div className="mb-3 border-b border-gray-200 pb-2 text-sm font-medium text-black">
-          Sales
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <KpiCard
-            label="Coverage (x)"
-            value={d.sales.pipelineCoverageX.toFixed(1)}
-            hint="vs target"
-          />
-          <KpiCard label="Win Rate 7d" value={`${d.sales.winRate7dPct}%`} />
-          <KpiCard label="Win Rate 30d" value={`${d.sales.winRate30dPct}%`} />
-          <KpiCard
-            label="Cycle Time"
-            value={`${d.sales.cycleTimeDaysMedian}d`}
-          />
-        </div>
+        <KpiCard
+          label="Equity Revenue"
+          value={`$${((financialMetrics?.equityRevenue || 0) / 1000).toFixed(1)}K`}
+          hint="/mo"
+        />
       </Card>
       <Card className={cn(TRS_CARD, "p-4")}>
-        <div className="mb-3 border-b border-gray-200 pb-2 text-sm font-medium text-black">
-          Finance
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <KpiCard
-            label="AR Total"
-            value={`$${Math.round(d.finance.arTotal / 1000)}K`}
-          />
-          <KpiCard label="DSO" value={`${d.finance.dsoDays}d`} />
-          <KpiCard
-            label="Collected (7d)"
-            value={`$${Math.round(d.finance.cashCollected7d / 1000)}K`}
-          />
-          <KpiCard
-            label="Price Realization"
-            value={`${d.finance.priceRealizationPct}%`}
-          />
-        </div>
+        <KpiCard
+          label="Partnership Revenue"
+          value={`$${((financialMetrics?.equityPartnershipRevenue || 0) / 1000).toFixed(1)}K`}
+          hint="/mo"
+        />
       </Card>
       <Card className={cn(TRS_CARD, "p-4")}>
-        <div className="mb-3 border-b border-gray-200 pb-2 text-sm font-medium text-black">
-          Total Revenue
-        </div>
-        <div className="h-40">
-          <SmallSpark />
-        </div>
+        <KpiCard
+          label="Total Monthly Income"
+          value={`$${((financialMetrics?.totalMonthlyRevenue || 0) / 1000).toFixed(1)}K`}
+          hint="/mo"
+        />
       </Card>
       <Card className={cn(TRS_CARD, "p-4")}>
-        <div className="mb-3 border-b border-gray-200 pb-2 text-sm font-medium text-black">
-          Client Revenue
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <KpiCard
-            label="Invoiced"
-            value={`$${((financialMetrics?.invoicedRevenue || 0) / 1000).toFixed(1)}K`}
-            hint="/mo"
-          />
-          <KpiCard
-            label="Equity"
-            value={`$${((financialMetrics?.equityRevenue || 0) / 1000).toFixed(1)}K`}
-            hint="/mo"
-          />
-          <KpiCard
-            label="Partnership"
-            value={`$${((financialMetrics?.equityPartnershipRevenue || 0) / 1000).toFixed(1)}K`}
-            hint="/mo"
-          />
-          <KpiCard
-            label="Total MRR"
-            value={`$${((financialMetrics?.totalMonthlyRevenue || 0) / 1000).toFixed(1)}K`}
-            hint="/mo"
-          />
-        </div>
+        <KpiCard
+          label="Annual Revenue"
+          value={`$${((financialMetrics?.annualRevenue || 0) / 1000).toFixed(1)}K`}
+          hint="/year"
+        />
+      </Card>
+      <Card className={cn(TRS_CARD, "p-4")}>
+        <KpiCard
+          label="Active Clients"
+          value={`${financialMetrics?.activeClients || 0}`}
+        />
+      </Card>
+      <Card className={cn(TRS_CARD, "p-4")}>
+        <KpiCard
+          label="Avg Client Revenue"
+          value={`$${((financialMetrics?.averageClientRevenue || 0) / 1000).toFixed(1)}K`}
+          hint="/mo"
+        />
+      </Card>
+      <Card className={cn(TRS_CARD, "p-4")}>
+        <KpiCard
+          label="Active Projects"
+          value={`${financialMetrics?.activeProjects || 0}`}
+        />
+      </Card>
+      <Card className={cn(TRS_CARD, "p-4")}>
+        <KpiCard
+          label="Total Documents"
+          value={`${financialMetrics?.totalDocuments || 0}`}
+        />
       </Card>
     </div>
   );
