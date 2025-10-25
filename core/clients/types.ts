@@ -85,6 +85,8 @@ export type CompoundingMetrics = {
   drivers: { name: string; delta: number }[];
 };
 
+export type DealType = "invoiced" | "equity_partnership" | "equity";
+
 export type Client = {
   id: string;
   name: string;
@@ -109,6 +111,11 @@ export type Client = {
   kanban: KanbanItem[];
   compounding?: CompoundingMetrics;
   notes?: string;
+  // Financial tracking
+  dealType?: DealType;
+  monthlyInvoiced?: number; // For invoiced deals: monthly amount we invoice
+  equityPercentage?: number; // For equity deals: our equity stake (typically 15%)
+  // For equity_partnership: $2500/mo + 2% of client MRR (calculated from compounding.currentMRR)
 };
 
 export type DiscoveryResponse = {

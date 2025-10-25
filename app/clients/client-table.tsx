@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 const PHASES: RevOSPhase[] = ["Discovery", "Data", "Algorithm", "Architecture", "Compounding"];
 const SEGMENTS: Client["segment"][] = ["SMB", "Mid", "Enterprise"];
 
-type SortField = "name" | "segment" | "arr" | "owner" | "phase" | "health";
+type SortField = "name" | "segment" | "arr" | "owner" | "phase" | "health" | "dealType" | "monthlyRevenue";
 type SortDirection = "asc" | "desc";
 
 export function ClientsTable({ data }: { data: Client[] }) {
@@ -22,6 +22,25 @@ export function ClientsTable({ data }: { data: Client[] }) {
   const [phase, setPhase] = useState<string>("all");
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+
+  const calculateMonthlyRevenue = useCallback((client: Client): number => {
+    if (!client.dealType) return 0;
+
+    switch (client.dealType) {
+      case "invoiced":
+        return client.monthlyInvoiced ?? 0;
+      case "equity_partnership":
+        // $2500/mo + 2% of client MRR
+        const clientMRR = client.compounding?.currentMRR ?? 0;
+        return 2500 + (clientMRR * 0.02);
+      case "equity":
+        // 15% of client MRR
+        const equityMRR = client.compounding?.currentMRR ?? 0;
+        return equityMRR * (client.equityPercentage ?? 15) / 100;
+      default:
+        return 0;
+    }
+  }, []);
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -66,6 +85,14 @@ export function ClientsTable({ data }: { data: Client[] }) {
           aValue = a.health ?? 0;
           bValue = b.health ?? 0;
           break;
+        case "dealType":
+          aValue = a.dealType ?? "";
+          bValue = b.dealType ?? "";
+          break;
+        case "monthlyRevenue":
+          aValue = calculateMonthlyRevenue(a);
+          bValue = calculateMonthlyRevenue(b);
+          break;
         default:
           return 0;
       }
@@ -76,7 +103,7 @@ export function ClientsTable({ data }: { data: Client[] }) {
     });
 
     return results;
-  }, [data, search, segment, phase, sortField, sortDirection]);
+  }, [data, search, segment, phase, sortField, sortDirection, calculateMonthlyRevenue]);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
@@ -97,6 +124,20 @@ export function ClientsTable({ data }: { data: Client[] }) {
   const formatCurrency = useCallback((value?: number) => {
     if (value == null) return "—";
     return `$${value.toLocaleString()}`;
+  }, []);
+
+  const formatDealType = useCallback((dealType?: Client["dealType"]) => {
+    if (!dealType) return "—";
+    switch (dealType) {
+      case "invoiced":
+        return "Invoiced";
+      case "equity_partnership":
+        return "Equity Partnership";
+      case "equity":
+        return "Equity";
+      default:
+        return dealType;
+    }
   }, []);
 
   const handleKeyDown = useCallback(
@@ -207,6 +248,24 @@ export function ClientsTable({ data }: { data: Client[] }) {
                   <ArrowUpDown className="h-3 w-3" />
                 </button>
               </TableHead>
+              <TableHead>
+                <button
+                  onClick={() => toggleSort("dealType")}
+                  className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
+                >
+                  Deal Type
+                  <ArrowUpDown className="h-3 w-3" />
+                </button>
+              </TableHead>
+              <TableHead>
+                <button
+                  onClick={() => toggleSort("monthlyRevenue")}
+                  className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
+                >
+                  Monthly Revenue
+                  <ArrowUpDown className="h-3 w-3" />
+                </button>
+              </TableHead>
               <TableHead>Open Opps</TableHead>
               <TableHead>AR</TableHead>
             </TableRow>
@@ -238,6 +297,8 @@ export function ClientsTable({ data }: { data: Client[] }) {
                     </span>
                   </TableCell>
                   <TableCell>{Math.round(client.health)}</TableCell>
+                  <TableCell>{formatDealType(client.dealType)}</TableCell>
+                  <TableCell>{formatCurrency(calculateMonthlyRevenue(client))}</TableCell>
                   <TableCell>{openOpps}</TableCell>
                   <TableCell>{formatCurrency(outstanding)}</TableCell>
                 </TableRow>
@@ -245,7 +306,7 @@ export function ClientsTable({ data }: { data: Client[] }) {
             })}
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-sm text-gray-500 dark:text-neutral-400">
+                <TableCell colSpan={10} className="text-center text-sm text-gray-500 dark:text-neutral-400">
                   No clients match the current filters.
                 </TableCell>
               </TableRow>

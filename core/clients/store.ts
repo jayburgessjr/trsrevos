@@ -87,6 +87,8 @@ const CLIENTS = new Map<string, Client>();
         ],
       },
       notes: "Security questionnaire pending.",
+      dealType: "equity_partnership",
+      // Revenue: $2500/mo + 2% of their $19,500 MRR = $2500 + $390 = $2,890/mo
     });
   }
 
@@ -164,6 +166,8 @@ const CLIENTS = new Map<string, Client>();
           { name: "Churn mitigation", delta: 600 },
         ],
       },
+      dealType: "invoiced",
+      monthlyInvoiced: 6800, // Standard monthly invoice amount
     });
   }
 
@@ -218,6 +222,8 @@ const CLIENTS = new Map<string, Client>();
         drivers: [{ name: "Automation add-on", delta: 600 }],
       },
       notes: "Architecture blueprint approved for rollout.",
+      dealType: "equity",
+      equityPercentage: 15, // 15% of their $16,200 MRR = $2,430/mo
     });
   }
 
@@ -273,6 +279,8 @@ const CLIENTS = new Map<string, Client>();
         drivers: [{ name: "Churn risk", delta: -300 }],
       },
       notes: "Renewal slipping due to data delays.",
+      dealType: "invoiced",
+      monthlyInvoiced: 1600, // Monthly invoice amount
     });
   }
 })();

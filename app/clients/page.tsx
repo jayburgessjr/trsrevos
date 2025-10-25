@@ -54,6 +54,25 @@ function mapStoreClient(client: Client): ClientRow {
   };
 }
 
+function calculateMonthlyRevenue(client: Client): number {
+  if (!client.dealType) return 0;
+
+  switch (client.dealType) {
+    case "invoiced":
+      return client.monthlyInvoiced ?? 0;
+    case "equity_partnership":
+      // $2500/mo + 2% of client MRR
+      const clientMRR = client.compounding?.currentMRR ?? 0;
+      return 2500 + (clientMRR * 0.02);
+    case "equity":
+      // 15% of client MRR
+      const equityMRR = client.compounding?.currentMRR ?? 0;
+      return equityMRR * (client.equityPercentage ?? 15) / 100;
+    default:
+      return 0;
+  }
+}
+
 function computeFallbackOverview(client: Client) {
   const openOpps = client.opportunities.filter(
     (opp) => opp.stage !== "ClosedLost" && opp.stage !== "ClosedWon"
@@ -191,6 +210,28 @@ export default async function ClientsPage({
     (client) => (client.phase ?? "").toLowerCase() === "onboarding",
   ).length;
 
+  // Calculate financial metrics (only available in fallback mode for now)
+  let invoicedRevenue = 0;
+  let equityRevenue = 0;
+  let equityPartnershipRevenue = 0;
+  let totalMonthlyRevenue = 0;
+
+  if (usingFallback) {
+    const fullClients = listClients();
+    fullClients.forEach((client) => {
+      const revenue = calculateMonthlyRevenue(client);
+      totalMonthlyRevenue += revenue;
+
+      if (client.dealType === "invoiced") {
+        invoicedRevenue += revenue;
+      } else if (client.dealType === "equity") {
+        equityRevenue += revenue;
+      } else if (client.dealType === "equity_partnership") {
+        equityPartnershipRevenue += revenue;
+      }
+    });
+  }
+
   return (
     <div className="min-h-screen bg-white text-black">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4">
@@ -248,6 +289,15 @@ export default async function ClientsPage({
           <SummaryCard label="Average Health" value={`${avgHealth}%`} />
           <SummaryCard label="Onboarding" value={`${onboardingCount}`} />
         </div>
+
+        {usingFallback && (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+            <SummaryCard label="Invoiced Revenue" value={`$${Math.round(invoicedRevenue).toLocaleString()}/mo`} />
+            <SummaryCard label="Equity Revenue" value={`$${Math.round(equityRevenue).toLocaleString()}/mo`} />
+            <SummaryCard label="Equity Partnership" value={`$${Math.round(equityPartnershipRevenue).toLocaleString()}/mo`} />
+            <SummaryCard label="Total Monthly Revenue" value={`$${Math.round(totalMonthlyRevenue).toLocaleString()}/mo`} />
+          </div>
+        )}
 
         <ClientsPortfolioTable clients={clients} overviewMap={overviewMap} />
       </div>
