@@ -87,7 +87,7 @@ export default function AddTaskDialog({ projectId, onTaskCreated }: AddTaskDialo
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+      <DialogTrigger>
         <Button className="bg-[#015e32] hover:bg-[#01753d]">
           <Plus className="h-4 w-4 mr-2" />
           Add Task

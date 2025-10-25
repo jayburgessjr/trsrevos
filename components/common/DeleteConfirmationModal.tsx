@@ -10,7 +10,7 @@ type DeleteConfirmationModalProps = {
   onClose: () => void
   onConfirm: () => void | Promise<void>
   itemName: string
-  itemType: 'client' | 'document' | 'project' | 'content'
+  itemType: 'client' | 'document' | 'project' | 'content' | 'task'
   title?: string
   description?: string
 }

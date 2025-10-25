@@ -111,7 +111,7 @@ export default function ShareDialog({ resourceType, resourceId, resourceName }: 
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+      <DialogTrigger>
         <Button variant="outline" size="sm" className="gap-2">
           <Share2 className="h-4 w-4" />
           Share
@@ -119,7 +119,7 @@ export default function ShareDialog({ resourceType, resourceId, resourceName }: 
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Share "{resourceName}"</DialogTitle>
+          <DialogTitle>Share &quot;{resourceName}&quot;</DialogTitle>
           <DialogDescription>
             Manage who can view and edit this {resourceType}
           </DialogDescription>

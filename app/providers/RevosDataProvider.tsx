@@ -66,6 +66,8 @@ const loadInitialState = (): RevosState => {
       resourcePermissions: [],
       currentUser: mockCurrentUser,
       files: [],
+      notifications: [],
+      notificationPreferences: null,
     }
   }
 
@@ -78,6 +80,8 @@ const loadInitialState = (): RevosState => {
         agents: mockAgents,
         tasks: parsed.tasks || [],
         files: parsed.files || [],
+        notifications: parsed.notifications || [],
+        notificationPreferences: parsed.notificationPreferences || null,
       }
     }
   } catch (error) {
@@ -98,6 +102,8 @@ const loadInitialState = (): RevosState => {
     resourcePermissions: [],
     currentUser: null,
     files: [],
+    notifications: [],
+    notificationPreferences: null,
   }
 }
 
