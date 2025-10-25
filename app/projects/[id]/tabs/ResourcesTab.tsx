@@ -10,15 +10,15 @@ interface ResourcesTabProps {
   resources: ProjectResource[]
 }
 
-export default function ResourcesTab({ project, resources }: ResourcesTabProps) {
+export default function ResourcesTab({ project, resources = [] }: ResourcesTabProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<string>('all')
 
   // Get unique resource types
-  const resourceTypes = Array.from(new Set(resources.map((r) => r.type)))
+  const resourceTypes = Array.from(new Set((resources || []).map((r) => r.type)))
 
   // Filter resources
-  const filteredResources = resources.filter((resource) => {
+  const filteredResources = (resources || []).filter((resource) => {
     const matchesSearch =
       resource.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       resource.description.toLowerCase().includes(searchTerm.toLowerCase()) ||

@@ -13,16 +13,16 @@ interface DocumentsTabProps {
   documents: ProjectDocument[]
 }
 
-export default function DocumentsTab({ project, documents }: DocumentsTabProps) {
+export default function DocumentsTab({ project, documents = [] }: DocumentsTabProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<'all' | 'Draft' | 'Review' | 'Approved'>('all')
   const [filterType, setFilterType] = useState<string>('all')
 
   // Get unique document types
-  const documentTypes = Array.from(new Set(documents.map((d) => d.type)))
+  const documentTypes = Array.from(new Set((documents || []).map((d) => d.type)))
 
   // Filter documents
-  const filteredDocuments = documents.filter((doc) => {
+  const filteredDocuments = (documents || []).filter((doc) => {
     const matchesSearch =
       doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       doc.type.toLowerCase().includes(searchTerm.toLowerCase())

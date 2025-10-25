@@ -10,16 +10,16 @@ interface ContentTabProps {
   content: ProjectContent[]
 }
 
-export default function ContentTab({ project, content }: ContentTabProps) {
+export default function ContentTab({ project, content = [] }: ContentTabProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<'all' | 'Draft' | 'Review' | 'Published'>('all')
   const [filterType, setFilterType] = useState<string>('all')
 
   // Get unique content types
-  const contentTypes = Array.from(new Set(content.map((c) => c.type)))
+  const contentTypes = Array.from(new Set((content || []).map((c) => c.type)))
 
   // Filter content
-  const filteredContent = content.filter((item) => {
+  const filteredContent = (content || []).filter((item) => {
     const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = filterStatus === 'all' || item.status === filterStatus
     const matchesType = filterType === 'all' || item.type === filterType
