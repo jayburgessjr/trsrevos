@@ -1,6 +1,14 @@
 -- Fix RLS policy for clients table to allow authenticated users to create clients
 -- The issue is that auth.uid() must match owner_id exactly
 
+-- Ensure the is_admin function exists
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('SuperAdmin', 'Admin')
+  )
+$$ LANGUAGE SQL SECURITY DEFINER;
+
 -- Drop the old restrictive policy
 DROP POLICY IF EXISTS "Users can create clients" ON clients;
 

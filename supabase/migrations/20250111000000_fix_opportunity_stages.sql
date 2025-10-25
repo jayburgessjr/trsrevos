@@ -1,6 +1,15 @@
 -- Fix opportunity stage mismatch
 -- Change 'New' to 'Prospect' to match application expectations
 
+-- Ensure the update_updated_at_column function exists
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ language 'plpgsql';
+
 -- Update the check constraint to use 'Prospect' instead of 'New'
 ALTER TABLE opportunities DROP CONSTRAINT IF EXISTS opportunities_stage_check;
 ALTER TABLE opportunities ADD CONSTRAINT opportunities_stage_check

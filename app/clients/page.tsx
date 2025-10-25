@@ -16,6 +16,9 @@ type ClientRow = {
   health: number | null;
   created_at: string | null;
   owner: { name: string | null } | { name: string | null }[] | null;
+  deal_type?: string | null;
+  monthly_invoiced?: number | null;
+  equity_percentage?: number | null;
 };
 
 const hasSupabaseCredentials = Boolean(
@@ -54,20 +57,23 @@ function mapStoreClient(client: Client): ClientRow {
   };
 }
 
-function calculateMonthlyRevenue(client: Client): number {
-  if (!client.dealType) return 0;
+function calculateMonthlyRevenue(client: Client | ClientRow, currentMRR?: number): number {
+  const dealType = 'dealType' in client ? client.dealType : ('deal_type' in client ? client.deal_type : null);
+  if (!dealType) return 0;
 
-  switch (client.dealType) {
+  switch (dealType) {
     case "invoiced":
-      return client.monthlyInvoiced ?? 0;
+      const monthlyInvoiced = 'monthlyInvoiced' in client ? client.monthlyInvoiced : ('monthly_invoiced' in client ? client.monthly_invoiced : null);
+      return monthlyInvoiced ?? 0;
     case "equity_partnership":
       // $2500/mo + 2% of client MRR
-      const clientMRR = client.compounding?.currentMRR ?? 0;
+      const clientMRR = 'compounding' in client ? (client.compounding?.currentMRR ?? 0) : (currentMRR ?? 0);
       return 2500 + (clientMRR * 0.02);
     case "equity":
       // 15% of client MRR
-      const equityMRR = client.compounding?.currentMRR ?? 0;
-      return equityMRR * (client.equityPercentage ?? 15) / 100;
+      const equityMRR = 'compounding' in client ? (client.compounding?.currentMRR ?? 0) : (currentMRR ?? 0);
+      const equityPct = 'equityPercentage' in client ? (client.equityPercentage ?? 15) : ('equity_percentage' in client ? (client.equity_percentage ?? 15) : 15);
+      return equityMRR * equityPct / 100;
     default:
       return 0;
   }
@@ -130,7 +136,7 @@ export default async function ClientsPage({
       let query = supabase
         .from("clients")
         .select(
-          "id, name, status, phase, owner_id, arr, health, created_at, owner:users!clients_owner_id_fkey(name)"
+          "id, name, status, phase, owner_id, arr, health, created_at, deal_type, monthly_invoiced, equity_percentage, owner:users!clients_owner_id_fkey(name)"
         )
         .order("created_at", { ascending: false })
         .limit(200);
@@ -210,7 +216,7 @@ export default async function ClientsPage({
     (client) => (client.phase ?? "").toLowerCase() === "onboarding",
   ).length;
 
-  // Calculate financial metrics (only available in fallback mode for now)
+  // Calculate financial metrics
   let invoicedRevenue = 0;
   let equityRevenue = 0;
   let equityPartnershipRevenue = 0;
@@ -227,6 +233,20 @@ export default async function ClientsPage({
       } else if (client.dealType === "equity") {
         equityRevenue += revenue;
       } else if (client.dealType === "equity_partnership") {
+        equityPartnershipRevenue += revenue;
+      }
+    });
+  } else {
+    // Calculate from Supabase data
+    clientsData.forEach((client) => {
+      const revenue = calculateMonthlyRevenue(client, 0); // TODO: Fetch MRR from compounding_metrics table
+      totalMonthlyRevenue += revenue;
+
+      if (client.deal_type === "invoiced") {
+        invoicedRevenue += revenue;
+      } else if (client.deal_type === "equity") {
+        equityRevenue += revenue;
+      } else if (client.deal_type === "equity_partnership") {
         equityPartnershipRevenue += revenue;
       }
     });
@@ -290,14 +310,12 @@ export default async function ClientsPage({
           <SummaryCard label="Onboarding" value={`${onboardingCount}`} />
         </div>
 
-        {usingFallback && (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-            <SummaryCard label="Invoiced Revenue" value={`$${Math.round(invoicedRevenue).toLocaleString()}/mo`} />
-            <SummaryCard label="Equity Revenue" value={`$${Math.round(equityRevenue).toLocaleString()}/mo`} />
-            <SummaryCard label="Equity Partnership" value={`$${Math.round(equityPartnershipRevenue).toLocaleString()}/mo`} />
-            <SummaryCard label="Total Monthly Revenue" value={`$${Math.round(totalMonthlyRevenue).toLocaleString()}/mo`} />
-          </div>
-        )}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+          <SummaryCard label="Invoiced Revenue" value={`$${Math.round(invoicedRevenue).toLocaleString()}/mo`} />
+          <SummaryCard label="Equity Revenue" value={`$${Math.round(equityRevenue).toLocaleString()}/mo`} />
+          <SummaryCard label="Equity Partnership" value={`$${Math.round(equityPartnershipRevenue).toLocaleString()}/mo`} />
+          <SummaryCard label="Total Monthly Revenue" value={`$${Math.round(totalMonthlyRevenue).toLocaleString()}/mo`} />
+        </div>
 
         <ClientsPortfolioTable clients={clients} overviewMap={overviewMap} />
       </div>
