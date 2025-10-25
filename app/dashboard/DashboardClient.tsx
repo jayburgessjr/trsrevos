@@ -41,16 +41,25 @@ import { TRS_CARD } from "@/lib/style";
 import { resolveTabs } from "@/lib/tabs";
 import { cn } from "@/lib/utils";
 
+type FinancialMetrics = {
+  invoicedRevenue: number;
+  equityRevenue: number;
+  equityPartnershipRevenue: number;
+  totalMonthlyRevenue: number;
+};
+
 type DashboardClientProps = {
   data: ExecDashboard;
   exportAction: () => Promise<void>;
   review: ForecastReviewState;
+  financialMetrics: FinancialMetrics;
 };
 
 export default function DashboardClient({
   data,
   exportAction,
   review,
+  financialMetrics,
 }: DashboardClientProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -267,10 +276,29 @@ export default function DashboardClient({
       </Card>
       <Card className={cn(TRS_CARD, "p-4")}>
         <div className="mb-3 border-b border-gray-200 pb-2 text-sm font-medium text-black">
-          Total Revenue
+          Client Revenue
         </div>
-        <div className="h-40">
-          <SmallSpark />
+        <div className="grid grid-cols-2 gap-3">
+          <KpiCard
+            label="Invoiced"
+            value={`$${(financialMetrics.invoicedRevenue / 1000).toFixed(1)}K`}
+            hint="/mo"
+          />
+          <KpiCard
+            label="Equity"
+            value={`$${(financialMetrics.equityRevenue / 1000).toFixed(1)}K`}
+            hint="/mo"
+          />
+          <KpiCard
+            label="Partnership"
+            value={`$${(financialMetrics.equityPartnershipRevenue / 1000).toFixed(1)}K`}
+            hint="/mo"
+          />
+          <KpiCard
+            label="Total MRR"
+            value={`$${(financialMetrics.totalMonthlyRevenue / 1000).toFixed(1)}K`}
+            hint="/mo"
+          />
         </div>
       </Card>
     </div>
