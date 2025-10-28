@@ -19,6 +19,7 @@ type DealDetailModalProps = {
   deal: OpportunityWithNotes;
   onClose: () => void;
   userId: string;
+  readOnly?: boolean;
 };
 
 const STAGES = [
@@ -30,7 +31,8 @@ const STAGES = [
   { key: "ClosedLost", label: "Closed Lost", probability: 0 },
 ];
 
-export function DealDetailModal({ deal, onClose, userId }: DealDetailModalProps) {
+export function DealDetailModal({ deal, onClose, userId, readOnly = false }: DealDetailModalProps) {
+  const isReadOnly = Boolean(readOnly);
   const [isEditing, setIsEditing] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +50,9 @@ export function DealDetailModal({ deal, onClose, userId }: DealDetailModalProps)
   const [noteText, setNoteText] = useState("");
 
   const handleUpdate = () => {
+    if (isReadOnly) {
+      return;
+    }
     setError(null);
     startTransition(async () => {
       const result = await updateOpportunity(deal.id, {
@@ -68,6 +73,9 @@ export function DealDetailModal({ deal, onClose, userId }: DealDetailModalProps)
   };
 
   const handleDelete = () => {
+    if (isReadOnly) {
+      return;
+    }
     if (!confirm("Are you sure you want to delete this deal?")) return;
 
     startTransition(async () => {
@@ -81,6 +89,9 @@ export function DealDetailModal({ deal, onClose, userId }: DealDetailModalProps)
   };
 
   const handleMarkAsLost = () => {
+    if (isReadOnly) {
+      return;
+    }
     startTransition(async () => {
       const result = await updateOpportunity(deal.id, {
         stage: "ClosedLost",
@@ -96,6 +107,9 @@ export function DealDetailModal({ deal, onClose, userId }: DealDetailModalProps)
   };
 
   const handleAddNote = () => {
+    if (isReadOnly) {
+      return;
+    }
     if (!noteText.trim()) return;
 
     startTransition(async () => {
@@ -108,10 +122,12 @@ export function DealDetailModal({ deal, onClose, userId }: DealDetailModalProps)
     });
   };
 
-  const markClosedWonAction = markClosedWon.bind(null, {
-    opportunityId: deal.id,
-    pipelineId: undefined,
-  });
+  const markClosedWonAction = isReadOnly
+    ? null
+    : markClosedWon.bind(null, {
+        opportunityId: deal.id,
+        pipelineId: undefined,
+      });
 
   const getDaysInStage = () => {
     const updated = new Date(deal.updated_at);
@@ -154,11 +170,17 @@ export function DealDetailModal({ deal, onClose, userId }: DealDetailModalProps)
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <form action={markClosedWonAction}>
-                <Button type="submit" size="sm" variant="primary">
-                  Mark Closed Won
-                </Button>
-              </form>
+              {markClosedWonAction ? (
+                <form action={markClosedWonAction}>
+                  <Button type="submit" size="sm" variant="primary">
+                    Mark Closed Won
+                  </Button>
+                </form>
+              ) : (
+                <Badge variant="outline" className="text-xs uppercase text-gray-500">
+                  Demo mode
+                </Badge>
+              )}
               <Button variant="ghost" size="sm" onClick={onClose} disabled={isPending}>
                 ✕
               </Button>
@@ -319,7 +341,14 @@ export function DealDetailModal({ deal, onClose, userId }: DealDetailModalProps)
 
               {/* Activities Tab */}
               {activeTab === "activities" && (
-                <ActivitySection opportunityId={deal.id} userId={userId} />
+                isReadOnly ? (
+                  <div className="rounded-md border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-600">
+                    Activities are view-only in demo mode. Connect Supabase to log
+                    tasks and automatically sync updates.
+                  </div>
+                ) : (
+                  <ActivitySection opportunityId={deal.id} userId={userId} />
+                )
               )}
 
               {/* Notes Tab */}
@@ -333,17 +362,23 @@ export function DealDetailModal({ deal, onClose, userId }: DealDetailModalProps)
                       placeholder="Add a note..."
                       className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none"
                       rows={3}
-                      disabled={isPending}
+                      disabled={isPending || isReadOnly}
                     />
                     <Button
                       variant="primary"
                       size="sm"
                       onClick={handleAddNote}
-                      disabled={isPending || !noteText.trim()}
+                      disabled={isPending || !noteText.trim() || isReadOnly}
                       className="mt-2"
                     >
                       Add Note
                     </Button>
+                    {isReadOnly ? (
+                      <p className="mt-2 text-xs text-gray-500">
+                        Notes are read-only in demo mode. Connect Supabase to capture
+                        new updates from your team.
+                      </p>
+                    ) : null}
                   </div>
 
                   {/* Notes List */}
@@ -377,7 +412,7 @@ export function DealDetailModal({ deal, onClose, userId }: DealDetailModalProps)
           {/* Actions */}
           <div className="flex items-center justify-between gap-2 pt-6 border-t mt-6">
             <div className="flex gap-2">
-              {!isEditing && deal.stage !== "ClosedLost" && (
+              {!isEditing && deal.stage !== "ClosedLost" && !isReadOnly && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -387,19 +422,21 @@ export function DealDetailModal({ deal, onClose, userId }: DealDetailModalProps)
                   Mark as Lost
                 </Button>
               )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDelete}
-                disabled={isPending}
-                className="text-red-600 hover:bg-red-50"
-              >
-                Delete Deal
-              </Button>
+              {!isReadOnly ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDelete}
+                  disabled={isPending}
+                  className="text-red-600 hover:bg-red-50"
+                >
+                  Delete Deal
+                </Button>
+              ) : null}
             </div>
 
             <div className="flex gap-2">
-              {isEditing ? (
+              {!isReadOnly && isEditing ? (
                 <>
                   <Button
                     variant="outline"
@@ -433,8 +470,9 @@ export function DealDetailModal({ deal, onClose, userId }: DealDetailModalProps)
                   variant="primary"
                   size="sm"
                   onClick={() => setIsEditing(true)}
+                  disabled={isReadOnly}
                 >
-                  Edit Deal
+                  {isReadOnly ? "View only" : "Edit Deal"}
                 </Button>
               )}
             </div>
