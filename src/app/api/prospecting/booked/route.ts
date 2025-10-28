@@ -1,4 +1,4 @@
-import { prisma } from '@/src/lib/prisma';
+import { getPrismaClient } from '@/src/lib/prisma';
 
 type CalendlyPayload = {
   payload?: {
@@ -8,6 +8,12 @@ type CalendlyPayload = {
 };
 
 export async function POST(request: Request) {
+  const prisma = getPrismaClient();
+  if (!prisma) {
+    console.warn('[prospecting] booked webhook received without DATABASE_URL');
+    return new Response('database unavailable', { status: 500 });
+  }
+
   let body: CalendlyPayload | null = null;
   try {
     body = (await request.json()) as CalendlyPayload;

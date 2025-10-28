@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { startOfDay } from 'date-fns';
-import { prisma } from '@/src/lib/prisma';
+import { getPrismaClient } from '@/src/lib/prisma';
 import {
   generateCopy,
   isWithinSendWindow,
@@ -34,6 +34,12 @@ const rowSchema = z.object({
 });
 
 export async function ingestCsvAction(rows: any[]) {
+  const prisma = getPrismaClient();
+  if (!prisma) {
+    console.warn('[prospecting] ingestCsvAction invoked without DATABASE_URL');
+    return;
+  }
+
   for (const row of rows) {
     const parsed = rowSchema.safeParse(row);
     if (!parsed.success) continue;
@@ -87,6 +93,12 @@ export async function ingestCsvAction(rows: any[]) {
 }
 
 export async function queueResearchAction() {
+  const prisma = getPrismaClient();
+  if (!prisma) {
+    console.warn('[prospecting] queueResearchAction invoked without DATABASE_URL');
+    return;
+  }
+
   const prospects = await prisma.prospect.findMany({
     where: { status: 'new' },
     include: {
@@ -125,6 +137,12 @@ export async function queueResearchAction() {
 }
 
 export async function runDailySendsAction() {
+  const prisma = getPrismaClient();
+  if (!prisma) {
+    console.warn('[prospecting] runDailySendsAction invoked without DATABASE_URL');
+    return;
+  }
+
   const sequence = await prisma.sequence.findFirst({
     orderBy: { createdAt: 'asc' },
   });
