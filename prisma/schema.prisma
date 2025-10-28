@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  website      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  contacts     Contact[]
+  prospects    Prospect[]
+}
+
+model Contact {
+  id           String   @id @default(cuid())
+  accountId    String?
+  email        String   @unique
+  firstName    String?
+  lastName     String?
+  title        String?
+  linkedinUrl  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  account      Account? @relation(fields: [accountId], references: [id])
+  prospects    Prospect[]
+}
+
+model ResearchSnapshot {
+  id        String   @id @default(cuid())
+  url       String?
+  summary   String
+  triggers  String   // JSON array string
+  citations String   // JSON array string of {title,url}
+  createdAt DateTime @default(now())
+  prospects Prospect[]
+}
+
+model Sequence {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  maxDailySends Int      @default(40)
+  quietStart    Int      @default(20) // 20:00 local
+  quietEnd      Int      @default(7)  // 07:00 local
+  createdAt     DateTime @default(now())
+  templates     MessageTemplate[]
+  prospects     Prospect[]
+}
+
+model MessageTemplate {
+  id         String   @id @default(cuid())
+  sequenceId String
+  step       Int
+  subject    String
+  body       String
+  delayHours Int
+  createdAt  DateTime @default(now())
+  sequence   Sequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+}
+
+model Prospect {
+  id          String   @id @default(cuid())
+  accountId   String?
+  contactId   String?
+  source      String
+  icpScore    Int      @default(0)
+  status      String   // new|researched|queued|sent|replied|qualified|booked|closed
+  researchId  String?
+  sequenceId  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  account     Account? @relation(fields: [accountId], references: [id])
+  contact     Contact? @relation(fields: [contactId], references: [id])
+  research    ResearchSnapshot? @relation(fields: [researchId], references: [id])
+  sequence    Sequence? @relation(fields: [sequenceId], references: [id])
+  attempts    SendAttempt[]
+  bookings    Booking[]
+  replies     Reply[]
+}
+
+model SendAttempt {
+  id         String   @id @default(cuid())
+  prospectId String
+  step       Int
+  providerId String?
+  status     String   // queued|sent|bounced|replied|failed
+  error      String?
+  createdAt  DateTime @default(now())
+  prospect   Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+}
+
+model Reply {
+  id             String   @id @default(cuid())
+  prospectId     String
+  rawText        String
+  classification String   // positive|neutral|objection|ooo|unsubscribe
+  createdAt      DateTime @default(now())
+  prospect       Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+}
+
+model Booking {
+  id         String   @id @default(cuid())
+  prospectId String
+  calendar   String   // calendly
+  externalId String
+  start      DateTime
+  end        DateTime
+  createdAt  DateTime @default(now())
+  prospect   Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+}
