@@ -1,10 +1,4 @@
-import { getPrismaClient } from '../src/lib/prisma';
-
-const prisma = getPrismaClient();
-
-if (!prisma) {
-  throw new Error('DATABASE_URL is not set');
-}
+import { prisma } from '../src/lib/prisma';
 
 async function main() {
   const sequence = await prisma.sequence.upsert({
