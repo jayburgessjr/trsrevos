@@ -1,7 +1,13 @@
-import { prisma } from '@/src/lib/prisma';
+import { getPrismaClient } from '@/src/lib/prisma';
 import { classifyReply } from '@/src/lib/prospecting';
 
 export async function POST(request: Request) {
+  const prisma = getPrismaClient();
+  if (!prisma) {
+    console.warn('[prospecting] inbound reply received without DATABASE_URL');
+    return new Response('database unavailable', { status: 500 });
+  }
+
   const form = await request.formData();
   const fromField = String(form.get('from') || '');
   const emailMatch = (fromField.split('<')[1] || fromField).replace('>', '').trim().toLowerCase();
