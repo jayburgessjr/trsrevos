@@ -1,39 +1,51 @@
-import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  })
+type SupabaseUser = {
+  id: string
+}
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          supabaseResponse = NextResponse.next({
-            request,
-          })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
-        },
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+async function getSupabaseUser(request: NextRequest): Promise<SupabaseUser | null> {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    return null
+  }
+
+  const accessTokenCookie =
+    request.cookies.get('sb-access-token') ||
+    request.cookies.get('sb:access_token') ||
+    request.cookies.getAll().find((cookie) => cookie.name.includes('access-token'))
+
+  const accessToken = accessTokenCookie?.value
+
+  if (!accessToken) {
+    return null
+  }
+
+  try {
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        apikey: SUPABASE_ANON_KEY,
       },
+      cache: 'no-store',
+    })
+
+    if (!response.ok) {
+      return null
     }
-  )
 
-  // IMPORTANT: Avoid writing any logic between createServerClient and
-  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-  // issues with users being randomly logged out.
+    const data = (await response.json()) as SupabaseUser
+    return data
+  } catch (error) {
+    console.error('Failed to verify Supabase session in middleware', error)
+    return null
+  }
+}
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
+export async function updateSession(request: NextRequest) {
+  const user = await getSupabaseUser(request)
   const { pathname } = request.nextUrl
 
   // Protect all routes except explicitly public ones and API routes
@@ -58,18 +70,5 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
-  // creating a new response object with NextResponse.next() make sure to:
-  // 1. Pass the request in it, like so:
-  //    const myNewResponse = NextResponse.next({ request })
-  // 2. Copy over the cookies, like so:
-  //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
-  // 3. Change the myNewResponse object to fit your needs, but avoid changing
-  //    the cookies!
-  // 4. Finally:
-  //    return myNewResponse
-  // If this is not done, you may be causing the browser and server to go out
-  // of sync and terminate the user's session prematurely.
-
-  return supabaseResponse
+  return NextResponse.next()
 }
