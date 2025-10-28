@@ -14,6 +14,7 @@ import type {
   OpportunityWithNotes,
   PipelineAutomationState,
   PipelineSyncJob,
+  PipelineMetrics,
 } from "@/core/pipeline/actions";
 import {
   schedulePipelineSyncs,
@@ -68,16 +69,10 @@ function formatNextRun(job: PipelineSyncJob) {
 
 type Props = {
   opportunities: OpportunityWithNotes[];
-  metrics: {
-    totalValue: number;
-    totalWeighted: number;
-    dealCount: number;
-    avgDealSize: number;
-    winRate: number;
-    avgSalesCycle: number;
-  };
+  metrics: PipelineMetrics;
   automation: PipelineAutomationState;
   userId: string;
+  isSampleData?: boolean;
 };
 
 export default function PipelineClient({
@@ -85,7 +80,9 @@ export default function PipelineClient({
   metrics,
   automation,
   userId,
+  isSampleData = false,
 }: Props) {
+  const isReadOnly = isSampleData;
   const [activeTab, setActiveTab] = useState("Overview");
   const [showAddProspect, setShowAddProspect] = useState(false);
   const [showImportProspects, setShowImportProspects] = useState(false);
@@ -105,13 +102,13 @@ export default function PipelineClient({
   );
   const sampleClosedWonAction = useMemo(
     () =>
-      sampleOpportunity
+      !isReadOnly && sampleOpportunity
         ? markClosedWon.bind(null, {
             pipelineId: undefined,
             opportunityId: sampleOpportunity.id,
           })
         : null,
-    [sampleOpportunity],
+    [isReadOnly, sampleOpportunity],
   );
 
   const quarterlyTarget = 1_200_000;
@@ -121,6 +118,11 @@ export default function PipelineClient({
   );
 
   const handleSync = () => {
+    if (isReadOnly) {
+      setSyncMessage("Connect Supabase to enable live pipeline syncs.");
+      return;
+    }
+
     startSync(async () => {
       const result = await syncPipelineAnalytics();
       setSyncMessage(
@@ -152,6 +154,11 @@ export default function PipelineClient({
   const alertHistory = automationState.alerts;
 
   const handleAutomations = () => {
+    if (isReadOnly) {
+      setAutomationMessage("Automations are disabled while viewing demo data.");
+      return;
+    }
+
     startAutomation(async () => {
       const result = await schedulePipelineSyncs();
       if (result.ok) {
@@ -171,10 +178,16 @@ export default function PipelineClient({
   };
 
   const handleOpenModal = () => {
+    if (isReadOnly) {
+      return;
+    }
     setShowAddProspect(true);
   };
 
   const handleOpenImport = () => {
+    if (isReadOnly) {
+      return;
+    }
     setShowImportProspects(true);
   };
 
@@ -189,6 +202,12 @@ export default function PipelineClient({
   const lastAlertHashRef = useRef<string | null>(null);
 
   useEffect(() => {
+    if (isReadOnly) {
+      lastAlertHashRef.current = null;
+      setAlertMessage(null);
+      return;
+    }
+
     if (!analytics.alerts.length) {
       lastAlertHashRef.current = null;
       setAlertMessage(null);
@@ -216,7 +235,7 @@ export default function PipelineClient({
         setAlertMessage("Failed to notify on pipeline risks");
       }
     });
-  }, [alertHash, analytics.alerts, startAlert]);
+  }, [alertHash, analytics.alerts, isReadOnly, startAlert]);
 
   const opportunitiesByStage = useMemo(() => {
     const stages = [
@@ -350,16 +369,22 @@ export default function PipelineClient({
           <Button
             variant="outline"
             size="sm"
-            disabled={syncPending}
+            disabled={syncPending || isReadOnly}
             onClick={handleSync}
+            title={
+              isReadOnly ? "Available when live pipeline data is connected" : undefined
+            }
           >
             {syncPending ? "Syncing…" : "Sync analytics"}
           </Button>
           <Button
             variant="outline"
             size="sm"
-            disabled={automationPending}
+            disabled={automationPending || isReadOnly}
             onClick={handleAutomations}
+            title={
+              isReadOnly ? "Available when live pipeline data is connected" : undefined
+            }
           >
             {automationPending ? "Scheduling…" : "Automate syncs"}
           </Button>
@@ -370,10 +395,26 @@ export default function PipelineClient({
               </Button>
             </form>
           ) : null}
-          <Button variant="outline" size="sm" onClick={handleOpenImport}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleOpenImport}
+            disabled={isReadOnly}
+            title={
+              isReadOnly ? "Importing requires an active Supabase connection" : undefined
+            }
+          >
             Import CSV
           </Button>
-          <Button variant="primary" size="sm" onClick={handleOpenModal}>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleOpenModal}
+            disabled={isReadOnly}
+            title={
+              isReadOnly ? "Add prospects once live data is enabled" : undefined
+            }
+          >
             + New Prospect
           </Button>
         </div>
@@ -386,6 +427,13 @@ export default function PipelineClient({
         activeTab={activeTab}
         onTabChange={setActiveTab}
       />
+
+      {isSampleData ? (
+        <div className="rounded-md border border-indigo-200 bg-indigo-50 p-3 text-xs text-indigo-800">
+          You’re viewing demo pipeline data. Configure Supabase credentials to
+          load live opportunities and unlock pipeline automations.
+        </div>
+      ) : null}
 
       {syncMessage ? (
         <div className="rounded-md border border-sky-200 bg-sky-50 p-3 text-xs text-sky-800">
@@ -526,10 +574,28 @@ export default function PipelineClient({
                 </p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={handleOpenImport}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleOpenImport}
+                  disabled={isReadOnly}
+                  title={
+                    isReadOnly
+                      ? "Importing requires an active Supabase connection"
+                      : undefined
+                  }
+                >
                   Import CSV
                 </Button>
-                <Button variant="primary" size="sm" onClick={handleOpenModal}>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleOpenModal}
+                  disabled={isReadOnly}
+                  title={
+                    isReadOnly ? "Add prospects once live data is enabled" : undefined
+                  }
+                >
                   + New Prospect
                 </Button>
               </div>
@@ -544,6 +610,7 @@ export default function PipelineClient({
           <PipelineKanban
             opportunitiesByStage={opportunitiesByStage}
             userId={userId}
+            readOnly={isReadOnly}
           />
         </div>
       )}
@@ -799,19 +866,19 @@ export default function PipelineClient({
         </div>
       )}
 
-      {showAddProspect && (
+      {!isReadOnly && showAddProspect ? (
         <AddProspectModal
           onClose={() => setShowAddProspect(false)}
           userId={userId}
         />
-      )}
+      ) : null}
 
-      {showImportProspects && (
+      {!isReadOnly && showImportProspects ? (
         <ImportProspectsModal
           onClose={() => setShowImportProspects(false)}
           userId={userId}
         />
-      )}
+      ) : null}
     </PageTemplate>
   );
 }

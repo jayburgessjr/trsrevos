@@ -12,6 +12,7 @@ type PipelineKanbanProps = {
     [stage: string]: OpportunityWithNotes[];
   };
   userId: string;
+  readOnly?: boolean;
 };
 
 const STAGES = [
@@ -22,23 +23,33 @@ const STAGES = [
   { key: "ClosedWon", label: "Closed Won", color: "bg-green-100" },
 ];
 
-export function PipelineKanban({ opportunitiesByStage, userId }: PipelineKanbanProps) {
+export function PipelineKanban({ opportunitiesByStage, userId, readOnly }: PipelineKanbanProps) {
+  const isReadOnly = Boolean(readOnly);
   const [draggedOpportunity, setDraggedOpportunity] = useState<string | null>(null);
   const [selectedDeal, setSelectedDeal] = useState<OpportunityWithNotes | null>(null);
   const [showQuickActions, setShowQuickActions] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const handleDragStart = (e: React.DragEvent, opportunityId: string) => {
+    if (isReadOnly) {
+      return;
+    }
     setDraggedOpportunity(opportunityId);
     e.dataTransfer.effectAllowed = "move";
   };
 
   const handleDragOver = (e: React.DragEvent) => {
+    if (isReadOnly) {
+      return;
+    }
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
   };
 
   const handleDrop = (e: React.DragEvent, newStage: string) => {
+    if (isReadOnly) {
+      return;
+    }
     e.preventDefault();
 
     if (!draggedOpportunity) return;
@@ -65,6 +76,9 @@ export function PipelineKanban({ opportunitiesByStage, userId }: PipelineKanbanP
   };
 
   const handleQuickDelete = (e: React.MouseEvent, oppId: string) => {
+    if (isReadOnly) {
+      return;
+    }
     e.stopPropagation();
     if (!confirm("Delete this deal?")) return;
 
@@ -75,6 +89,9 @@ export function PipelineKanban({ opportunitiesByStage, userId }: PipelineKanbanP
   };
 
   const handleQuickMarkLost = (e: React.MouseEvent, oppId: string) => {
+    if (isReadOnly) {
+      return;
+    }
     e.stopPropagation();
     startTransition(async () => {
       await moveOpportunityStage(oppId, "ClosedLost");
@@ -117,7 +134,7 @@ export function PipelineKanban({ opportunitiesByStage, userId }: PipelineKanbanP
               {opportunitiesByStage[stage.key]?.map((opp) => (
                 <Card
                   key={opp.id}
-                  draggable={!isPending}
+                  draggable={!isPending && !isReadOnly}
                   onDragStart={(e) => handleDragStart(e, opp.id)}
                   onClick={() => setSelectedDeal(opp)}
                   className={cn(
@@ -126,18 +143,20 @@ export function PipelineKanban({ opportunitiesByStage, userId }: PipelineKanbanP
                   )}
                 >
                   {/* Quick Actions Button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowQuickActions(showQuickActions === opp.id ? null : opp.id);
-                    }}
-                    className="absolute top-2 right-2 p-1 opacity-0 group-hover:opacity-100 hover:bg-gray-100 rounded transition-opacity z-10"
-                  >
-                    <span className="text-gray-600">⋮</span>
-                  </button>
+                  {!isReadOnly ? (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowQuickActions(showQuickActions === opp.id ? null : opp.id);
+                      }}
+                      className="absolute top-2 right-2 p-1 opacity-0 group-hover:opacity-100 hover:bg-gray-100 rounded transition-opacity z-10"
+                    >
+                      <span className="text-gray-600">⋮</span>
+                    </button>
+                  ) : null}
 
                   {/* Quick Actions Menu */}
-                  {showQuickActions === opp.id && (
+                  {showQuickActions === opp.id && !isReadOnly && (
                     <div className="absolute top-8 right-2 bg-white border border-gray-200 rounded-md shadow-lg z-20 py-1 min-w-[140px]">
                       <button
                         onClick={(e) => {
@@ -205,6 +224,7 @@ export function PipelineKanban({ opportunitiesByStage, userId }: PipelineKanbanP
           deal={selectedDeal}
           onClose={() => setSelectedDeal(null)}
           userId={userId}
+          readOnly={isReadOnly}
         />
       )}
     </>

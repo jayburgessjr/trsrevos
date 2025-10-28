@@ -36,6 +36,90 @@ export type OpportunityWithNotes = Opportunity & {
   owner: { name: string } | null;
 };
 
+export type PipelineMetrics = {
+  totalValue: number;
+  totalWeighted: number;
+  dealCount: number;
+  avgDealSize: number;
+  winRate: number;
+  avgSalesCycle: number;
+};
+
+const EMPTY_METRICS: PipelineMetrics = {
+  totalValue: 0,
+  totalWeighted: 0,
+  dealCount: 0,
+  avgDealSize: 0,
+  winRate: 0,
+  avgSalesCycle: 0,
+};
+
+export function calculatePipelineMetrics(
+  opportunities: OpportunityWithNotes[],
+): PipelineMetrics {
+  if (!opportunities.length) {
+    return { ...EMPTY_METRICS };
+  }
+
+  const totalValue = opportunities.reduce(
+    (sum, opp) => sum + (opp.amount ?? 0),
+    0,
+  );
+  const totalWeighted = opportunities.reduce(
+    (sum, opp) =>
+      sum + (opp.amount ?? 0) * ((opp.probability ?? 0) / 100),
+    0,
+  );
+  const dealCount = opportunities.length;
+  const avgDealSize = dealCount ? totalValue / dealCount : 0;
+
+  const closedWon = opportunities.filter((opp) => opp.stage === "ClosedWon");
+  const closedLost = opportunities.filter((opp) => opp.stage === "ClosedLost");
+  const closedWithOutcome = closedWon.length + closedLost.length;
+
+  const winRate = closedWithOutcome
+    ? (closedWon.length / closedWithOutcome) * 100
+    : 0;
+
+  const closedDeals = opportunities.filter(
+    (opp) =>
+      (opp.stage === "ClosedWon" || opp.stage === "ClosedLost") &&
+      !!opp.close_date,
+  );
+
+  const totalCycleDays = closedDeals.reduce((sum, opp) => {
+    if (!opp.close_date) {
+      return sum;
+    }
+
+    const created = new Date(opp.created_at);
+    const closed = new Date(opp.close_date);
+    if (Number.isNaN(created.getTime()) || Number.isNaN(closed.getTime())) {
+      return sum;
+    }
+
+    const duration = Math.max(
+      0,
+      Math.floor((closed.getTime() - created.getTime()) / (1000 * 60 * 60 * 24)),
+    );
+
+    return sum + duration;
+  }, 0);
+
+  const avgSalesCycle = closedDeals.length
+    ? totalCycleDays / closedDeals.length
+    : 0;
+
+  return {
+    totalValue,
+    totalWeighted,
+    dealCount,
+    avgDealSize,
+    winRate,
+    avgSalesCycle,
+  };
+}
+
 /**
  * Fetch all opportunities with their notes, clients, and owners
  */
@@ -265,69 +349,9 @@ export async function addOpportunityNote(
 /**
  * Get pipeline metrics
  */
-export async function getPipelineMetrics(): Promise<{
-  totalValue: number;
-  totalWeighted: number;
-  dealCount: number;
-  avgDealSize: number;
-  winRate: number;
-  avgSalesCycle: number;
-}> {
-  const supabase = await createClient();
-
-  const { data: opportunities } = await supabase
-    .from("opportunities")
-    .select("amount, probability, stage, created_at, close_date");
-
-  if (!opportunities || opportunities.length === 0) {
-    return {
-      totalValue: 0,
-      totalWeighted: 0,
-      dealCount: 0,
-      avgDealSize: 0,
-      winRate: 0,
-      avgSalesCycle: 0,
-    };
-  }
-
-  const totalValue = opportunities.reduce((sum, opp) => sum + (opp.amount || 0), 0);
-  const totalWeighted = opportunities.reduce(
-    (sum, opp) => sum + (opp.amount || 0) * ((opp.probability || 0) / 100),
-    0
-  );
-  const dealCount = opportunities.length;
-  const avgDealSize = totalValue / dealCount;
-
-  const wonDeals = opportunities.filter((opp) => opp.stage === "ClosedWon");
-  const lostDeals = opportunities.filter((opp) => opp.stage === "ClosedLost");
-  const winRate =
-    wonDeals.length + lostDeals.length > 0
-      ? (wonDeals.length / (wonDeals.length + lostDeals.length)) * 100
-      : 0;
-
-  // Calculate avg sales cycle for closed deals
-  const closedDeals = opportunities.filter(
-    (opp) => opp.stage === "ClosedWon" || opp.stage === "ClosedLost"
-  );
-  const avgSalesCycle =
-    closedDeals.length > 0
-      ? closedDeals.reduce((sum, opp) => {
-          if (!opp.close_date) return sum;
-          const created = new Date(opp.created_at);
-          const closed = new Date(opp.close_date);
-          const days = Math.floor((closed.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
-          return sum + days;
-        }, 0) / closedDeals.length
-      : 0;
-
-  return {
-    totalValue,
-    totalWeighted,
-    dealCount,
-    avgDealSize,
-    winRate,
-    avgSalesCycle,
-  };
+export async function getPipelineMetrics(): Promise<PipelineMetrics> {
+  const opportunities = await getOpportunities();
+  return calculatePipelineMetrics(opportunities);
 }
 
 /**
