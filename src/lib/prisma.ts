@@ -23,4 +23,12 @@ export function getPrismaClient(): PrismaClient | undefined {
   return prismaClient;
 }
 
-export const prisma = getPrismaClient();
+export const prisma = (() => {
+  const client = getPrismaClient();
+
+  if (!client) {
+    throw new Error('DATABASE_URL is not set');
+  }
+
+  return client;
+})();
